@@ -1,0 +1,30 @@
+{
+    "name": "NSFW Detector by Navendu",
+    "version": "0.1",
+    "description": "TensorFlow chrome extension for using pretrained MobileNet NN to analyze images on web pages!",
+    "author": "Navendu Pottekkat",
+    "permissions": [
+      "activeTab",
+      "declarativeContent",
+      "webRequest",
+      "webRequestBlocking",
+      "<all_urls>",
+      "storage",
+      "tabs"
+    ],
+    "background": {
+      "scripts": ["src/background.js"],
+      "persistent": true
+    },
+    "content_scripts": [
+      {
+        "matches": ["http://*/*", "https://*/*"],
+        "js": ["src/content.js"],
+        "all_frames": true,
+        "run_at": "document_start"
+      }
+    ],
+    "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
+    "manifest_version": 2
+  }
+  
