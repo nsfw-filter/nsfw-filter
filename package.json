@@ -13,5 +13,8 @@
   "dependencies": {
     "@tensorflow/tfjs": "^2.0.1",
     "nsfwjs": "^2.2.0"
+  },
+  "devDependencies": {
+    "parcel-bundler": "^1.12.4"
   }
 }

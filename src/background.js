@@ -1,6 +1,9 @@
 import 'regenerator-runtime/runtime'
 
+import * as tf from '@tensorflow/tfjs'
 import * as nsfwjs from 'nsfwjs'
+
+tf.enableProdMode()
 
 // Original code, commented to test a few things, the below code works!
 
