@@ -1,7 +1,7 @@
 {
-  "name": "NSFW Detector by Navendu",
+  "name": "NSFW Filter",
   "version": "0.1",
-  "description": "TensorFlow chrome extension for using pretrained MobileNet NN to analyze images on web pages!",
+  "description": "Hide NSFW content from websites using this extension powered by AI!",
   "author": "Navendu Pottekkat",
   "permissions": [
     "activeTab",
