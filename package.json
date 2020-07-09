@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "copy": "cp src/content.js dist/src/ && cp src/model.json dist/src/ && cp src/group1-shard1of1 dist/src/",
+    "copy": "cp src/content.js dist/src/ && cp src/popup.html dist/src/",
     "build": "parcel build src/background.js -d dist/src/ -o background && npm run copy",
     "watch": "npm run copy && parcel watch src/background.js --hmr-hostname localhost -d dist/src/ -o background"
   },
