@@ -1,7 +1,7 @@
 {
   "name": "nsfw-filter",
   "version": "1.0.0",
-  "description": "Hide NSFW content from websites using this extension powered by AI!",
+  "description": "Hide NSFW content from websites using this extension powered by AI! This extension replaces images that are NSFW with random images from Unsplash.",
   "scripts": {
     "copy": "cp src/content.js dist/src/",
     "build": "parcel build src/background.js -d dist/src/ -o background && npm run copy",
