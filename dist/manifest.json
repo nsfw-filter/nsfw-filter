@@ -3,6 +3,7 @@
   "version": "0.1",
   "description": "Hide NSFW content from websites using this extension powered by AI!",
   "author": "Navendu Pottekkat",
+  "homepage_url": "https://github.com/navendu-pottekkat/nsfw-blocker/",
   "permissions": [
     "activeTab",
     "declarativeContent",
@@ -32,7 +33,6 @@
     }
   ],
   "page_action": {
-    "default_popup": "src/popup.html",
     "default_icon": {
       "16": "images/icon16.png",
       "32": "images/icon32.png",

@@ -1,17 +1,43 @@
+/**
+* @license
+* Copyright 2020 Navendu Pottekkat. All Rights Reserved.
+* Licensed under the GNU General Public License v3.0
+* License copy at https://github.com/navendu-pottekkat/nsfw-blocker/blob/master/LICENSE
+*
+* =======================================================================================
+*
+* Permissions of this strong copyleft license are conditioned on making 
+* available complete source code of licensed works and modifications, 
+* which include larger works using a licensed work, 
+* under the same license. Copyright and license notices must be preserved. 
+* Contributors provide an express grant of patent rights.
+*
+* =======================================================================================
+*/
+
 import 'regenerator-runtime/runtime'
 
 import * as tf from '@tensorflow/tfjs'
 import * as nsfwjs from 'nsfwjs'
 
+// Enable production mode in TensorFlow
+
 tf.enableProdMode()
 
-const IMAGE_SIZE = 224;
-const FILTER_THRESHOLD = 0.75;
-const FILTER_LIST = ["Hentai", "Porn", "Sexy"];
+const IMAGE_SIZE = 224; // nsfwjs model used here takes input tensors as 224x224
+const FILTER_THRESHOLD = 0.75; // you can set a threshold and use the filter only if the predictions are above the threshold
+const FILTER_LIST = ["Hentai", "Porn", "Sexy"]; // the image classes that needs to be filtered
+const MODEL_PATH = '../models/'; // the model is stored as a web accessible resource
 
-nsfwjs.load('../models/').then(model => {
-
+nsfwjs.load(MODEL_PATH).then(model => {
+  /*
+  This function loads the nsfwjs model to memory and prepares it for making predictions.
+  Once the model is loaded, it will load the images and make predictions.
+  */
   async function loadImage(url) {
+    /*
+    This function loads the image for passing to the model.
+    */
     const image = new Image(IMAGE_SIZE, IMAGE_SIZE);
     return new Promise((resolve, reject) => {
       image.crossOrigin = "anonymous";
@@ -22,28 +48,12 @@ nsfwjs.load('../models/').then(model => {
   }
 
   async function executeModel(url) {
+    /*
+    Executes the model and returns predicitions.
+    */
     const image = await loadImage(url);
-
-    // input pixels must be floats in (0,1) range instead of integers (0,255)
-    // const tensor = tf
-    //   .fromPixels(image)
-    //   .toFloat()
-    //   .div(255)
-    //   .reshape([1, IMAGE_SIZE, IMAGE_SIZE, 3]);
-
-    // MobileNet V1: model.predict(tensor)
-    // MobileNet V2: model.predict({ Placeholder: tensor })
-    const prediction = model.classify(image, 1);
-
+    const prediction = model.classify(image, 1); // Change the second parameter to change the number of top predicitions returned
     const output = prediction;
-
-    // const output_test = prediction[0].className; // [cat_probability, nocat_probability]
-    // console.log('Prediction for %s', url, output);
-
-    // if (output_test == 'Neutral') {
-    //   console.log("Safe")
-    // }
-
     return output;
   }
 
@@ -51,7 +61,9 @@ nsfwjs.load('../models/').then(model => {
     executeModel(request.url)
       .then(op => {
         if (FILTER_LIST.includes(op[0].className)) {
-          console.log("EUREKA! EUREKA! EUREKA!")
+          /*
+          If the top predicition is in our filter list, filter the image (return true)
+          */
           console.log(op[0].className, op[0].probability)
           return true;
         }
@@ -61,8 +73,6 @@ nsfwjs.load('../models/').then(model => {
       })
       .then(result => callback({ result: result }))
       .catch(err => callback({ result: false, err: err.message }));
-
     return true; // needed to make the content script wait for the async processing to complete
   });
-
 });
