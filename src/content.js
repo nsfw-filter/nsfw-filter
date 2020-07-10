@@ -2,7 +2,7 @@
 * @license
 * Copyright 2020 Navendu Pottekkat. All Rights Reserved.
 * Licensed under the GNU General Public License v3.0
-* License copy at https://github.com/navendu-pottekkat/nsfw-blocker/blob/master/LICENSE
+* License copy at https://github.com/navendu-pottekkat/nsfw-filter/blob/master/LICENSE
 *
 * =======================================================================================
 *
