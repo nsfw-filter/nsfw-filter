@@ -47,7 +47,7 @@
     "128": "images/icon128.png"
   },
   "web_accessible_resources": [
-    "models/*"
+    "models/*, images/*"
   ],
   "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
   "manifest_version": 2
