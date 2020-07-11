@@ -56,9 +56,10 @@ When the extension is installed, the images in the page is changed to random ima
   - [Sponsor](#sponsor)
   - [Adding new features or fixing bugs](#adding-new-features-or-fixing-bugs)
 - [License](#license)
-- [Privacy](#)
+- [Privacy](#privacy)
 
 # Installation 
+[(Back to top)](#table-of-contents)
 
 Clone this repository and navigate inside the project folder and install the dependencies by running:
 
@@ -74,6 +75,7 @@ npm run-script build
 ```
 
 ### Adding to Chrome
+[(Back to top)](#table-of-contents)
 
 After you have finished the [Installation](#installation), open Google Chrome and open the Extension Management page by navigating to ```chrome://extensions``` or by opening Settings and clicking Extensions from the bottom left.
 
@@ -86,6 +88,7 @@ Click the LOAD UNPACKED button and select the extension directory(```.../dist```
 Voila! The extension is now installed and ready to be used!
 
 # Usage
+[(Back to top)](#table-of-contents)
 
 After adding the extension to Chrome, it will light-up everytime you load a compatable website. 
 
@@ -94,10 +97,12 @@ When a page is loaded, the extension would check for images as you scroll across
 You can toggle(off/on) the extension from the ```chrome://extensions``` page.
 
 # Development 
+[(Back to top)](#table-of-contents)
 
 By default the code runs in production mode. This can be disabled during development by commenting out ```tf.enableProdMode ()``` in the ```/src/background.js``` file. This is enabled by default to improve the performance. 
 
 ### Dependencies
+[(Back to top)](#table-of-contents)
 
 ```
 "@tensorflow/tfjs": "^2.0.1",
@@ -113,6 +118,7 @@ By default the code runs in production mode. This can be disabled during develop
 Run ```npm i``` to install the dependencies.
 
 ### Watch
+[(Back to top)](#table-of-contents)
 
 Watch task makes it easier while you are developing the extension. If it detects changes in your source code, it automatically recompiles and reloads the extension.
 
@@ -123,6 +129,7 @@ npm run-script watch
 ```
 
 ### Project tree
+[(Back to top)](#table-of-contents)
 
 ```
 ├── _config.yml
@@ -155,6 +162,7 @@ npm run-script watch
 ```
 
 ### Guidelines
+[(Back to top)](#table-of-contents)
 
 Edit the ```background.js``` and ```content.js``` files in the ```/src``` folder in the root directory and **NOT** the one in ```/dist/src```.
 
@@ -165,14 +173,17 @@ The model use for this project [nsfwjs](https://github.com/infinitered/nsfwjs) i
 While making changes or adding new files, make sure to add it in the ```/dist``` folder and add it to ```/dist/manifest.json``` file.
 
 # Contribute
+[(Back to top)](#table-of-contents)
 
 ### Sponsor
+[(Back to top)](#table-of-contents)
 
 This is a completely Open Source project and it is free for use. A contribution from you would go a long way to lift my spirits up and push me to build more cool stuff in the future.
 
 You can click this link for sponsoring.
 
 ### Adding new features or fixing bugs
+[(Back to top)](#table-of-contents)
 
 Check out [Development](#development) for setting up your development environment.
 
@@ -181,9 +192,11 @@ Submit a **pull request**, wait for **review**. I will check(usually) every-othe
 If you need any clarifications, mail me at: navendupottekkat@gmail.com or ping me in [LinkedIn](https://www.linkedin.com/in/navendup/). I would be happy to sort things out!
 
 # License
+[(Back to top)](#table-of-contents)
 
 [GNU General Public License version 3](https://opensource.org/licenses/GPL-3.0)
 
 # Privacy
+[(Back to top)](#table-of-contents)
 
 This extension does **NOT** collect and send any user data. All the operations on the images are done locally on the browser.
