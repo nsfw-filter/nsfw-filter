@@ -44,6 +44,8 @@ When the extension is installed, the images in the page is changed to random ima
 
 **You can try loading the same website with and without the extension to see it work. (The page may contain images that are innapropriate for some users)**
 
+Check [**DEMO.md**](./DEMO.md) for more.
+
 ![](demo/images/demo.gif)
 
 # Table of contents
