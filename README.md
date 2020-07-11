@@ -26,17 +26,37 @@
 
 A Google Chrome extension that filters out NSFW images from websites.
 
-It uses TensorFlow JS- a Machine Learning framework- to check NSFW images when they are loaded. If the loaded images contain NSFW content as predicted by the algorithm, it is replaced by a random image from Unsplash.
+It uses TensorFlow JS- a Machine Learning framework- to check NSFW images when they are loaded. 
+
+If the loaded images contain NSFW content as predicted by the algorithm, it is replaced by a random image from Unsplash.
+
+Model used [**nsfwjs**](https://github.com/infinitered/nsfwjs) devoleped by [**Infinite Red, Inc.**](https://github.com/infinitered)
 
 # Demo
 
-The website used in this demo is [scroller/nsfw](https://scrolller.com/nsfw), which randomly loads NSFW images. 
+The website used in this demo is [**scroller/nsfw**](https://scrolller.com/nsfw), which randomly loads NSFW images. 
 
 When the extension is installed, the images in the page is changed to random images from Unsplash.
 
 **You can try loading the same website with and without the extension to see it work. (The page may contain images that are innapropriate for some users)**
 
 ![](demo/images/demo.gif)
+
+# Table of contents
+
+- [Installation](#installation)
+  - [Adding to Chrome](#adding-to-chrome)
+- [Usage](#usage)
+- [Development](#development)
+  - [Dependencies](#dependencies)
+  - [Watch](#watch)
+  - [Project tree](#project-tree)
+  - [Guidelines](#guidelines)
+- [Contribute](#contribute)
+  - [Sponsor](#sponsor)
+  - [Adding new features or fixing bugs](#adding-new-features-or-fixing-bugs)privacy
+- [License](#license)
+- [Privacy](#)
 
 # Installation 
 
@@ -107,11 +127,13 @@ npm run-script watch
 ```
 ├── _config.yml
 ├── demo
-│   ├── images
-│   │   ├── banner.png
-│   │   └── logo.png
-│   └── test
-│       └── test.html
+│   └── images
+│       ├── banner.png
+│       ├── demo.gif
+│       ├── download.png
+│       ├── icon32.png
+│       ├── install_instructions.png
+│       └── logo.png
 ├── dist
 │   ├── images
 │   │   ├── icon128.png
@@ -130,7 +152,6 @@ npm run-script watch
 └── src
     ├── background.js
     └── content.js
-
 ```
 
 ### Guidelines
