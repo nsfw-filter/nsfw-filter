@@ -26,7 +26,7 @@
 <img src="./demo/images/download.png" align="right"
      alt="Download now" width="120" height="178">
 
-A Google Chrome extension that filters out NSFW images from websites.
+A Web extension that filters out NSFW images from websites.
 
 It uses TensorFlow JS- a Machine Learning framework- to check NSFW images when they are loaded. 
 
@@ -35,6 +35,8 @@ If the loaded images contain NSFW content as predicted by the algorithm, it is r
 Model used- [**nsfwjs**](https://github.com/infinitered/nsfwjs) devoleped by [**Infinite Red, Inc.**](https://github.com/infinitered)
 
 [**Download NSFW Filter**](https://github.com/navendu-pottekkat/nsfw-filter/archive/master.zip)
+
+Supported browsers: [**Google Chrome**](#adding-to-chrome), [**Mozilla Firefox**](#adding-to-firefox).
 
 # Demo
 
@@ -55,6 +57,7 @@ Check [**DEMO.md**](./DEMO.md) for more.
 - [Table of contents](#table-of-contents)
 - [Installation](#installation)
     - [Adding to Chrome](#adding-to-chrome)
+    - [Adding to Firefox](#adding-to-firefox)
 - [Usage](#usage)
 - [Development](#development)
     - [Dependencies](#dependencies)
@@ -96,14 +99,25 @@ Click the LOAD UNPACKED button and select the extension directory(```.../dist```
 
 Voila! The extension is now installed and ready to be used!
 
+### Adding to Firefox
+[(Back to top)](#table-of-contents)
+
+After finishing [Installation](#installation), open Firefox and open the Debug Add-ons page by navigating to ```about:debugging#/runtime/this-firefox``` or by selecting it from Settings dropdown in the add-ons page.
+
+Click Load Temporary Add-on and select the ```manifest.json``` file from the ```.../dist``` directory.
+
+<img src="./demo/images/install_instructions_firefox.png" alt="Install Instructions">
+
+That's it! The extension is now ready to be used in Firefox!
+
 # Usage
 [(Back to top)](#table-of-contents)
 
-After adding the extension to Chrome, it will light-up everytime you load a compatable website. 
+After adding the extension to Chrome/Firefox, it will light-up everytime you load a compatable website. 
 
 When a page is loaded, the extension would check for images as you scroll across the page and runs the images through the algorithm and if NSFW images are found, it is replaced automatically by images from Unsplash.
 
-You can toggle(off/on) the extension from the ```chrome://extensions``` page.
+You can toggle(off/on) the extension from the ```chrome://extensions``` page in Chrome and ```about:debugging#/runtime/this-firefox``` in Firefox.
 
 # Development 
 [(Back to top)](#table-of-contents)
