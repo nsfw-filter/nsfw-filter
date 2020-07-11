@@ -1,4 +1,4 @@
-![](../demo/images/banner.png)
+![](https://github.com/navendu-pottekkat/nsfw-filter/blob/master/demo/images/preview.png)
 
 # NSFW Filter
 
@@ -18,7 +18,7 @@ When the extension is installed, the images in the page is changed to random ima
 
 **You can try loading the same website with and without the extension to see it work. (The page may contain images that are innapropriate for some users)**
 
-![](../demo/images/demo.gif)
+![](https://github.com/navendu-pottekkat/nsfw-filter/blob/master/demo/images/demo.gif)
 
 # Table of contents
 
@@ -64,7 +64,7 @@ Enable Developer Mode by clicking the toggle switch next to Developer mode.
 
 Click the LOAD UNPACKED button and select the extension directory(```.../dist```).
 
-<img src="../demo/images/install_instructions.png" alt="Install Instructions">
+<img src="https://github.com/navendu-pottekkat/nsfw-filter/blob/master/demo/images/install_instructions.png" alt="Install Instructions">
 
 Voila! The extension is now installed and ready to be used!
 
