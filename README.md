@@ -1,7 +1,7 @@
 ![](./demo/images/banner.png)
 
 <p align="center">
-  <img alt="GitHub manifest version (path)" src="https://img.shields.io/github/manifest-json/v/navendu-pottekkat/nsfw-filter?filename=dist%2Fmanifest.json&style=flat-square">
+  <img alt="GitHub release (latest by date including pre-releases)" src="https://img.shields.io/github/v/release/navendu-pottekkat/nsfw-filter?include_prereleases&style=flat-square">
   <a href="https://github.com/navendu-pottekkat/nsfw-filter/commits/master">
   <img src="https://img.shields.io/github/last-commit/navendu-pottekkat/nsfw-filter?style=flat-square"
          alt="GitHub last commit">
@@ -46,17 +46,20 @@ When the extension is installed, the images in the page is changed to random ima
 
 # Table of contents
 
+- [NSFW Filter](#nsfw-filter)
+- [Demo](#demo)
+- [Table of contents](#table-of-contents)
 - [Installation](#installation)
-  - [Adding to Chrome](#adding-to-chrome)
+    - [Adding to Chrome](#adding-to-chrome)
 - [Usage](#usage)
 - [Development](#development)
-  - [Dependencies](#dependencies)
-  - [Watch](#watch)
-  - [Project tree](#project-tree)
-  - [Guidelines](#guidelines)
+    - [Dependencies](#dependencies)
+    - [Watch](#watch)
+    - [Project tree](#project-tree)
+    - [Guidelines](#guidelines)
 - [Contribute](#contribute)
-  - [Sponsor](#sponsor)
-  - [Adding new features or fixing bugs](#adding-new-features-or-fixing-bugs)
+    - [Sponsor](#sponsor)
+    - [Adding new features or fixing bugs](#adding-new-features-or-fixing-bugs)
 - [License](#license)
 - [Privacy](#privacy)
 
@@ -190,6 +193,8 @@ You can click this link for sponsoring.
 Check out [Development](#development) for setting up your development environment.
 
 Submit a **pull request**, wait for **review**. I will check(usually) every-other-day.
+
+Please follow the [**Code of Conduct**](./CODE_OF_CONDUCT.md).
 
 If you need any clarifications, mail me at: navendupottekkat@gmail.com or ping me in [LinkedIn](https://www.linkedin.com/in/navendup/). I would be happy to sort things out!
 
