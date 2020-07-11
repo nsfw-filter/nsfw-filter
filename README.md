@@ -32,7 +32,7 @@ It uses TensorFlow JS- a Machine Learning framework- to check NSFW images when t
 
 If the loaded images contain NSFW content as predicted by the algorithm, it is replaced by a random image from Unsplash.
 
-Model used [**nsfwjs**](https://github.com/infinitered/nsfwjs) devoleped by [**Infinite Red, Inc.**](https://github.com/infinitered)
+Model used- [**nsfwjs**](https://github.com/infinitered/nsfwjs) devoleped by [**Infinite Red, Inc.**](https://github.com/infinitered)
 
 [**Download NSFW Filter**](https://github.com/navendu-pottekkat/nsfw-filter/archive/master.zip)
 
