@@ -34,6 +34,8 @@ If the loaded images contain NSFW content as predicted by the algorithm, it is r
 
 Model used [**nsfwjs**](https://github.com/infinitered/nsfwjs) devoleped by [**Infinite Red, Inc.**](https://github.com/infinitered)
 
+[**Download NSFW Filter**](https://github.com/navendu-pottekkat/nsfw-filter/archive/master.zip)
+
 # Demo
 
 The website used in this demo is [**scroller/nsfw**](https://scrolller.com/nsfw), which randomly loads NSFW images. 
