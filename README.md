@@ -54,7 +54,7 @@ When the extension is installed, the images in the page is changed to random ima
   - [Guidelines](#guidelines)
 - [Contribute](#contribute)
   - [Sponsor](#sponsor)
-  - [Adding new features or fixing bugs](#adding-new-features-or-fixing-bugs)privacy
+  - [Adding new features or fixing bugs](#adding-new-features-or-fixing-bugs)
 - [License](#license)
 - [Privacy](#)
 
