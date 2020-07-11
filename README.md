@@ -1,4 +1,4 @@
-![](./demo/images/banner.png)
+![](./demo/images/preview.png)
 
 <p align="center">
   <img alt="GitHub release (latest by date including pre-releases)" src="https://img.shields.io/github/v/release/navendu-pottekkat/nsfw-filter?include_prereleases&style=flat-square">
