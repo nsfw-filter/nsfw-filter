@@ -1,4 +1,4 @@
-![](https://github.com/navendu-pottekkat/nsfw-filter/blob/master/demo/images/banner.png)
+![](./demo/images/banner.png)
 
 <p align="center">
   <img alt="GitHub manifest version (path)" src="https://img.shields.io/github/manifest-json/v/navendu-pottekkat/nsfw-filter?filename=dist%2Fmanifest.json&style=flat-square">
@@ -21,11 +21,22 @@
 
 # NSFW Filter
 
+<img src="./demo/images/download.png" align="right"
+     alt="Download now" width="120" height="178">
+
 A Google Chrome extension that filters out NSFW images from websites.
 
 It uses TensorFlow JS- a Machine Learning framework- to check NSFW images when they are loaded. If the loaded images contain NSFW content as predicted by the algorithm, it is replaced by a random image from Unsplash.
 
 # Demo
+
+The website used in this demo is [scroller/nsfw](https://scrolller.com/nsfw), which randomly loads NSFW images. 
+
+When the extension is installed, the images in the page is changed to random images from Unsplash.
+
+**You can try loading the same website with and without the extension to see it work. (The page may contain images that are innapropriate for some users)**
+
+![](demo/images/demo.gif)
 
 # Installation 
 
@@ -50,7 +61,7 @@ Enable Developer Mode by clicking the toggle switch next to Developer mode.
 
 Click the LOAD UNPACKED button and select the extension directory(```.../dist```).
 
-![]()
+<img src="./demo/images/install_instructions.png" alt="Install Instructions">
 
 Voila! The extension is now installed and ready to be used!
 
@@ -151,3 +162,7 @@ If you need any clarifications, mail me at: navendupottekkat@gmail.com or ping m
 # License
 
 [GNU General Public License version 3](https://opensource.org/licenses/GPL-3.0)
+
+# Privacy
+
+This extension does **NOT** collect and send any user data. All the operations on the images are done locally on the browser.
