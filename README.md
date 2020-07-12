@@ -23,8 +23,8 @@
 
 # NSFW Filter
 
-<img src="./demo/images/download.png" align="right"
-     alt="Download now" width="120" height="178">
+[<img src="https://github.com/navendu-pottekkat/nsfw-filter/blob/master/demo/images/download.png" align="right"
+     alt="Download now" width="120" height="178">](https://github.com/navendu-pottekkat/nsfw-filter.git)
 
 A Web extension that filters out NSFW images from websites.
 
@@ -122,6 +122,8 @@ You can toggle(off/on) the extension from the ```chrome://extensions``` page in 
 # Development 
 [(Back to top)](#table-of-contents)
 
+Check the [**wiki**](https://github.com/navendu-pottekkat/nsfw-filter/wiki) for detailed info.
+
 By default the code runs in production mode. This can be disabled during development by commenting out ```tf.enableProdMode ()``` in the ```/src/background.js``` file. This is enabled by default to improve the performance. 
 
 ### Dependencies
@@ -211,6 +213,8 @@ You can click this link for sponsoring.
 Check out [Development](#development) for setting up your development environment.
 
 Submit a **pull request**, wait for **review**. I will check(usually) every-other-day.
+
+Refer the [**issue template**](./ISSUE_TEMPLATE.md) and [**pull request**](./PULL_REQ_TEMPLATE.md) template before submitting.
 
 Please follow the [**Code of Conduct**](./CODE_OF_CONDUCT.md).
 
