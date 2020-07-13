@@ -26,7 +26,7 @@
 [<img src="https://github.com/navendu-pottekkat/nsfw-filter/blob/master/demo/images/download.png" align="right"
      alt="Download now" width="120" height="178">](https://github.com/navendu-pottekkat/nsfw-filter.git)
 
-<img src="https://github.com/navendu-pottekkat/nsfw-filter/blob/master/demo/images/firefox.png" align="right"
+<img src="https://github.com/navendu-pottekkat/files/blob/master/nsfw-filter/firefox.gif" align="right"
      alt="Download now" width="120">
 
 A Web extension that filters out NSFW images from websites.
