@@ -34,11 +34,11 @@ If the loaded images contain NSFW content as predicted by the algorithm, it is r
 
 Model used- [**nsfwjs**](https://github.com/infinitered/nsfwjs) devoleped by [**Infinite Red, Inc.**](https://github.com/infinitered)
 
-[<img src="https://github.com/navendu-pottekkat/files/blob/master/nsfw-filter/source.gif" align="right"
+[<img src="https://github.com/navendu-pottekkat/files/blob/master/nsfw-filter/source.gif" align="center"
      alt="Download now" width="120">](https://github.com/navendu-pottekkat/nsfw-filter.git)
-<img src="https://github.com/navendu-pottekkat/files/blob/master/nsfw-filter/chrome.gif" align="right"
+<img src="https://github.com/navendu-pottekkat/files/blob/master/nsfw-filter/chrome.gif" align="center"
      alt="Download now" width="120">
-[<img src="https://github.com/navendu-pottekkat/files/blob/master/nsfw-filter/firefox.gif" align="right"
+[<img src="https://github.com/navendu-pottekkat/files/blob/master/nsfw-filter/firefox.gif" align="center"
      alt="Download now" width="120">](https://addons.mozilla.org/en-US/firefox/addon/nsfw-filter/)
 
 [**Download NSFW Filter**](https://github.com/navendu-pottekkat/nsfw-filter/archive/master.zip) | [**Download for Firefox**](https://addons.mozilla.org/en-US/firefox/addon/nsfw-filter/) | **Coming soon on Chrome Web Store!**
