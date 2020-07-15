@@ -66,6 +66,15 @@ function analyzeImage(image) {
   });
 }
 
+window.addEventListener("load", (images) => {
+  /*
+  Call function when page is loaded.
+  */
+  clasifyImages();
+});
+
+// A function to call the function when the user scrolls is also added because most pages lazy load the images
+
 document.addEventListener("scroll", (images) => {
   /*
   Call function when scrolling and timeout after scrolling stops.
@@ -79,12 +88,3 @@ Array.prototype.unique = function () {
     return self.indexOf(value) === index;
   });
 }
-
-chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
-  if (changeInfo.status == 'complete' && tab.active) {
-    /*
-    Run classification on the active tab.
-    */
-    clasifyImages();
-  }
-})
