@@ -24,7 +24,7 @@
 # NSFW Filter
 
 [<img src="https://github.com/navendu-pottekkat/nsfw-filter/blob/master/demo/images/download.png" align="right"
-     alt="Download now" width="120" height="178">](https://github.com/navendu-pottekkat/nsfw-filter.git)
+     alt="Download now" width="120" height="178">](https://github.com/navendu-pottekkat/nsfw-filter/archive/master.zip)
 
 A Web extension that filters out NSFW images from websites.
 
@@ -35,7 +35,7 @@ If the loaded images contain NSFW content as predicted by the algorithm, it is r
 Model used- [**nsfwjs**](https://github.com/infinitered/nsfwjs) devoleped by [**Infinite Red, Inc.**](https://github.com/infinitered)
 
 [<img src="https://github.com/navendu-pottekkat/files/blob/master/nsfw-filter/source.gif" align="center"
-     alt="Download now" width="120">](https://github.com/navendu-pottekkat/nsfw-filter.git)
+     alt="Download now" width="120">](https://github.com/navendu-pottekkat/nsfw-filter/archive/master.zip)
 <img src="https://github.com/navendu-pottekkat/files/blob/master/nsfw-filter/chrome.gif" align="center"
      alt="Download now" width="120">
 [<img src="https://github.com/navendu-pottekkat/files/blob/master/nsfw-filter/firefox.gif" align="center"
