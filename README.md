@@ -13,7 +13,6 @@
          alt="GitHub pull requests">
   </br>
   
-  <img alt="GitHub All Releases" src="https://img.shields.io/github/downloads/navendu-pottekkat/nsfw-filter/total?style=flat-square">
   <img alt="Contributing" src="https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg" href="code_of_conduct.md">
   <img alt="GitHub" src="https://img.shields.io/github/license/navendu-pottekkat/nsfw-filter?style=flat-square&color=yellow">
     <a href="https://twitter.com/intent/tweet?text=Try this Chrome Extension that filters out NSFW images from your browser:&url=https%3A%2F%2Fnavendu.me%2Fnsfw-filter%2Findex.html">
