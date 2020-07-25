@@ -60,9 +60,6 @@ function analyzeImage(image) {
 // Call function when DOM is loaded
 document.addEventListener("DOMContentLoaded", () => { clasifyImages() });
 
-// Call function when DOM is loaded with images, just for sure
-document.addEventListener("load", () => { clasifyImages() });
-
 // The script is executed when a user scrolls through a website on the tab that is active in the browser.
 let isScrolling;
 // Call function when the user scrolls because most pages lazy load the images
