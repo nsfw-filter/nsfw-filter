@@ -6,10 +6,10 @@
 *
 * =======================================================================================
 *
-* Permissions of this strong copyleft license are conditioned on making 
-* available complete source code of licensed works and modifications, 
-* which include larger works using a licensed work, 
-* under the same license. Copyright and license notices must be preserved. 
+* Permissions of this strong copyleft license are conditioned on making
+* available complete source code of licensed works and modifications,
+* which include larger works using a licensed work,
+* under the same license. Copyright and license notices must be preserved.
 * Contributors provide an express grant of patent rights.
 *
 * =======================================================================================
@@ -60,7 +60,7 @@ nsfwjs.load(MODEL_PATH).then(model => {
   chrome.runtime.onMessage.addListener((request, sender, callback) => {
     executeModel(request.url)
       .then(op => {
-        if (FILTER_LIST.includes(op[0].className)) {
+        if (op[0].className && FILTER_LIST.includes(op[0].className)) {
           /*
           If the top predicition is in our filter list, filter the image (return true)
           */
