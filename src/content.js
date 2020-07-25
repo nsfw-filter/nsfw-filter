@@ -24,7 +24,7 @@ if (!DEBUG) console.log = () => {};
 const images = document.getElementsByTagName('img');
 
 function clasifyImages() {
-  // hide every image until figure out its safety
+  // Hide every image until figure out its safety
   for (let i = 0; i < images.length; i++) {
     if (!images[i].__isPreChecked) {
       images[i].__isPreChecked = true
@@ -50,10 +50,8 @@ function clasifyImages() {
 function analyzeImage(image) {
   console.log('analyze image %s', image.src);
   chrome.runtime.sendMessage({ url: image.src }, response => {
-    console.log({response})
     if (response && response.result === false) {
       console.log(`Prediction result is ${response.result} for image ${image.src}`);
-      console.log(image)
       image.style.visibility = 'visible'
     }
   });
@@ -62,7 +60,7 @@ function analyzeImage(image) {
 // Call function when DOM is loaded
 document.addEventListener("DOMContentLoaded", () => { clasifyImages() });
 
-// Call function when DOM is loaded with images
+// Call function when DOM is loaded with images, just for sure
 document.addEventListener("load", () => { clasifyImages() });
 
 // The script is executed when a user scrolls through a website on the tab that is active in the browser.
