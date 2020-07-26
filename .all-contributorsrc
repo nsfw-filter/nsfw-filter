@@ -1,0 +1,26 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "contributors": [
+    {
+      "login": "YegorZaremba",
+      "name": "Yegor <3",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/31797554?v=4",
+      "profile": "https://github.com/YegorZaremba",
+      "contributions": [
+        "code",
+        "design",
+        "ideas"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "projectName": "nsfw-filter",
+  "projectOwner": "navendu-pottekkat",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "skipCi": true
+}
