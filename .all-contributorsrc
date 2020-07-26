@@ -28,6 +28,15 @@
         "design",
         "ideas"
       ]
+    },
+    {
+      "login": "anonacc",
+      "name": "anonacc",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/64102225?v=4",
+      "profile": "https://github.com/anonacc",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7,
