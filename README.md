@@ -13,7 +13,7 @@
          alt="GitHub pull requests">
   </br>
   
-  <img alt="Contributors" src="https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square" href="#contributors-">
+  <img alt="Contributors" src="https://img.shields.io/badge/all_contributors-3-orange.svg?style=flat-square" href="#contributors-">
   <img alt="Contributing" src="https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg" href="code_of_conduct.md">
   <img alt="GitHub" src="https://img.shields.io/github/license/navendu-pottekkat/nsfw-filter?style=flat-square&color=yellow">
     <a href="https://twitter.com/intent/tweet?text=Try this Chrome Extension that filters out NSFW images from your browser:&url=https%3A%2F%2Fnavendu.me%2Fnsfw-filter%2Findex.html">
@@ -219,7 +219,6 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 <table>
   <tr>
     <td align="center"><a href="https://github.com/YegorZaremba"><img src="https://avatars3.githubusercontent.com/u/31797554?v=4" width="100px;" alt=""/><br /><sub><b>Yegor <3</b></sub></a><br /><a href="https://github.com/navendu-pottekkat/nsfw-filter/commits?author=YegorZaremba" title="Code">💻</a> <a href="#design-YegorZaremba" title="Design">🎨</a> <a href="#ideas-YegorZaremba" title="Ideas, Planning, & Feedback">🤔</a></td>
-    <td align="center"><a href="https://github.com/navendu"><img src="https://avatars1.githubusercontent.com/u/435297?v=4" width="100px;" alt=""/><br /><sub><b>navendu</b></sub></a><br /><a href="#design-navendu" title="Design">🎨</a> <a href="#ideas-navendu" title="Ideas, Planning, & Feedback">🤔</a></td>
     <td align="center"><a href="http://navendu.me"><img src="https://avatars1.githubusercontent.com/u/49474499?v=4" width="100px;" alt=""/><br /><sub><b>Navendu Pottekkat</b></sub></a><br /><a href="https://github.com/navendu-pottekkat/nsfw-filter/commits?author=navendu-pottekkat" title="Code">💻</a> <a href="#content-navendu-pottekkat" title="Content">🖋</a> <a href="https://github.com/navendu-pottekkat/nsfw-filter/commits?author=navendu-pottekkat" title="Documentation">📖</a> <a href="#design-navendu-pottekkat" title="Design">🎨</a> <a href="#ideas-navendu-pottekkat" title="Ideas, Planning, & Feedback">🤔</a></td>
   </tr>
 </table>
