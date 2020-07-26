@@ -31,7 +31,8 @@ function clasifyImages() {
         analyzeImage(images[i]);
 
         // lazy load handler
-        const isImageLazyLoad = JSON.stringify([images[i].src, images[i].classList, images[i].className]).includes('lazy')
+        const lazyLoadKeys = ['lazy', 'load']
+        const isImageLazyLoad = lazyLoadKeys.find(key => JSON.stringify([images[i].src, images[i].classList, images[i].className]).includes(key))
         if (!isImageLazyLoad) {
           images[i].__isChecked = true
         }
