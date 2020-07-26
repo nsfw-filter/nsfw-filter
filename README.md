@@ -219,6 +219,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 <table>
   <tr>
     <td align="center"><a href="https://github.com/YegorZaremba"><img src="https://avatars3.githubusercontent.com/u/31797554?v=4" width="100px;" alt=""/><br /><sub><b>Yegor <3</b></sub></a><br /><a href="https://github.com/navendu-pottekkat/nsfw-filter/commits?author=YegorZaremba" title="Code">💻</a> <a href="#design-YegorZaremba" title="Design">🎨</a> <a href="#ideas-YegorZaremba" title="Ideas, Planning, & Feedback">🤔</a></td>
+    <td align="center"><a href="https://github.com/navendu"><img src="https://avatars1.githubusercontent.com/u/435297?v=4" width="100px;" alt=""/><br /><sub><b>navendu</b></sub></a><br /><a href="#design-navendu" title="Design">🎨</a> <a href="#ideas-navendu" title="Ideas, Planning, & Feedback">🤔</a></td>
   </tr>
 </table>
 
