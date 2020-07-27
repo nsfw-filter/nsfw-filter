@@ -55,7 +55,7 @@ When the extension is installed, the images in the page is hidden.
 
 Check [**DEMO.md**](./DEMO.md) for more.
 
-![](demo/images/demo.gif)
+![](demo/images/demo_new.gif)
 
 # Table of contents
 
@@ -72,7 +72,7 @@ Check [**DEMO.md**](./DEMO.md) for more.
     - [Project tree](#project-tree)
     - [Guidelines](#guidelines)
 - [Contribute](#contribute)
-    - [Contributors](#contributors-)
+    - [Contributors ✨](#contributors-)
     - [Sponsor](#sponsor)
     - [Adding new features or fixing bugs](#adding-new-features-or-fixing-bugs)
 - [License](#license)

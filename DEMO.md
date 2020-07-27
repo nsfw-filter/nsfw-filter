@@ -22,4 +22,4 @@ Without the NSFW filter, you can see the websites loading and showing NSFW image
 
 With the extension, you can see that it detects the NSFW images and replaces them with images from Unsplash. i.e the website is made **safe**.
 
-![With NSFW Filter](https://github.com/navendu-pottekkat/files/blob/master/nsfw-filter/with_extension.gif)
+![With NSFW Filter](./demo/images/demo_new.gif)
