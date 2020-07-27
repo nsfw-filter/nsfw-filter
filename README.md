@@ -28,9 +28,11 @@
 
 A Web extension that filters out NSFW images from websites.
 
-It uses TensorFlow JS- a Machine Learning framework- to check NSFW images when they are loaded. 
+It uses TensorFlow JS- a Machine Learning framework- to check for NSFW images when a web page is loaded. 
 
 When a web page is loaded, all the images remain hidden until they are found to be NSFW or not. If they are found to be NSFW, they remain hidden. Otherwise, they become visible.
+
+***The extension runs completely on your browser. i.e No user data is being sent to a server for processing.***
 
 Model used- [**nsfwjs**](https://github.com/infinitered/nsfwjs) devoleped by [**Infinite Red, Inc.**](https://github.com/infinitered)
 
@@ -169,15 +171,20 @@ npm run-script watch
 [(Back to top)](#table-of-contents)
 
 ```
-├── _config.yml
+├── CODE_OF_CONDUCT.md
+├── CONTRIBUTING.md
 ├── demo
 │   └── images
 │       ├── banner.png
 │       ├── demo.gif
+│       ├── demo_new.gif
 │       ├── download.png
 │       ├── icon32.png
+│       ├── install_instructions_firefox.png
 │       ├── install_instructions.png
-│       └── logo.png
+│       ├── logo.png
+│       └── preview.png
+├── DEMO.md
 ├── dist
 │   ├── images
 │   │   ├── icon128.png
@@ -189,9 +196,13 @@ npm run-script watch
 │   └── models
 │       ├── group1-shard1of1
 │       └── model.json
+├── docs
+│   └── README.md
+├── ISSUE_TEMPLATE.md
 ├── LICENSE
 ├── package.json
 ├── package-lock.json
+├── PULL_REQ_TEMPLATE.md
 ├── README.md
 └── src
     ├── background.js
