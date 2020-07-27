@@ -45,6 +45,10 @@ Model used- [**nsfwjs**](https://github.com/infinitered/nsfwjs) devoleped by [**
 
 Supported browsers: [**Google Chrome**](#adding-to-chrome), [**Mozilla Firefox**](#adding-to-firefox).
 
+**What's new?**
+
+The images are now hidden when a page loads and become visible only when they are found to be not NSFW. The NSFW images remain hidden.
+
 # Demo
 
 The website used in this demo is [**scroller/nsfw**](https://scrolller.com/nsfw), which randomly loads NSFW images. 
