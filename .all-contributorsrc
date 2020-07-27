@@ -37,6 +37,17 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "abhirammltr",
+      "name": "Abhiram V V",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/32649851?v=4",
+      "profile": "https://github.com/abhirammltr",
+      "contributions": [
+        "code",
+        "bug",
+        "ideas"
+      ]
     }
   ],
   "contributorsPerLine": 7,
