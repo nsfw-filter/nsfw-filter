@@ -30,7 +30,7 @@ A Web extension that filters out NSFW images from websites.
 
 It uses TensorFlow JS- a Machine Learning framework- to check NSFW images when they are loaded. 
 
-If the loaded images contain NSFW content as predicted by the algorithm, it is replaced by a random image from Unsplash.
+When a web page is loaded, all the images remain hidden until they are found to be NSFW or not. If they are found to be NSFW, they remain hidden. Otherwise, they become visible.
 
 Model used- [**nsfwjs**](https://github.com/infinitered/nsfwjs) devoleped by [**Infinite Red, Inc.**](https://github.com/infinitered)
 
@@ -49,7 +49,7 @@ Supported browsers: [**Google Chrome**](#adding-to-chrome), [**Mozilla Firefox**
 
 The website used in this demo is [**scroller/nsfw**](https://scrolller.com/nsfw), which randomly loads NSFW images. 
 
-When the extension is installed, the images in the page is changed to random images from Unsplash.
+When the extension is installed, the images in the page is hidden.
 
 **You can try loading the same website with and without the extension to see it work. (The page may contain images that are innapropriate for some users)**
 
@@ -123,7 +123,7 @@ That's it! The extension is now ready to be used in Firefox!
 
 After adding the extension to Chrome/Firefox, it will light-up everytime you load a compatable website. 
 
-When a page is loaded, the extension would check for images as you scroll across the page and runs the images through the algorithm and if NSFW images are found, it is replaced automatically by images from Unsplash.
+When a page is loaded, the extension would check for images as you scroll across the page and runs the images through the algorithm and if NSFW images are found, it is hidden automatically.
 
 You can toggle(off/on) the extension from the ```chrome://extensions``` page in Chrome and ```about:debugging#/runtime/this-firefox``` in Firefox.
 
