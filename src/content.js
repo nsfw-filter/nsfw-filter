@@ -26,8 +26,8 @@ function clasifyImages() {
   for (let i = 0; i < images.length; i++) {
     if (!(images[i].__isNSFW || images[i].__isChecked)) {
       if (images[i].src && images[i].width > 64 && images[i].height > 64) {
-        images[i].style.visibility = 'hidden'
-
+        images[i].style.visibility = 'hidden';
+        
         analyzeImage(images[i]);
 
         // lazy load handler
@@ -49,23 +49,18 @@ function analyzeImage(image) {
   chrome.runtime.sendMessage({ url: image.src, url2: image.src }, response => {
     console.log(`Prediction result is ${response ? response.result : 'undefined'} for image ${image.src}`);
     if (response && response.result === false) {
-      image.style.visibility = 'visible'
+      image.style.visibility = 'visible';
     } else {
       image.__isNSFW = true
     }
   });
 }
 
-// Call function when DOM is loaded
-window.addEventListener("load", () => {
-  clasifyImages()
-
-  // @todo hanlde with javascript render delay
-  const timesToJSrun = [500, 1000, 2000, 3000]
-  for (let i = 0; i < timesToJSrun.length; i++) {
-    setTimeout(() => { clasifyImages() }, timesToJSrun[i]);
-  }
+//Call function when changes made in DOM tree
+var observer = new MutationObserver(function(mutations) {
+  clasifyImages();
 });
+observer.observe(document,{attributes: false, childList: true, characterData: false, subtree:true});
 
 // The script is executed when a user scrolls through a website on the tab that is active in the browser.
 // Call function when the user scrolls because most pages lazy load the images
