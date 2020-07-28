@@ -17,11 +17,7 @@
 
 "use strict";
 
-// Set DEBUG to true to start logging in the console
-const DEBUG = false;
-if (!DEBUG) console.log = () => {};
-
-import { getMemory, isValidHttpUrl } from './utils'
+import { isValidHttpUrl } from './utils'
 
 function clasifyImage(image) {
   if (!(image.__isNSFW || image.__isChecked)) {
@@ -39,13 +35,13 @@ function clasifyImage(image) {
 function analyzeImage(image) {
   console.log('analyze image %s', image.src);
 
-  const message = { url: image.src }
-  if (image.dataset && image.dataset.original) {
-    message.lazyLoadUrl = isValidHttpUrl(image.dataset.original) ? image.dataset.original : `${window.location.origin}${image.dataset.original}`
+  const message = { srcUrl: image.src }
+  if (Object.values(image.dataset).length) {
+    message.lazyUrls = Object.values(image.dataset).map(url => isValidHttpUrl(url) ? url : `${window.location.origin}${url}`)
   }
 
   chrome.runtime.sendMessage(message, response => {
-    console.log(`Prediction result is ${response ? response.result : 'undefined'} for image ${response.url}`);
+    console.log(`Prediction result is ${response ? response.result : 'undefined'} for image ${response.url ? response.url : 'undefined'}, error: ${response.err ? response.err : 'none'}`);
     if (response && response.result === false) {
       image.style.visibility = 'visible'
     } else {
@@ -63,8 +59,8 @@ const filterOnLoading = () => {
 
 // Call function when DOM is loaded
 document.addEventListener("DOMContentLoaded", () => {
+  // @docs some websites only works with manual recheck
   filterOnLoading()
-
   // @refactor https://github.com/navendu-pottekkat/nsfw-filter/issues/19
   const timeArray = [0, 15, 50, 100]
   for (let i = 0; i < timeArray.length; i++) {
@@ -97,8 +93,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  const observer = new MutationObserver(callback);
-  observer.observe(document, { subtree: true, attributes: true, childList: true });
+  setTimeout(() => {
+    const observer = new MutationObserver(callback);
+    observer.observe(document, { subtree: true, attributes: true, childList: true });
+  }, 0)
 });
 
 // @refactor not sure is it necessary or not, cause we have MutationObserver, needs figure out
@@ -107,7 +105,3 @@ document.addEventListener("DOMContentLoaded", () => {
 //   clearTimeout(isScrolling);
 //   isScrolling = setTimeout(() => { clasifyImages() }, 100);
 // });
-
-if (DEBUG) {
-  getMemory()
-}
