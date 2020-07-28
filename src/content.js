@@ -17,31 +17,17 @@
 
 "use strict";
 
-// Set DEBUG to true to start logging in the console
-const DEBUG = false;
-if (!DEBUG) console.log = () => {};
+import { isValidHttpUrl } from './utils'
 
-function clasifyImages() {
-  const images = document.getElementsByTagName('img')
-  for (let i = 0; i < images.length; i++) {
-    if (!(images[i].__isNSFW || images[i].__isChecked)) {
-      if (images[i].src && images[i].width > 64 && images[i].height > 64) {
-        images[i].style.visibility = 'hidden'
-        analyzeImage(images[i]);
-        images[i].__isChecked = true
-      }
-
-      // @todo handle unsafe images smaller than 64px
+function clasifyImage(image) {
+  if (!(image.__isNSFW || image.__isChecked)) {
+    if (image.src && image.width > 64 && image.height > 64) {
+      image.style.visibility = 'hidden'
+      analyzeImage(image);
+      image.__isChecked = true
     }
-  }
-}
 
-function isValidUrl(string) {
-  try {
-    const url = new URL(string);
-    return url.protocol === "http:" || url.protocol === "https:";
-  } catch (_err) {
-    return false;
+    // @todo handle unsafe images smaller than 64px
   }
 }
 
@@ -49,13 +35,13 @@ function isValidUrl(string) {
 function analyzeImage(image) {
   console.log('analyze image %s', image.src);
 
-  const message = { url: image.src }
-  if (image.dataset && image.dataset.original) {
-    message.lazyLoadUrl = isValidUrl(image.dataset.original) ? image.dataset.original : `${window.location.origin}${image.dataset.original}`
+  const message = { srcUrl: image.src }
+  if (Object.values(image.dataset).length) {
+    message.lazyUrls = Object.values(image.dataset).map(url => isValidHttpUrl(url) ? url : `${window.location.origin}${url}`)
   }
 
   chrome.runtime.sendMessage(message, response => {
-    console.log(`Prediction result is ${response ? response.result : 'undefined'} for image ${response.url}`);
+    console.log(`Prediction result is ${response ? response.result : 'undefined'} for image ${response.url ? response.url : 'undefined'}, error: ${response.err ? response.err : 'none'}`);
     if (response && response.result === false) {
       image.style.visibility = 'visible'
     } else {
@@ -64,21 +50,58 @@ function analyzeImage(image) {
   });
 }
 
+const filterOnLoading = () => {
+  const images = document.getElementsByTagName('img')
+  for (let i = 0; i < images.length; i++) {
+    clasifyImage(images[i])
+  }
+}
+
 // Call function when DOM is loaded
 document.addEventListener("DOMContentLoaded", () => {
-  clasifyImages()
-
-  // @refactor hanlde with javascript render delay
-  const timesToJSrun = [500, 1000, 2000, 3000, 4000, 5000]
-  for (let i = 0; i < timesToJSrun.length; i++) {
-    setTimeout(() => { clasifyImages() }, timesToJSrun[i]);
+  // @docs some websites only works with manual recheck
+  filterOnLoading()
+  // @refactor https://github.com/navendu-pottekkat/nsfw-filter/issues/19
+  const timeArray = [0, 15, 50, 100]
+  for (let i = 0; i < timeArray.length; i++) {
+    setTimeout(filterOnLoading, timeArray[i])
   }
+
+  function callback(mutationsList, __observer) {
+    for (let mutation of mutationsList) {
+      for (let i = 0; i < mutation.addedNodes.length; i++) {
+        try {
+          const images = mutation.addedNodes[i].getElementsByTagName('img')
+          if (images.length) {
+            for (let i = 0; i < images.length; i++) {
+              clasifyImage(images[i])
+            }
+          }
+        } catch (__err) {}
+      }
+
+      if (mutation.target.tagName === 'IMG') {
+        clasifyImage(mutation.target)
+      }
+
+      const images = mutation.target.getElementsByTagName('img')
+      if (images.length) {
+        for (let i = 0; i < images.length; i++) {
+          clasifyImage(images[i])
+        }
+      }
+    }
+  }
+
+  setTimeout(() => {
+    const observer = new MutationObserver(callback);
+    observer.observe(document, { subtree: true, attributes: true, childList: true });
+  }, 0)
 });
 
-// The script is executed when a user scrolls through a website on the tab that is active in the browser.
-// Call function when the user scrolls because most pages lazy load the images
-let isScrolling;
-document.addEventListener("scroll", () => {
-  clearTimeout(isScrolling);
-  isScrolling = setTimeout(() => { clasifyImages() }, 100);
-});
+// @refactor not sure is it necessary or not, cause we have MutationObserver, needs figure out
+// let isScrolling;
+// document.addEventListener("scroll", () => {
+//   clearTimeout(isScrolling);
+//   isScrolling = setTimeout(() => { clasifyImages() }, 100);
+// });
