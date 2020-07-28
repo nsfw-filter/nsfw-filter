@@ -26,7 +26,8 @@
         "https://*/*"
       ],
       "js": [
-        "src/content.js"
+        "src/content.js",
+        "src/utils.js"
       ],
       "all_frames": true,
       "run_at": "document_start"
