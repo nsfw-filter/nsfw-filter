@@ -57,22 +57,21 @@ nsfwjs.load(MODEL_PATH).then(model => {
     return output;
   }
 
-  chrome.runtime.onMessage.addListener((request, sender, callback) => {
+  chrome.runtime.onMessage.addListener((request, __sender, callback) => {
     executeModel(request.url)
       .then(op => {
-        if (op[0].className && FILTER_LIST.includes(op[0].className)) {
-          /*
-          If the top predicition is in our filter list, filter the image (return true)
-          */
-          console.log(op[0].className, op[0].probability)
-          return true;
-        }
-        else {
-          return false;
+        const result = op[0] && op[0].className && FILTER_LIST.includes(op[0].className);
+        if (!result && request.lazyLoadUrl) {
+          return executeModel(request.lazyLoadUrl);
+        } else {
+         callback({ result, url: request.url });
         }
       })
-      .then(result => callback({ result: result }))
-      .catch(err => callback({ result: false, err: err.message }));
-    return true; // needed to make the content script wait for the async processing to complete
+      .catch(err => callback({ result: false, url: request.url, err: err.message }))
+      .then(op => op && op[0] && callback({ result: op[0].className && FILTER_LIST.includes(op[0].className), url: request.lazyLoadUrl }))
+      .catch(err => callback({ result: false, url: request.lazyLoadUrl, err: err.message }));
+
+
+    return true; // @docs https://stackoverflow.com/a/56483156
   });
 });

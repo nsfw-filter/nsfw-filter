@@ -17,8 +17,8 @@
 
 "use strict";
 
-// Set DEBUG to false to prevent logging in the console.
-const DEBUG = true;
+// Set DEBUG to true to start logging in the console
+const DEBUG = false;
 if (!DEBUG) console.log = () => {};
 
 function clasifyImages() {
@@ -27,15 +27,8 @@ function clasifyImages() {
     if (!(images[i].__isNSFW || images[i].__isChecked)) {
       if (images[i].src && images[i].width > 64 && images[i].height > 64) {
         images[i].style.visibility = 'hidden'
-
         analyzeImage(images[i]);
-
-        // lazy load handler
-        const lazyLoadKeys = ['lazy', 'load']
-        const isImageLazyLoad = lazyLoadKeys.find(key => JSON.stringify([images[i].src, images[i].classList, images[i].className]).includes(key))
-        if (!isImageLazyLoad) {
-          images[i].__isChecked = true
-        }
+        images[i].__isChecked = true
       }
 
       // @todo handle unsafe images smaller than 64px
@@ -43,11 +36,26 @@ function clasifyImages() {
   }
 }
 
+function isValidUrl(string) {
+  try {
+    const url = new URL(string);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch (_err) {
+    return false;
+  }
+}
+
 // Calls the background script passing it the image URL
 function analyzeImage(image) {
   console.log('analyze image %s', image.src);
-  chrome.runtime.sendMessage({ url: image.src, url2: image.src }, response => {
-    console.log(`Prediction result is ${response ? response.result : 'undefined'} for image ${image.src}`);
+
+  const message = { url: image.src }
+  if (image.dataset && image.dataset.original) {
+    message.lazyLoadUrl = isValidUrl(image.dataset.original) ? image.dataset.original : `${window.location.origin}${image.dataset.original}`
+  }
+
+  chrome.runtime.sendMessage(message, response => {
+    console.log(`Prediction result is ${response ? response.result : 'undefined'} for image ${response.url}`);
     if (response && response.result === false) {
       image.style.visibility = 'visible'
     } else {
@@ -57,11 +65,11 @@ function analyzeImage(image) {
 }
 
 // Call function when DOM is loaded
-window.addEventListener("load", () => {
+document.addEventListener("DOMContentLoaded", () => {
   clasifyImages()
 
-  // @todo hanlde with javascript render delay
-  const timesToJSrun = [500, 1000, 2000, 3000]
+  // @refactor hanlde with javascript render delay
+  const timesToJSrun = [500, 1000, 2000, 3000, 4000, 5000]
   for (let i = 0; i < timesToJSrun.length; i++) {
     setTimeout(() => { clasifyImages() }, timesToJSrun[i]);
   }
