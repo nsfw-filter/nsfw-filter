@@ -66,17 +66,13 @@ document.addEventListener("DOMContentLoaded", () => {
   filterOnLoading()
 
   // @refactor https://github.com/navendu-pottekkat/nsfw-filter/issues/19
-  const timeArray = [0, 15, 50, 250, 500]
+  const timeArray = [0, 15, 50, 100]
   for (let i = 0; i < timeArray.length; i++) {
     setTimeout(filterOnLoading, timeArray[i])
   }
 
   function callback(mutationsList, __observer) {
     for (let mutation of mutationsList) {
-      if (mutation.target.tagName === 'IMG') {
-        clasifyImage(mutation.target)
-      }
-
       for (let i = 0; i < mutation.addedNodes.length; i++) {
         try {
           const images = mutation.addedNodes[i].getElementsByTagName('img')
@@ -87,6 +83,17 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         } catch (__err) {}
       }
+
+      if (mutation.target.tagName === 'IMG') {
+        clasifyImage(mutation.target)
+      }
+
+      const images = mutation.target.getElementsByTagName('img')
+      if (images.length) {
+        for (let i = 0; i < images.length; i++) {
+          clasifyImage(images[i])
+        }
+      }
     }
   }
 
@@ -94,8 +101,7 @@ document.addEventListener("DOMContentLoaded", () => {
   observer.observe(document, { subtree: true, attributes: true, childList: true });
 });
 
-// // The script is executed when a user scrolls through a website on the tab that is active in the browser.
-// // Call function when the user scrolls because most pages lazy load the images
+// @refactor not sure is it necessary or not, cause we have MutationObserver, needs figure out
 // let isScrolling;
 // document.addEventListener("scroll", () => {
 //   clearTimeout(isScrolling);
