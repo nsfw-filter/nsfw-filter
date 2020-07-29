@@ -4,15 +4,19 @@
   "description": "Hide NSFW content from websites using this extension powered by AI! This extension replaces images that are NSFW with random images from Unsplash.",
   "scripts": {
     "lint": "eslint .",
-    "copy": "cp src/content.js dist/src/",
-    "build": "parcel build src/* -d dist/src/",
-    "watch": "npm run copy && parcel watch src/background.js --hmr-hostname localhost -d dist/src/ -o background"
+    "build": "parcel build src/* -d dist/src/"
   },
   "author": {
     "name": "Navendu Pottekkat",
     "email": "navendupottekkat@gmail.com",
     "url": "http://navendu.me"
   },
+  "contributors": [
+    {
+      "name": "Yegor Zaremba",
+      "url": "https://github.com/yegorzaremba"
+    }
+  ],
   "homepage": "https://github.com/navendu-pottekkat/nsfw-filter",
   "license": "GNU General Public License v3.0",
   "dependencies": {
