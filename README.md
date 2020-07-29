@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/github/issues-pr/navendu-pottekkat/nsfw-filter?style=flat-square&color=blue"
          alt="GitHub pull requests">
   </br>
-  
+
   <img alt="Contributors" src="https://img.shields.io/badge/all_contributors-5-orange.svg?style=flat-square" href="#contributors-">
   <img alt="Contributing" src="https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg" href="code_of_conduct.md">
   <img alt="GitHub" src="https://img.shields.io/github/license/navendu-pottekkat/nsfw-filter?style=flat-square&color=yellow">
@@ -28,7 +28,7 @@
 
 A Web extension that filters out NSFW images from websites.
 
-It uses TensorFlow JS- a Machine Learning framework- to check for NSFW images when a web page is loaded. 
+It uses TensorFlow JS- a Machine Learning framework- to check for NSFW images when a web page is loaded.
 
 When a web page is loaded, all the images remain hidden until they are found to be NSFW or not. If they are found to be NSFW, they remain hidden. Otherwise, they become visible.
 
@@ -53,7 +53,7 @@ The images are now hidden when a page loads and become visible only when they ar
 
 # Demo
 
-The website used in this demo is [**scroller/nsfw**](https://scrolller.com/nsfw), which randomly loads NSFW images. 
+The website used in this demo is [**scroller/nsfw**](https://scrolller.com/nsfw), which randomly loads NSFW images.
 
 When the extension is installed, the images in the page is hidden.
 
@@ -84,20 +84,19 @@ Check [**DEMO.md**](./DEMO.md) for more.
 - [License](#license)
 - [Privacy](#privacy)
 
-# Installation 
+# Installation
 [(Back to top)](#table-of-contents)
 
 Clone this repository and navigate inside the project folder and install the dependencies by running:
 
 ```
-npm i
-
+npm ci
 ```
 
 After installing the dependencies, build the project by executing:
 
 ```
-npm run-script build
+npm run build
 ```
 
 ### Adding to Chrome
@@ -127,18 +126,18 @@ That's it! The extension is now ready to be used in Firefox!
 # Usage
 [(Back to top)](#table-of-contents)
 
-After adding the extension to Chrome/Firefox, it will light-up everytime you load a compatable website. 
+After adding the extension to Chrome/Firefox, it will light-up everytime you load a compatable website.
 
 When a page is loaded, the extension would check for images as you scroll across the page and runs the images through the algorithm and if NSFW images are found, it is hidden automatically.
 
 You can toggle(off/on) the extension from the ```chrome://extensions``` page in Chrome and ```about:debugging#/runtime/this-firefox``` in Firefox.
 
-# Development 
+# Development
 [(Back to top)](#table-of-contents)
 
 Check the [**wiki**](https://github.com/navendu-pottekkat/nsfw-filter/wiki) for detailed info.
 
-By default the code runs in production mode. This can be disabled during development by commenting out ```tf.enableProdMode ()``` in the ```/src/background.js``` file. This is enabled by default to improve the performance. 
+By default the code runs in production mode. This can be disabled during development by commenting out ```tf.enableProdMode ()``` in the ```/src/background.js``` file. This is enabled by default to improve the performance.
 
 ### Dependencies
 [(Back to top)](#table-of-contents)
