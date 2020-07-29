@@ -74,7 +74,6 @@ Check [**DEMO.md**](./DEMO.md) for more.
 - [Usage](#usage)
 - [Development](#development)
     - [Dependencies](#dependencies)
-    - [Watch](#watch)
     - [Project tree](#project-tree)
     - [Guidelines](#guidelines)
 - [Contribute](#contribute)
@@ -154,17 +153,6 @@ By default the code runs in production mode. This can be disabled during develop
 ```
 
 Run ```npm i``` to install the dependencies.
-
-### Watch
-[(Back to top)](#table-of-contents)
-
-Watch task makes it easier while you are developing the extension. If it detects changes in your source code, it automatically recompiles and reloads the extension.
-
-Run this command after [Installation](#installation):
-
-```
-npm run-script watch
-```
 
 ### Project tree
 [(Back to top)](#table-of-contents)
