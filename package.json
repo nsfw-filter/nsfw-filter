@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Hide NSFW content from websites using this extension powered by AI! This extension replaces images that are NSFW with random images from Unsplash.",
   "scripts": {
+    "lint": "eslint .",
     "copy": "cp src/content.js dist/src/",
     "build": "parcel build src/* -d dist/src/",
     "watch": "npm run copy && parcel watch src/background.js --hmr-hostname localhost -d dist/src/ -o background"
@@ -19,6 +20,12 @@
     "nsfwjs": "^2.2.0"
   },
   "devDependencies": {
+    "eslint": "^7.5.0",
+    "eslint-config-standard": "^14.1.1",
+    "eslint-plugin-import": "^2.22.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.1",
     "parcel-bundler": "^1.12.4"
   }
 }

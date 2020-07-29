@@ -15,15 +15,15 @@
 * =======================================================================================
 */
 
-"use strict";
+'use strict'
 
 import { isValidHttpUrl } from './utils'
 
-function clasifyImage(image) {
+function clasifyImage (image) {
   if (!(image.__isNSFW || image.__isChecked)) {
     if (image.src && image.width > 64 && image.height > 64) {
       image.style.visibility = 'hidden'
-      analyzeImage(image);
+      analyzeImage(image)
       image.__isChecked = true
     }
 
@@ -32,8 +32,8 @@ function clasifyImage(image) {
 }
 
 // Calls the background script passing it the image URL
-function analyzeImage(image) {
-  console.log('analyze image %s', image.src);
+function analyzeImage (image) {
+  console.log('analyze image %s', image.src)
 
   const message = { srcUrl: image.src }
   if (Object.values(image.dataset).length) {
@@ -41,13 +41,13 @@ function analyzeImage(image) {
   }
 
   chrome.runtime.sendMessage(message, response => {
-    console.log(`Prediction result is ${response ? response.result : 'undefined'} for image ${response.url ? response.url : 'undefined'}, error: ${response.err ? response.err : 'none'}`);
+    console.log(`Prediction result is ${response ? response.result : 'undefined'} for image ${response.url ? response.url : 'undefined'}, error: ${response.err ? response.err : 'none'}`)
     if (response && response.result === false) {
       image.style.visibility = 'visible'
     } else {
       image.__isNSFW = true
     }
-  });
+  })
 }
 
 const filterOnLoading = () => {
@@ -58,7 +58,7 @@ const filterOnLoading = () => {
 }
 
 // Call function when DOM is loaded
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener('DOMContentLoaded', () => {
   // @docs some websites only works with manual recheck
   filterOnLoading()
   // @refactor https://github.com/navendu-pottekkat/nsfw-filter/issues/19
@@ -67,19 +67,8 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(filterOnLoading, timeArray[i])
   }
 
-  function callback(mutationsList, __observer) {
-    for (let mutation of mutationsList) {
-      for (let i = 0; i < mutation.addedNodes.length; i++) {
-        try {
-          const images = mutation.addedNodes[i].getElementsByTagName('img')
-          if (images.length) {
-            for (let i = 0; i < images.length; i++) {
-              clasifyImage(images[i])
-            }
-          }
-        } catch (__err) {}
-      }
-
+  function callback (mutationsList, __observer) {
+    for (const mutation of mutationsList) {
       if (mutation.target.tagName === 'IMG') {
         clasifyImage(mutation.target)
       }
@@ -94,14 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   setTimeout(() => {
-    const observer = new MutationObserver(callback);
-    observer.observe(document, { subtree: true, attributes: true, childList: true });
+    const observer = new MutationObserver(callback)
+    observer.observe(document, { subtree: true, attributes: true, childList: true })
   }, 0)
-});
-
-// @refactor not sure is it necessary or not, cause we have MutationObserver, needs figure out
-// let isScrolling;
-// document.addEventListener("scroll", () => {
-//   clearTimeout(isScrolling);
-//   isScrolling = setTimeout(() => { clasifyImages() }, 100);
-// });
+})
