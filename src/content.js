@@ -41,11 +41,28 @@ function analyzeImage (image) {
   }
 
   chrome.runtime.sendMessage(message, response => {
-    console.log(`Prediction result is ${response ? response.result : 'undefined'} for image ${response.url ? response.url : 'undefined'}, error: ${response.err ? response.err : 'none'}`)
-    if (response && response.result === false) {
-      image.style.visibility = 'visible'
+    // In case of background worker not alive yet
+    if (chrome.runtime.lastError) {
+      if (!image.__reconectCount) {
+        image.__reconectCount = 0
+      }
+
+      if (image.__reconectCount > 4) {
+        image.style.visibility = 'visible'
+        image.__isChecked = true
+        console.log(`Cannot connect to background worker for ${image.src} image, mark image as checked`)
+      } else {
+        image.__reconectCount++
+        console.log(`Cannot connect to background worker for ${image.src} image, attempt ${image.__reconectCount}`)
+        setTimeout(() => analyzeImage(image), 142)
+      }
     } else {
-      image.__isNSFW = true
+      console.log(`Prediction result is ${response ? response.result : 'undefined'} for image ${response.url ? response.url : 'undefined'}, error: ${response.err ? response.err : 'none'}`)
+      if (response && response.result === false) {
+        image.style.visibility = 'visible'
+      } else {
+        image.__isNSFW = true
+      }
     }
   })
 }
@@ -59,8 +76,9 @@ const filterOnLoading = () => {
 
 // Call function when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-  // @docs some websites only works with manual recheck
+  // In some cases MutationObserver cannot immediately catch DOM mutations after DOM loaded
   filterOnLoading()
+
   // @refactor https://github.com/navendu-pottekkat/nsfw-filter/issues/19
   const timeArray = [0, 15, 50, 100]
   for (let i = 0; i < timeArray.length; i++) {

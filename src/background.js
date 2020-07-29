@@ -53,8 +53,7 @@ nsfwjs.load(MODEL_PATH).then(model => {
     */
     const image = await loadImage(url)
     const prediction = model.classify(image, 1) // Change the second parameter to change the number of top predicitions returned
-    const output = prediction
-    return output
+    return prediction
   }
 
   chrome.runtime.onMessage.addListener((request, __sender, callback) => {
@@ -62,7 +61,7 @@ nsfwjs.load(MODEL_PATH).then(model => {
       .then(op => {
         const result = op[0] && op[0].className && FILTER_LIST.includes(op[0].className)
 
-        // lazy loading handler, if falase main src url, do race for first nsfw true result
+        // lazy loading handler, if srcUrl (main url) isn't a NSFW, we wait first NSFW prediction result for all lazy load urls
         if (!result && request.lazyUrls && request.lazyUrls.length) {
           return promiseSome(request.lazyUrls.map(url => executeModel(url)))
         } else {
@@ -73,6 +72,6 @@ nsfwjs.load(MODEL_PATH).then(model => {
       .then(result => callback({ result, url: `lazy urls ${request.lazyUrls ? request.lazyUrls.join() : 'none'}` }))
       .catch(err => callback({ result: false, url: `lazy urls ${request.lazyUrls ? request.lazyUrls.join() : 'none'}`, err: err.message }))
 
-    return true // @docs https://stackoverflow.com/a/56483156
+    return true // https://stackoverflow.com/a/56483156
   })
 })
