@@ -47,9 +47,17 @@ Model used- [**nsfwjs**](https://github.com/infinitered/nsfwjs) devoleped by [**
 
 Supported browsers: [**Google Chrome**](#adding-to-chrome), [**Mozilla Firefox**](#adding-to-firefox).
 
-**What's new?**
+Reach out to us! Join the [**Slack channel**](https://join.slack.com/t/nsfwfilter/shared_invite/zt-gfx0dewg-Hc0~3gu4jXcCDYWQxu3lZA).
+
+# What's new?
+
+**v1.0.0** released!
 
 The images are now hidden when a page loads and become visible only when they are found to be not NSFW. The NSFW images remain hidden.
+
+Performance improvements.
+
+Bug fixes.
 
 # Demo
 
@@ -66,6 +74,7 @@ Check [**DEMO.md**](./DEMO.md) for more.
 # Table of contents
 
 - [NSFW Filter](#nsfw-filter)
+- [What's new?](#what-)
 - [Demo](#demo)
 - [Table of contents](#table-of-contents)
 - [Installation](#installation)
@@ -85,6 +94,10 @@ Check [**DEMO.md**](./DEMO.md) for more.
 
 # Installation
 [(Back to top)](#table-of-contents)
+
+These instructions are for **developers(and Chrome users**- since NSFW Filter is not available in the Chrome Webstore yet!).
+
+You can download for use directly from [**addons.mozilla/nsfw-filter**](https://addons.mozilla.org/en-US/firefox/addon/nsfw-filter/).
 
 Clone this repository and navigate inside the project folder and install the dependencies by running:
 
@@ -113,6 +126,8 @@ Voila! The extension is now installed and ready to be used!
 
 ### Adding to Firefox
 [(Back to top)](#table-of-contents)
+
+To install the developer version follow the steps below. To just use the extension download from [**addons.mozilla/nsfw-filter**](https://addons.mozilla.org/en-US/firefox/addon/nsfw-filter/)
 
 After finishing [Installation](#installation), open Firefox and open the Debug Add-ons page by navigating to ```about:debugging#/runtime/this-firefox``` or by selecting it from Settings dropdown in the add-ons page.
 
@@ -252,7 +267,7 @@ Refer the [**issue template**](./ISSUE_TEMPLATE.md) and [**pull request**](./PUL
 
 Please follow the [**Code of Conduct**](./CODE_OF_CONDUCT.md).
 
-If you need any clarifications, mail me at: navendupottekkat@gmail.com or ping me in [LinkedIn](https://www.linkedin.com/in/navendup/). I would be happy to sort things out!
+Contributions of any kind are welcome! Reach out to us through this [**Slack channel**](https://join.slack.com/t/nsfwfilter/shared_invite/zt-gfx0dewg-Hc0~3gu4jXcCDYWQxu3lZA).
 
 # License
 [(Back to top)](#table-of-contents)
