@@ -3,12 +3,6 @@
   "version": "1.0.0",
   "description": "Hide NSFW content from websites using this extension powered by AI! PS: We don't access your data, it runs locally in your browser!",
   "author": "Navendu Pottekkat",
-  "contributors": [
-    {
-      "name": "Yegor Zaremba",
-      "url": "https://github.com/yegorzaremba"
-    }
-  ],
   "homepage_url": "https://github.com/navendu-pottekkat/nsfw-filter/",
   "permissions": [
     "activeTab",
