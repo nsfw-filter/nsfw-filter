@@ -1,6 +1,6 @@
 {
   "name": "NSFW Filter",
-  "version": "0.2",
+  "version": "1.0.0",
   "description": "Hide NSFW content from websites using this extension powered by AI! PS: We don't access your data, it runs locally in your browser!",
   "author": "Navendu Pottekkat",
   "homepage_url": "https://github.com/navendu-pottekkat/nsfw-filter/",
@@ -26,7 +26,8 @@
         "https://*/*"
       ],
       "js": [
-        "src/content.js"
+        "src/content.js",
+        "src/utils.js"
       ],
       "all_frames": true,
       "run_at": "document_start"

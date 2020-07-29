@@ -15,62 +15,93 @@
 * =======================================================================================
 */
 
-"use strict";
+'use strict'
 
-// Set DEBUG to false to prevent logging in the console.
-const DEBUG = true;
-if (!DEBUG) console.log = () => {};
+import { isValidHttpUrl } from './utils'
 
-function clasifyImages() {
-  const images = document.getElementsByTagName('img')
-  for (let i = 0; i < images.length; i++) {
-    if (!(images[i].__isNSFW || images[i].__isChecked)) {
-      if (images[i].src && images[i].width > 64 && images[i].height > 64) {
-        images[i].style.visibility = 'hidden'
-
-        analyzeImage(images[i]);
-
-        // lazy load handler
-        const lazyLoadKeys = ['lazy', 'load']
-        const isImageLazyLoad = lazyLoadKeys.find(key => JSON.stringify([images[i].src, images[i].classList, images[i].className]).includes(key))
-        if (!isImageLazyLoad) {
-          images[i].__isChecked = true
-        }
-      }
-
-      // @todo handle unsafe images smaller than 64px
+function clasifyImage (image) {
+  if (!(image.__isNSFW || image.__isChecked)) {
+    if (image.src && image.width > 64 && image.height > 64) {
+      image.style.visibility = 'hidden'
+      analyzeImage(image)
+      image.__isChecked = true
     }
+
+    // @todo handle unsafe images smaller than 64px
   }
 }
 
 // Calls the background script passing it the image URL
-function analyzeImage(image) {
-  console.log('analyze image %s', image.src);
-  chrome.runtime.sendMessage({ url: image.src, url2: image.src }, response => {
-    console.log(`Prediction result is ${response ? response.result : 'undefined'} for image ${image.src}`);
-    if (response && response.result === false) {
-      image.style.visibility = 'visible'
+function analyzeImage (image) {
+  console.log('analyze image %s', image.src)
+
+  const message = { srcUrl: image.src }
+  if (Object.values(image.dataset).length) {
+    message.lazyUrls = Object.values(image.dataset).map(url => isValidHttpUrl(url) ? url : `${window.location.origin}${url}`)
+  }
+
+  chrome.runtime.sendMessage(message, response => {
+    // In case of background worker not alive yet
+    if (chrome.runtime.lastError) {
+      if (!image.__reconectCount) {
+        image.__reconectCount = 0
+      }
+
+      if (image.__reconectCount > 4) {
+        image.style.visibility = 'visible'
+        image.__isChecked = true
+        console.log(`Cannot connect to background worker for ${image.src} image, mark image as checked`)
+      } else {
+        image.__reconectCount++
+        console.log(`Cannot connect to background worker for ${image.src} image, attempt ${image.__reconectCount}`)
+        setTimeout(() => analyzeImage(image), 142)
+      }
     } else {
-      image.__isNSFW = true
+      console.log(`Prediction result is ${response ? response.result : 'undefined'} for image ${response.url ? response.url : 'undefined'}, error: ${response.err ? response.err : 'none'}`)
+      if (response && response.result === false) {
+        image.style.visibility = 'visible'
+      } else {
+        image.__isNSFW = true
+      }
     }
-  });
+  })
+}
+
+const filterOnLoading = () => {
+  const images = document.getElementsByTagName('img')
+  for (let i = 0; i < images.length; i++) {
+    clasifyImage(images[i])
+  }
 }
 
 // Call function when DOM is loaded
-window.addEventListener("load", () => {
-  clasifyImages()
+document.addEventListener('DOMContentLoaded', () => {
+  // In some cases MutationObserver cannot immediately catch DOM mutations after DOM loaded
+  filterOnLoading()
 
-  // @todo hanlde with javascript render delay
-  const timesToJSrun = [500, 1000, 2000, 3000]
-  for (let i = 0; i < timesToJSrun.length; i++) {
-    setTimeout(() => { clasifyImages() }, timesToJSrun[i]);
+  // @refactor https://github.com/navendu-pottekkat/nsfw-filter/issues/19
+  const timeArray = [0, 15, 50, 100]
+  for (let i = 0; i < timeArray.length; i++) {
+    setTimeout(filterOnLoading, timeArray[i])
   }
-});
 
-// The script is executed when a user scrolls through a website on the tab that is active in the browser.
-// Call function when the user scrolls because most pages lazy load the images
-let isScrolling;
-document.addEventListener("scroll", () => {
-  clearTimeout(isScrolling);
-  isScrolling = setTimeout(() => { clasifyImages() }, 100);
-});
+  function callback (mutationsList, __observer) {
+    for (const mutation of mutationsList) {
+      if (mutation.target.tagName === 'IMG') {
+        clasifyImage(mutation.target)
+      }
+
+      const images = mutation.target.getElementsByTagName('img')
+      if (images.length) {
+        for (let i = 0; i < images.length; i++) {
+          clasifyImage(images[i])
+        }
+      }
+    }
+  }
+
+  setTimeout(() => {
+    const observer = new MutationObserver(callback)
+    observer.observe(document, { subtree: true, attributes: true, childList: true })
+  }, 0)
+})
