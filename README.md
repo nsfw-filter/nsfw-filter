@@ -74,7 +74,7 @@ Check [**DEMO.md**](./DEMO.md) for more.
 # Table of contents
 
 - [NSFW Filter](#nsfw-filter)
-- [What's new?](#what-)
+- [What's new?](#whats-new)
 - [Demo](#demo)
 - [Table of contents](#table-of-contents)
 - [Installation](#installation)
