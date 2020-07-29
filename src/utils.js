@@ -1,7 +1,7 @@
 'use strict'
 
 // Set DEBUG to true to start logging in the console
-export const DEBUG = true
+export const DEBUG = false
 if (!DEBUG) {
   console.log = () => {}
 }
