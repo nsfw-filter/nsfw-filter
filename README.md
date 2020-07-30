@@ -16,7 +16,7 @@
   <img alt="Contributors" src="https://img.shields.io/badge/all_contributors-5-orange.svg?style=flat-square" href="#contributors-">
   <img alt="Contributing" src="https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg" href="code_of_conduct.md">
   <img alt="GitHub" src="https://img.shields.io/github/license/navendu-pottekkat/nsfw-filter?style=flat-square&color=yellow">
-    <a href="https://twitter.com/intent/tweet?text=Try this Chrome Extension that filters out NSFW images from your browser:&url=https%3A%2F%2Fnavendu.me%2Fnsfw-filter%2Findex.html">
+    <a href="https://twitter.com/intent/tweet?text=Try this Extension that filters out NSFW images from your browser using AI:&url=https%3A%2F%2Fwww.github.com%2Fnavendu-pottekkat%2Fnsfw-filter">
   <img src="https://img.shields.io/twitter/url?style=flat-square&logo=twitter&url=https%3A%2F%2Fwww.github.com%2Fnavendu-pottekkat%2Fnsfw-filter"
        alt="GitHub tweet"></a>
 </p>
