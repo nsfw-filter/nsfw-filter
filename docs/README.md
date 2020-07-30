@@ -1,4 +1,4 @@
-# NSFW Filter
+![](https://github.com/navendu-pottekkat/nsfw-filter/blob/master/demo/images/preview.png)
 
 [**NSFW Filter**](https://github.com/navendu-pottekkat/nsfw-filter) is a web extension that blocks NSFW images from your browser.
 
