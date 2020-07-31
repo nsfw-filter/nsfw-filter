@@ -5,13 +5,8 @@
   "author": "Navendu Pottekkat",
   "homepage_url": "https://github.com/navendu-pottekkat/nsfw-filter/",
   "permissions": [
-    "activeTab",
-    "declarativeContent",
-    "webRequest",
-    "webRequestBlocking",
     "<all_urls>",
-    "storage",
-    "tabs"
+    "declarativeContent"
   ],
   "background": {
     "scripts": [
