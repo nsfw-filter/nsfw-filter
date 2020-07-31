@@ -58,6 +58,15 @@
         "bug",
         "ideas"
       ]
+    },
+    {
+      "login": "ClayMav",
+      "name": "Clay McGinnis",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/16675291?v=4",
+      "profile": "https://clay.sh",
+      "contributions": [
+        "review"
+      ]
     }
   ],
   "contributorsPerLine": 7,
