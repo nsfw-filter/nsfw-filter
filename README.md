@@ -43,7 +43,7 @@ Model used- [**nsfwjs**](https://github.com/infinitered/nsfwjs) devoleped by [**
 [<img src="https://github.com/navendu-pottekkat/files/blob/master/nsfw-filter/firefox.gif" align="center"
      alt="Download now" width="120">](https://addons.mozilla.org/en-US/firefox/addon/nsfw-filter/)
 
-[**Download NSFW Filter**](https://github.com/navendu-pottekkat/nsfw-filter/archive/master.zip) | [**Download for Firefox**](https://addons.mozilla.org/en-US/firefox/addon/nsfw-filter/) | **Coming soon on Chrome Web Store!**
+[**Download NSFW Filter**](https://github.com/navendu-pottekkat/nsfw-filter/archive/master.zip) | [**Download for Firefox**](https://addons.mozilla.org/en-US/firefox/addon/nsfw-filter/) | **Coming soon on Chrome Web Store! (Check below to install from source)**
 
 Supported browsers: [**Google Chrome**](#adding-to-chrome), [**Mozilla Firefox**](#adding-to-firefox).
 
