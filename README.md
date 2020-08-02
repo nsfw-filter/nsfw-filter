@@ -36,6 +36,8 @@ When a web page is loaded, all the images remain hidden until they are found to 
 
 Model used- [**nsfwjs**](https://github.com/infinitered/nsfwjs) devoleped by [**Infinite Red, Inc.**](https://github.com/infinitered)
 
+![](https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=225086&theme=light)
+
 [<img src="https://github.com/navendu-pottekkat/files/blob/master/nsfw-filter/source.gif" align="center"
      alt="Download now" width="120">](https://github.com/navendu-pottekkat/nsfw-filter/archive/master.zip)
 <img src="https://github.com/navendu-pottekkat/files/blob/master/nsfw-filter/chrome.gif" align="center"
