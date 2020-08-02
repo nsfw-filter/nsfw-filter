@@ -1,5 +1,7 @@
 ![](./demo/images/preview.png)
-
+<p align="center">
+  <a href="https://www.producthunt.com/posts/nsfw-filter?utm_source=badge-featured&utm_medium=badge&utm_souce=badge-nsfw-filter" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=225086&theme=dark" alt="NSFW Filter - Web extension to block NSFW content using AI | Product Hunt Embed" style="width: 250px; height: 54px;" width="250px" height="54px" /></a>
+</p>
 <p align="center">
   <img alt="GitHub release (latest by date including pre-releases)" src="https://img.shields.io/github/v/release/navendu-pottekkat/nsfw-filter?include_prereleases&style=flat-square">
   <a href="https://github.com/navendu-pottekkat/nsfw-filter/commits/master">
@@ -35,8 +37,6 @@ When a web page is loaded, all the images remain hidden until they are found to 
 ***The extension runs completely on your browser. i.e No user data is being sent to a server for processing.***
 
 Model used- [**nsfwjs**](https://github.com/infinitered/nsfwjs) devoleped by [**Infinite Red, Inc.**](https://github.com/infinitered)
-
-![](https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=225086&theme=light)
 
 [<img src="https://github.com/navendu-pottekkat/files/blob/master/nsfw-filter/source.gif" align="center"
      alt="Download now" width="120">](https://github.com/navendu-pottekkat/nsfw-filter/archive/master.zip)
