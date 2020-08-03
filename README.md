@@ -216,9 +216,9 @@ Run ```npm i``` to install the dependencies.
 ### Guidelines
 [(Back to top)](#table-of-contents)
 
-Edit the ```background.js``` and ```content.js``` files in the ```/src``` folder in the root directory and **NOT** the one in ```/dist/src```.
+Edit the ```background.js```, ```utils.js``` and ```content.js``` files in the ```/src``` folder in the root directory and **NOT** the one in ```/dist/src```.
 
-The contents of ```/dist/src``` folder is automatically created when you run ```npm run-script build``` and should **NOT** be tampered.
+The contents of ```/dist/src``` folder is automatically created when you run ```npm run build``` and should **NOT** be tampered.
 
 The model use for this project [nsfwjs](https://github.com/infinitered/nsfwjs) is stored in ```dist/models```. This can be changed to use your own models built using TensorFlow JS. You can read the [docs](https://www.tensorflow.org/js) from TensorFlow to learn more.
 
@@ -266,11 +266,11 @@ Check out [Development](#development) for setting up your development environmen
 
 Submit a **pull request**, wait for **review**. I will check(usually) every-other-day.
 
-Refer the [**issue template**](./ISSUE_TEMPLATE.md) and [**pull request**](./PULL_REQ_TEMPLATE.md) template before submitting.
-
 Please follow the [**Code of Conduct**](./CODE_OF_CONDUCT.md).
 
 Contributions of any kind are welcome! Reach out to us through this [**Slack channel**](https://join.slack.com/t/nsfwfilter/shared_invite/zt-gfx0dewg-Hc0~3gu4jXcCDYWQxu3lZA).
+
+Check the [**guidelines**](https://github.com/navendu-pottekkat/nsfw-filter/blob/master/CONTRIBUTING.md) before contributing.
 
 # License
 [(Back to top)](#table-of-contents)

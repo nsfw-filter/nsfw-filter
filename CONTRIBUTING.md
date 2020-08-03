@@ -10,7 +10,7 @@
 
 * We use GitHub issues to track public bugs. Report a bug by [**opening a new issue**](https://github.com/navendu-pottekkat/nsfw-filter/issues/new/choose).
 
-* Try to stick to the [**issue template**](https://github.com/navendu-pottekkat/nsfw-filter/blob/master/ISSUE_TEMPLATE.md) and [**pull request template**](https://github.com/navendu-pottekkat/nsfw-filter/blob/master/PULL_REQ_TEMPLATE.md)
+* Try to stick to the **issue template** and **pull request template**.
 
 ### Contributors ✨
 
