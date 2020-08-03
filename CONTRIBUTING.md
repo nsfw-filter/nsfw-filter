@@ -1,5 +1,17 @@
 # Contribute
 
+***Contributions of any kind are welcome!***
+
+* When contributing to this repository, please discuss the change you wish to make via [**issues**](https://github.com/navendu-pottekkat/nsfw-filter/issues) or the [**Slack channel**](https://join.slack.com/t/nsfwfilter/shared_invite/zt-gfx0dewg-Hc0~3gu4jXcCDYWQxu3lZA) with the owners of this repository.
+
+* Note that we have a [**code of conduct**](https://github.com/navendu-pottekkat/nsfw-filter/blob/master/CODE_OF_CONDUCT.md), please follow it in all your interactions with the project.
+
+* All code changes take place through [**pull requests**](https://github.com/navendu-pottekkat/nsfw-filter/pulls). Check [***GitHub Flow***](https://guides.github.com/introduction/flow/index.html).
+
+* We use GitHub issues to track public bugs. Report a bug by [**opening a new issue**](https://github.com/navendu-pottekkat/nsfw-filter/issues/new/choose).
+
+* Try to stick to the [**issue template**](https://github.com/navendu-pottekkat/nsfw-filter/blob/master/ISSUE_TEMPLATE.md) and [**pull request template**](https://github.com/navendu-pottekkat/nsfw-filter/blob/master/PULL_REQ_TEMPLATE.md)
+
 ### Contributors ✨
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
@@ -22,21 +34,3 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
 This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
-
-### Sponsor
-
-This is a completely Open Source project and it is free for use. A contribution from you would go a long way to lift my spirits up and push me to build more cool stuff in the future.
-
-You can click this link for sponsoring.
-
-### Adding new features or fixing bugs
-
-Check out [Development](#development) for setting up your development environment.
-
-Submit a **pull request**, wait for **review**. I will check(usually) every-other-day.
-
-Refer the [**issue template**](./ISSUE_TEMPLATE.md) and [**pull request**](./PULL_REQ_TEMPLATE.md) template before submitting.
-
-Please follow the [**Code of Conduct**](./CODE_OF_CONDUCT.md).
-
-Contributions of any kind are welcome! Reach out to us through this [**Slack channel**](https://join.slack.com/t/nsfwfilter/shared_invite/zt-gfx0dewg-Hc0~3gu4jXcCDYWQxu3lZA).
