@@ -36,7 +36,7 @@ function analyzeImage (image) {
   // raw image has invalid url with slashes, for google images case
   if (image.src.match(/\/\/\/\/\//)) {
     clearTimeout(image.__fullRawImageTimer)
-    image.__fullRawImageTimer = setTimeout(() => analyzeImage(image), 200)
+    image.__fullRawImageTimer = setTimeout(() => analyzeImage(image), 100)
   } else {
     const message = { srcUrl: image.src }
     if (Object.values(image.dataset).length) {
@@ -53,7 +53,7 @@ function analyzeImage (image) {
         console.log(`Cannot connect to background worker for ${image.src} image, attempt ${image.__reconectCount}`)
         image.__reconectCount++
         clearTimeout(image.__reconectTimer)
-        image.__reconectTimer = setTimeout(() => analyzeImage(image), 200)
+        image.__reconectTimer = setTimeout(() => analyzeImage(image), 100)
       } else {
         console.log(`Prediction result is ${response ? response.result : 'undefined'} for image ${response.url ? response.url : 'undefined'}, error: ${response.err ? response.err : 'none'}`)
         if (response && response.result === false) {
@@ -68,6 +68,10 @@ function analyzeImage (image) {
 
 function callback (mutationsList, __observer) {
   for (const mutation of mutationsList) {
+    if (mutation.target.tagName === 'IMG') {
+      clasifyImage(mutation.target)
+    }
+
     const images = mutation.target.getElementsByTagName('img')
     if (images.length) {
       for (let i = 0; i < images.length; i++) {
