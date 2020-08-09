@@ -1,0 +1,24 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "target": "ES3",
+    "module": "CommonJS",
+    "lib": ["DOM", "ESNext"],
+    "sourceMap": false,
+    "baseUrl": "src",
+    "outDir": "./dist/src",
+    "strict": true,
+    "strictNullChecks": true,
+    "alwaysStrict": true,
+    "strictBindCallApply": true,
+    "strictFunctionTypes": true,
+    "strictPropertyInitialization": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "removeComments": true,
+  },
+  "include": ["src/"],
+  "exclude": ["node_modules/", "dist/"]
+}

@@ -4,7 +4,8 @@
   "description": "Hide NSFW content from websites using this extension powered by AI! This extension replaces images that are NSFW with random images from Unsplash.",
   "scripts": {
     "lint": "eslint .",
-    "build": "parcel build src/* -d dist/src/"
+    "watch": "webpack --config webpack/webpack.dev.js --watch",
+    "build": "webpack --config webpack/webpack.prod.js"
   },
   "author": {
     "name": "Navendu Pottekkat",
@@ -20,16 +21,23 @@
   "homepage": "https://github.com/navendu-pottekkat/nsfw-filter",
   "license": "GNU General Public License v3.0",
   "dependencies": {
-    "@tensorflow/tfjs": "^2.0.1",
-    "nsfwjs": "^2.2.0"
+    "@tensorflow/tfjs": "2.1.0",
+    "nsfwjs": "2.2.0"
   },
   "devDependencies": {
-    "eslint": "^7.5.0",
-    "eslint-config-standard": "^14.1.1",
-    "eslint-plugin-import": "^2.22.0",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^4.2.1",
-    "eslint-plugin-standard": "^4.0.1",
-    "parcel-bundler": "^1.12.4"
+    "@types/chrome": "0.0.122",
+    "@typescript-eslint/eslint-plugin": "3.8.0",
+    "eslint": "7.5.0",
+    "eslint-config-standard": "14.1.1",
+    "eslint-config-standard-with-typescript": "18.0.2",
+    "eslint-plugin-import": "2.22.0",
+    "eslint-plugin-node": "11.1.0",
+    "eslint-plugin-promise": "4.2.1",
+    "eslint-plugin-standard": "4.0.1",
+    "ts-loader": "6.2.1",
+    "typescript": "3.9.7",
+    "webpack": "4.42.0",
+    "webpack-cli": "3.3.11",
+    "webpack-merge": "4.2.2"
   }
 }
