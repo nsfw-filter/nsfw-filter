@@ -40,8 +40,8 @@ Model used- [**nsfwjs**](https://github.com/infinitered/nsfwjs) devoleped by [**
 
 [<img src="https://github.com/navendu-pottekkat/files/blob/master/nsfw-filter/source.gif" align="center"
      alt="Download now" width="120">](https://github.com/navendu-pottekkat/nsfw-filter/archive/master.zip)
-<img src="https://github.com/navendu-pottekkat/files/blob/master/nsfw-filter/chrome.gif" align="center"
-     alt="Download now" width="120">
+[<img src="https://github.com/navendu-pottekkat/files/blob/master/nsfw-filter/chrome.gif" align="center"
+     alt="Download now" width="120">](https://chrome.google.com/webstore/detail/nsfw-filter/kmgagnlkckiamnenbpigfaljmanlbbhh)
 [<img src="https://github.com/navendu-pottekkat/files/blob/master/nsfw-filter/firefox.gif" align="center"
      alt="Download now" width="120">](https://addons.mozilla.org/en-US/firefox/addon/nsfw-filter/)
 
