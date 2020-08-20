@@ -45,7 +45,7 @@ Model used- [**nsfwjs**](https://github.com/infinitered/nsfwjs) devoleped by [**
 [<img src="https://github.com/navendu-pottekkat/files/blob/master/nsfw-filter/firefox.gif" align="center"
      alt="Download now" width="120">](https://addons.mozilla.org/en-US/firefox/addon/nsfw-filter/)
 
-[**Download NSFW Filter**](https://github.com/navendu-pottekkat/nsfw-filter/archive/master.zip) | [**Download for Firefox**](https://addons.mozilla.org/en-US/firefox/addon/nsfw-filter/) | **Coming soon on Chrome Web Store! (Check below to install from source)**
+[**Download NSFW Filter**](https://github.com/navendu-pottekkat/nsfw-filter/archive/master.zip) | [**Download for Chrome**](https://chrome.google.com/webstore/detail/nsfw-filter/kmgagnlkckiamnenbpigfaljmanlbbhh) | [**Download for Firefox**](https://addons.mozilla.org/en-US/firefox/addon/nsfw-filter/)
 
 Supported browsers: [**Google Chrome**](#adding-to-chrome), [**Mozilla Firefox**](#adding-to-firefox).
 
@@ -97,9 +97,9 @@ Check [**DEMO.md**](./DEMO.md) for more.
 # Installation
 [(Back to top)](#table-of-contents)
 
-These instructions are for **developers(and Chrome users**- since NSFW Filter is not available in the Chrome Webstore yet!).
+These instructions are for **developers**.
 
-You can download for use directly from [**addons.mozilla/nsfw-filter**](https://addons.mozilla.org/en-US/firefox/addon/nsfw-filter/).
+You can download for use directly from [**chrome.google.com/webstore/nsfw-filter**](https://chrome.google.com/webstore/detail/nsfw-filter/kmgagnlkckiamnenbpigfaljmanlbbhh) and [**addons.mozilla/nsfw-filter**](https://addons.mozilla.org/en-US/firefox/addon/nsfw-filter/).
 
 Clone this repository and navigate inside the project folder and install the dependencies by running:
 
@@ -115,6 +115,8 @@ npm run build
 
 ### Adding to Chrome
 [(Back to top)](#table-of-contents)
+
+To install the developer version follow the steps below. To just use the extension download from [**chrome.google.com/webstore/nsfw-filter**](https://chrome.google.com/webstore/detail/nsfw-filter/kmgagnlkckiamnenbpigfaljmanlbbhh)
 
 After you have finished the [Installation](#installation), open Google Chrome and open the Extension Management page by navigating to ```chrome://extensions``` or by opening Settings and clicking Extensions from the bottom left.
 
