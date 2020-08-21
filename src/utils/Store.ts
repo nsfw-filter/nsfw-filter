@@ -12,7 +12,7 @@ export class Store implements IStore {
   private readonly COUNTER_KEY: string
 
   constructor () {
-    this.COUNTER_KEY = 'stats_image_counter'
+    this.COUNTER_KEY = 'stats_counter'
   }
 
   public async saveCounters (value: counterData): Promise<counterData> {
