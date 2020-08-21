@@ -1,5 +1,6 @@
 import { _HTMLVideoElement as Video } from '../../utils/types'
 import { ImageFilter, IImageFilter } from './ImageFilter'
+import { logger } from '../../utils/Logger'
 
 type IVideoFilter = {
   analyzeVideo: (video: Video) => void
@@ -32,7 +33,7 @@ export class VideoFilter implements IVideoFilter {
   private async _analyzeVideo (video: Video): Promise<void> {
     const url = video.poster
     if (typeof url === 'string' && url.length > 5) {
-      console.log(`Analyze video ${url}`)
+      logger.log(`Analyze video ${url}`)
 
       const posterResult = await this._checkPoster(url)
 

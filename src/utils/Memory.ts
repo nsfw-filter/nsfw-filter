@@ -1,5 +1,6 @@
 import { _Performance } from './types'
 import { DEBUG } from './debug'
+import { logger } from './Logger'
 
 export class Memory {
   private readonly DEBUG: boolean
@@ -18,7 +19,7 @@ export class Memory {
     // Only for Google Chrome
     if (memory !== undefined) {
       const result = this.formatBytes(memory.usedJSHeapSize)
-      console.log(`Memory usage: ${result}`)
+      logger.log(`Memory usage: ${result}`)
 
       clearTimeout(this.TIMER)
       this.TIMER = window.setTimeout(() => { this.start() }, 7000)

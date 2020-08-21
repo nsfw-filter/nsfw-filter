@@ -1,4 +1,5 @@
 import { requestType, responseType, _HTMLImageElement as _Image } from '../../utils/types'
+import { logger } from '../../utils/Logger'
 
 const notEmpty = <T>(value: T | null | undefined): value is T => {
   return value !== null && value !== undefined
@@ -22,7 +23,7 @@ export class ImageFilter implements IImageFilter {
     if ((image.width > 32 && image.height > 32) || image.width === 0 || image.height === 0) {
       if (image._isChecked === undefined && image.src.length > 0) {
         image._isChecked = true
-        console.log(`Analyze image ${image.src}`)
+        logger.log(`Analyze image ${image.src}`)
         image.style.visibility = 'hidden'
         setTimeout(() => this._analyzeImage(image), 0)
       }
@@ -39,7 +40,7 @@ export class ImageFilter implements IImageFilter {
           resolve(false)
         }
 
-        console.log(response.message)
+        logger.log(response.message)
         if (!response.result) {
           return resolve(false)
         } else {
@@ -66,13 +67,13 @@ export class ImageFilter implements IImageFilter {
 
   private handleInvalidRawDate (image: _Image): void {
     image._fullRawImageCounter = image._fullRawImageCounter ?? 0
-    console.log(`Invalid raw image ${image.src}, attempt ${image._fullRawImageCounter}`)
+    logger.log(`Invalid raw image ${image.src}, attempt ${image._fullRawImageCounter}`)
     image._fullRawImageCounter++
     clearTimeout(image._fullRawImageTimer)
 
     if (image._fullRawImageCounter > 77) {
       image.style.visibility = 'visible'
-      console.log(`Invalid raw image, marked as visible ${image.src}`)
+      logger.log(`Invalid raw image, marked as visible ${image.src}`)
     } else {
       image._fullRawImageTimer = window.setTimeout(() => this._analyzeImage(image), 100)
     }
@@ -84,7 +85,7 @@ export class ImageFilter implements IImageFilter {
       return
     }
 
-    console.log(response.message)
+    logger.log(response.message)
     if (!response.result) {
       image.style.visibility = 'visible'
     } else {
@@ -94,13 +95,13 @@ export class ImageFilter implements IImageFilter {
 
   private handleBackgroundErrors (image: _Image, message: string | undefined): void {
     image._reconectCount = image._reconectCount ?? 0
-    console.log(`Cannot connect to background worker for ${image.src} image, attempt ${image._reconectCount}, error: ${message}`)
+    logger.log(`Cannot connect to background worker for ${image.src} image, attempt ${image._reconectCount}, error: ${message}`)
     image._reconectCount++
     clearTimeout(image._reconectTimer)
 
     if (image._reconectCount > 15) {
       image.style.visibility = 'visible'
-      console.log(`Background worker is down, marked as visible ${image.src}`)
+      logger.log(`Background worker is down, marked as visible ${image.src}`)
     } else {
       image._reconectTimer = window.setTimeout(() => this._analyzeImage(image), 100)
     }

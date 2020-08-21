@@ -1,6 +1,2 @@
-// Set DEBUG to true to start logging in the console
-export const DEBUG = true
-
-if (!DEBUG) {
-  console.log = () => {}
-}
+// Set DEBUG to true for development mode
+export const DEBUG = false

@@ -9,15 +9,17 @@ export class Model implements IModel {
   private readonly model: NSFWJS
   private readonly GIF_REGEX: RegExp
   private readonly FILTER_LIST: string[]
+  private readonly IMAGE_SIZE: number
 
   constructor (model: NSFWJS) {
     this.model = model
     this.GIF_REGEX = /^.*(.gif)($|\W.*$)/
     this.FILTER_LIST = ['Hentai', 'Porn', 'Sexy']
+    this.IMAGE_SIZE = 224
   }
 
   private async loadImage (url: string): Promise<HTMLImageElement> {
-    const image: HTMLImageElement = new Image()
+    const image: HTMLImageElement = new Image(this.IMAGE_SIZE, this.IMAGE_SIZE)
 
     return await new Promise((resolve, reject) => {
       image.crossOrigin = 'anonymous'
