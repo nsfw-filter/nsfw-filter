@@ -2,16 +2,13 @@ import { Store } from '../utils/Store'
 
 const store = new Store()
 
-store.getCounters().then(_result => {
-  const resultImages = typeof _result.images === 'number' ? _result.images : 0
-  const resultVideos = typeof _result.videos === 'number' ? _result.videos : 0
-
+store.getCounters().then((result = { images: 0, videos: 0 }) => {
   const image = document.getElementById('stats_image_amount')
-  if (image != null) image.innerHTML = `${resultImages}`
+  if (image != null) image.innerHTML = `${result.images}`
 
   const video = document.getElementById('stats_video_amount')
-  if (video != null) video.innerHTML = `${resultVideos}`
+  if (video != null) video.innerHTML = `${result.videos}`
 
   const total = document.getElementById('stats_total_amount')
-  if (total != null) total.innerHTML = `${Math.round(resultImages + resultVideos)}`
+  if (total != null) total.innerHTML = `${Math.round(result.images + result.videos)}`
 }, () => {})

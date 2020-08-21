@@ -36,13 +36,10 @@ const observer = new MutationObserver(callback)
 observer.observe(document, { subtree: true, attributes: true, childList: true })
 
 window.addEventListener('beforeunload', () => {
-  store.getCounters().then(_result => {
-    const resultImages = typeof _result.images === 'number' ? _result.images : 0
-    const resultVideos = typeof _result.videos === 'number' ? _result.videos : 0
-
+  store.getCounters().then((result = { images: 0, videos: 0 }) => {
     const updatedData = {
-      images: resultImages + imageFilter.getBlockAmount(),
-      videos: resultVideos + videoFilter.getBlockAmount()
+      images: result.images + imageFilter.getBlockAmount(),
+      videos: result.videos + videoFilter.getBlockAmount()
     }
 
     store.saveCounters(updatedData).then(() => {}, () => {})
