@@ -21,8 +21,7 @@ export class VideoFilter implements IVideoFilter {
       video._isChecked = true
       video.style.visibility = 'hidden'
       video.pause()
-      // eslint-disable-next-line @typescript-eslint/no-misused-promises
-      setTimeout(async () => await this._analyzeVideo(video), 0)
+      this._analyzeVideo(video).then(() => {}, () => {})
     }
   }
 

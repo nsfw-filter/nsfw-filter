@@ -25,7 +25,7 @@ export class ImageFilter implements IImageFilter {
         image._isChecked = true
         logger.log(`Analyze image ${image.src}`)
         image.style.visibility = 'hidden'
-        setTimeout(() => this._analyzeImage(image), 0)
+        this._analyzeImage(image)
       }
     }
   }
