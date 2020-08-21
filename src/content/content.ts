@@ -2,9 +2,9 @@ import { _HTMLImageElement as _Image, _HTMLVideoElement as Video } from '../util
 import { VideoFilter } from './Filter/VideoFilter'
 import { ImageFilter } from './Filter/ImageFilter'
 import { Store } from '../utils/Store'
-import { DEBUG, getMemory } from '../utils/common'
+import { Memory } from '../utils/Memory'
 
-if (DEBUG) getMemory()
+new Memory().start()
 
 const videoFilter = new VideoFilter()
 const imageFilter = new ImageFilter()

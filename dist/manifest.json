@@ -5,9 +5,11 @@
   "author": "Navendu Pottekkat",
   "homepage_url": "https://github.com/nsfw-filter/nsfw-filter/",
   "permissions": [
+    "activeTab",
     "declarativeContent",
     "<all_urls>",
-    "storage"
+    "storage",
+    "tabs"
   ],
   "background": {
     "scripts": ["src/background.js"],

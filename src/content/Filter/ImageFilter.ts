@@ -18,11 +18,14 @@ export class ImageFilter implements IImageFilter {
   }
 
   public analyzeImage (image: _Image): void {
-    if (!image._isChecked && image.src.length > 0) {
-      console.log(`Analyze image ${image.src}`)
-      image.style.visibility = 'hidden'
-      this._analyzeImage(image)
-      image._isChecked = true
+    // Skip small images, but pass pending
+    if ((image.width > 32 && image.height > 32) || image.width === 0 || image.height === 0) {
+      if (image._isChecked === undefined && image.src.length > 0) {
+        image._isChecked = true
+        console.log(`Analyze image ${image.src}`)
+        image.style.visibility = 'hidden'
+        setTimeout(() => this._analyzeImage(image), 0)
+      }
     }
   }
 
@@ -65,12 +68,12 @@ export class ImageFilter implements IImageFilter {
     image._fullRawImageCounter = image._fullRawImageCounter ?? 0
     console.log(`Invalid raw image ${image.src}, attempt ${image._fullRawImageCounter}`)
     image._fullRawImageCounter++
+    clearTimeout(image._fullRawImageTimer)
 
-    if (image._fullRawImageCounter > 10) {
+    if (image._fullRawImageCounter > 77) {
       image.style.visibility = 'visible'
       console.log(`Invalid raw image, marked as visible ${image.src}`)
     } else {
-      clearTimeout(image._fullRawImageTimer)
       image._fullRawImageTimer = window.setTimeout(() => this._analyzeImage(image), 100)
     }
   }
@@ -93,12 +96,12 @@ export class ImageFilter implements IImageFilter {
     image._reconectCount = image._reconectCount ?? 0
     console.log(`Cannot connect to background worker for ${image.src} image, attempt ${image._reconectCount}, error: ${message}`)
     image._reconectCount++
+    clearTimeout(image._reconectTimer)
 
     if (image._reconectCount > 15) {
       image.style.visibility = 'visible'
       console.log(`Background worker is down, marked as visible ${image.src}`)
     } else {
-      clearTimeout(image._reconectTimer)
       image._reconectTimer = window.setTimeout(() => this._analyzeImage(image), 100)
     }
   }

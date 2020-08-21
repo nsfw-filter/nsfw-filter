@@ -16,12 +16,12 @@ export class VideoFilter implements IVideoFilter {
   }
 
   public analyzeVideo (video: Video): void {
-    if (!video._isChecked !== undefined) {
+    if (video._isChecked === undefined) {
+      video._isChecked = true
       video.style.visibility = 'hidden'
       video.pause()
-      video._isChecked = true
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      this._analyzeVideo(video)
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      setTimeout(async () => await this._analyzeVideo(video), 0)
     }
   }
 
@@ -30,21 +30,25 @@ export class VideoFilter implements IVideoFilter {
   }
 
   private async _analyzeVideo (video: Video): Promise<void> {
-    console.log('Analyze video')
-    const posterResult = await this._checkPoster(video)
-    console.log({ posterResult })
+    const url = video.poster
+    if (typeof url === 'string' && url.length > 5) {
+      console.log(`Analyze video ${url}`)
 
-    if (!posterResult) {
-      video.style.visibility = 'visible'
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      video.play()
+      const posterResult = await this._checkPoster(url)
+
+      if (!posterResult) {
+        video.style.visibility = 'visible'
+        video.play().then(() => {}, () => {})
+      } else {
+        this._blockedItems = this._blockedItems + 1
+      }
     } else {
-      this._blockedItems = this._blockedItems + 1
+      video.style.visibility = 'visible'
+      video.play().then(() => {}, () => {})
     }
   }
 
-  private async _checkPoster (video: Video): Promise<boolean> {
-    const url = video.poster
+  private async _checkPoster (url: string): Promise<boolean> {
     return await this._imageFilter.analyzeImageByUrl(url)
   }
 }

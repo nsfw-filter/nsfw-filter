@@ -1,21 +1,19 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
-
-// import { NSFWJS } from 'nsfw-filter-nsfwjs'
 import { NSFWJS } from 'nsfw-filter-nsfwjs'
-import { FILTER_LIST } from '../utils/common'
 import { responseType } from '../utils/types'
 
-interface IModel {
+type IModel = {
   predictImage: (url: string) => Promise<boolean>
 }
 
 export class Model implements IModel {
   private readonly model: NSFWJS
   private readonly GIF_REGEX: RegExp
+  private readonly FILTER_LIST: string[]
 
   constructor (model: NSFWJS) {
     this.model = model
     this.GIF_REGEX = /^.*(.gif)($|\W.*$)/
+    this.FILTER_LIST = ['Hentai', 'Porn', 'Sexy']
   }
 
   private async loadImage (url: string): Promise<HTMLImageElement> {
@@ -32,13 +30,13 @@ export class Model implements IModel {
   public async predictImage (url: string): Promise<boolean> {
     const image = await this.loadImage(url)
 
-    const prediction = await this.model.classify(image, 3)
-    const result: Boolean = prediction.length > 0 && FILTER_LIST.includes(prediction[0].className)
+    const prediction = await this.model.classify(image, 1)
+    const result: Boolean = prediction.length > 0 && this.FILTER_LIST.includes(prediction[0].className)
     if (result === true) return Boolean(result)
 
     if (this.GIF_REGEX.test(url)) {
-      const predictionGIF = await this.model.classifyGif(image, { topk: 3, fps: 1.5 })
-      const resultGIF = predictionGIF.find(array => FILTER_LIST.includes(array[0].className))
+      const predictionGIF = await this.model.classifyGif(image, { topk: 1, fps: 0.1 })
+      const resultGIF = predictionGIF.find(array => this.FILTER_LIST.includes(array[0].className))
       return Boolean(resultGIF)
     }
 

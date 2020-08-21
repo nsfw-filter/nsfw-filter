@@ -1,16 +1,13 @@
 import * as tf from '@tensorflow/tfjs'
 import { load as loadModel } from 'nsfw-filter-nsfwjs'
 
-import { DEBUG, getMemory } from '../utils/common'
+import { Memory } from '../utils/Memory'
 import { promiseSomeRace } from '../utils/promiseSomeRace'
 import { requestType } from '../utils/types'
 import { Model } from './Model'
 
-if (!DEBUG) {
-  tf.enableProdMode()
-} else {
-  getMemory()
-}
+new Memory().start()
+tf.enableProdMode()
 
 const MODEL_PATH = '../models/'
 
@@ -19,11 +16,10 @@ loadModel(MODEL_PATH).then(NSFWJSModel => {
 
   chrome.runtime.onMessage.addListener((request: requestType, _sender, callback) => {
     const { url, lazyUrls } = request
-    console.log({ request1: request })
 
     model.predictImage(url)
       .then(result => {
-        // lazy loading handler, if srcUrl (main url) isn't a NSFW, we wait first NSFW prediction result for all lazy load urls
+        // Lazy loading handler, if srcUrl (main url) isn't a NSFW, we wait first NSFW prediction result for all lazy load urls
         if (!result && lazyUrls != null && lazyUrls.length > 0) {
           return promiseSomeRace(lazyUrls.map(async (url: string) => await model.predictImage(url)))
         } else {
