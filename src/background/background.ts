@@ -5,14 +5,16 @@ import { Memory } from '../utils/Memory'
 import { promiseSomeRace } from '../utils/promiseSomeRace'
 import { requestType } from '../utils/types'
 import { Model } from './Model'
+import { Logger } from '../utils/Logger'
 
-new Memory().start()
+const logger = new Logger()
+new Memory(logger).start()
 tf.enableProdMode()
 
 const MODEL_PATH = '../models/'
 
 loadModel(MODEL_PATH).then(NSFWJSModel => {
-  const model = new Model(NSFWJSModel)
+  const model = new Model(NSFWJSModel, logger)
 
   chrome.runtime.onMessage.addListener((request: requestType, _sender, callback) => {
     const { url, lazyUrls } = request

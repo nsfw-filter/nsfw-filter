@@ -1,23 +1,15 @@
-import { _HTMLVideoElement as Video } from '../../utils/types'
-import { ImageFilter, IImageFilter } from './ImageFilter'
-import { logger } from '../../utils/Logger'
+import { _HTMLVideoElement as Video, requestType } from '../../utils/types'
+import { Filter } from './Filter'
 
-type IVideoFilter = {
+export type IVideoFilter = {
   analyzeVideo: (video: Video) => void
-  getBlockAmount: () => number
 }
 
-export class VideoFilter implements IVideoFilter {
-  private _blockedItems: number
-  private readonly _imageFilter: IImageFilter
-
-  constructor () {
-    this._blockedItems = 0
-    this._imageFilter = new ImageFilter()
-  }
-
+export class VideoFilter extends Filter implements IVideoFilter {
   public analyzeVideo (video: Video): void {
-    if (video._isChecked === undefined) {
+    const url = VideoFilter.prepareUrl(video.poster)
+
+    if (video._isChecked === undefined && typeof url === 'string') {
       video._isChecked = true
       video.style.visibility = 'hidden'
       video.pause()
@@ -25,30 +17,22 @@ export class VideoFilter implements IVideoFilter {
     }
   }
 
-  public getBlockAmount (): number {
-    return this._blockedItems
-  }
-
   private async _analyzeVideo (video: Video): Promise<void> {
-    const url = video.poster
-    if (typeof url === 'string' && url.length > 5) {
-      logger.log(`Analyze video ${url}`)
+    const posterResult = await this._checkPoster(video.poster)
 
-      const posterResult = await this._checkPoster(url)
-
-      if (!posterResult) {
-        video.style.visibility = 'visible'
-        video.play().then(() => {}, () => {})
-      } else {
-        this._blockedItems = this._blockedItems + 1
-      }
-    } else {
-      video.style.visibility = 'visible'
-      video.play().then(() => {}, () => {})
+    if (posterResult) {
+      this.blockedItems++
+      return
     }
+
+    video.style.visibility = 'visible'
+    video.play().then(() => {}, () => {})
   }
 
   private async _checkPoster (url: string): Promise<boolean> {
-    return await this._imageFilter.analyzeImageByUrl(url)
+    this.logger.log(`Analyze video ${url}`)
+    const request: requestType = { url }
+
+    return await this.requestToAnalyzeImage(request)
   }
 }
