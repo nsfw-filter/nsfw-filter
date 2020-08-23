@@ -36,6 +36,8 @@ When a web page is loaded, all the images remain hidden until they are found to 
 
 ***The extension runs completely on your browser. i.e No user data is being sent to a server for processing.***
 
+Read about the release in [**Hacker Noon**](https://hackernoon.com/nsfw-filter-introduction-building-a-safer-internet-using-ai-jq1e3u2f) or in [**Towards Data Science**](https://towardsdatascience.com/building-a-safer-internet-for-everyone-using-ai-175df5e02cee).
+
 Model used- [**nsfwjs**](https://github.com/infinitered/nsfwjs) devoleped by [**Infinite Red, Inc.**](https://github.com/infinitered)
 
 [<img src="https://github.com/navendu-pottekkat/files/blob/master/nsfw-filter/source.gif" align="center"
@@ -53,7 +55,9 @@ Reach out to us! Join the [**Slack channel**](https://join.slack.com/t/nsfwfilte
 
 # What's new?
 
-**v1.0.0** released!
+**v1.1.0** released!
+
+Released in Chrome Webstore! Check above for the link!
 
 The images are now hidden when a page loads and become visible only when they are found to be not NSFW. The NSFW images remain hidden.
 
