@@ -1,6 +1,9 @@
 // Highly sensitive code, make sure that you know what you're doing
 // https://stackoverflow.com/a/39332340/10432429
-// @TODO Canvas? SVG? Lazy loading for div.style.background-image?
+
+// @TODO Clarify HTML element types
+// @TODO Canvas and SVG
+// @TODO Lazy loading for div.style.background-image?
 
 import { _HTMLImageElement as _Image, _HTMLVideoElement as Video } from '../../utils/types'
 import { IVideoFilter } from '../Filter/VideoFilter'

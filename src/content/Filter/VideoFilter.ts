@@ -18,15 +18,20 @@ export class VideoFilter extends Filter implements IVideoFilter {
   }
 
   private async _analyzeVideo (video: Video): Promise<void> {
-    const posterResult = await this._checkPoster(video.poster)
+    try {
+      const posterResult = await this._checkPoster(video.poster)
 
-    if (posterResult) {
-      this.blockedItems++
-      return
+      if (posterResult) {
+        this.blockedItems++
+        return
+      }
+
+      video.style.visibility = 'visible'
+      video.play().then(() => {}, () => {})
+    } catch {
+      video.style.visibility = 'visible'
+      video.play().then(() => {}, () => {})
     }
-
-    video.style.visibility = 'visible'
-    video.play().then(() => {}, () => {})
   }
 
   private async _checkPoster (url: string): Promise<boolean> {
