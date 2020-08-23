@@ -1,6 +1,12 @@
 import { DEBUG } from './debug'
 
-class Logger {
+export type ILogger = {
+  log: (string: string) => void
+  warn: (string: string) => void
+  error: (string: string) => void
+}
+
+export class Logger implements ILogger {
   private readonly logger: Console | undefined
 
   constructor () {
@@ -19,5 +25,3 @@ class Logger {
     if (this.logger !== undefined) this.logger.error(string)
   }
 }
-
-export const logger = new Logger()

@@ -1,5 +1,5 @@
-import { requestType, responseType, _HTMLImageElement as _Image } from '../../utils/types'
-import { logger } from '../../utils/Logger'
+import { requestType, _HTMLImageElement as _Image } from '../../utils/types'
+import { Filter } from './Filter'
 
 const notEmpty = <T>(value: T | null | undefined): value is T => {
   return value !== null && value !== undefined
@@ -7,54 +7,42 @@ const notEmpty = <T>(value: T | null | undefined): value is T => {
 
 export type IImageFilter = {
   analyzeImage: (image: _Image) => void
-  analyzeImageByUrl: (url: string) => Promise<boolean>
-  getBlockAmount: () => number
+  analyzeDiv: (div: _Image) => void
 }
 
-export class ImageFilter implements IImageFilter {
-  private _blockedItems: number
-
-  constructor () {
-    this._blockedItems = 0
-  }
-
+export class ImageFilter extends Filter implements IImageFilter {
   public analyzeImage (image: _Image): void {
     // Skip small images, but pass pending
     if ((image.width > 32 && image.height > 32) || image.width === 0 || image.height === 0) {
       if (image._isChecked === undefined && image.src.length > 0) {
         image._isChecked = true
-        logger.log(`Analyze image ${image.src}`)
         image.style.visibility = 'hidden'
-        this._analyzeImage(image)
+
+        this.logger.log(`Analyze image ${image.src}`)
+        this._analyzeImage(image).then(() => {}, () => {})
       }
     }
   }
 
-  public async analyzeImageByUrl (url: string): Promise<boolean> {
-    const request: requestType = { url }
+  public async analyzeDiv (div: _Image): Promise<void> {
+    if (div._isChecked === undefined && typeof div.style.backgroundImage === 'string' && div.style.backgroundImage.length > 0) {
+      div._isChecked = true
+      div.style.visibility = 'hidden'
 
-    return await new Promise((resolve) => {
-      chrome.runtime.sendMessage(request, (response: responseType) => {
-        // @TODO handle errors
-        if (chrome.runtime.lastError != null) {
-          resolve(false)
-        }
+      const url: string | undefined = ImageFilter.prepareUrl(div.style.backgroundImage.slice(5, -2))
+      if (url === undefined) return
 
-        logger.log(response.message)
-        if (!response.result) {
-          return resolve(false)
-        } else {
-          return resolve(true)
-        }
-      })
-    })
+      const result = await this.requestToAnalyzeImage({ url })
+      if (result) {
+        this.blockedItems++
+        return
+      }
+
+      div.style.visibility = 'visible'
+    }
   }
 
-  public getBlockAmount (): number {
-    return this._blockedItems
-  }
-
-  private _analyzeImage (image: _Image): void {
+  private async _analyzeImage (image: _Image): Promise<void> {
     // For google images case, where raw image has invalid url with slashes
     if (Array.isArray(image.src.match(/\/\/\/\/\//))) {
       this.handleInvalidRawDate(image)
@@ -62,70 +50,41 @@ export class ImageFilter implements IImageFilter {
     }
 
     const request: requestType = ImageFilter.buildRequest(image)
-    chrome.runtime.sendMessage(request, (response: responseType) => this.handleReponse(response, image))
+    const result = await this.requestToAnalyzeImage(request)
+
+    if (result) {
+      this.blockedItems++
+      return
+    }
+
+    image.style.visibility = 'visible'
   }
 
   private handleInvalidRawDate (image: _Image): void {
     image._fullRawImageCounter = image._fullRawImageCounter ?? 0
-    logger.log(`Invalid raw image ${image.src}, attempt ${image._fullRawImageCounter}`)
+    this.logger.log(`Invalid raw image ${image.src}, attempt ${image._fullRawImageCounter}`)
     image._fullRawImageCounter++
     clearTimeout(image._fullRawImageTimer)
 
-    if (image._fullRawImageCounter > 77) {
-      image.style.visibility = 'visible'
-      logger.log(`Invalid raw image, marked as visible ${image.src}`)
-    } else {
-      image._fullRawImageTimer = window.setTimeout(() => this._analyzeImage(image), 100)
-    }
-  }
-
-  private handleReponse (response: responseType, image: _Image): void {
-    if (chrome.runtime.lastError != null) {
-      this.handleBackgroundErrors(image, chrome.runtime.lastError.message)
+    if (image._fullRawImageCounter < 77) {
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      image._fullRawImageTimer = window.setTimeout(async () => await this._analyzeImage(image), 100)
       return
     }
 
-    logger.log(response.message)
-    if (!response.result) {
-      image.style.visibility = 'visible'
-    } else {
-      this._blockedItems = this._blockedItems + 1
-    }
-  }
-
-  private handleBackgroundErrors (image: _Image, message: string | undefined): void {
-    image._reconectCount = image._reconectCount ?? 0
-    logger.log(`Cannot connect to background worker for ${image.src} image, attempt ${image._reconectCount}, error: ${message}`)
-    image._reconectCount++
-    clearTimeout(image._reconectTimer)
-
-    if (image._reconectCount > 15) {
-      image.style.visibility = 'visible'
-      logger.log(`Background worker is down, marked as visible ${image.src}`)
-    } else {
-      image._reconectTimer = window.setTimeout(() => this._analyzeImage(image), 100)
-    }
+    image.style.visibility = 'visible'
+    this.logger.log(`Invalid raw image, marked as visible ${image.src}`)
   }
 
   private static buildRequest (image: _Image): requestType {
     const message: requestType = { url: image.src }
+
     if (Object.values(image.dataset).length > 0) {
       message.lazyUrls = Object.values(image.dataset).map(url => {
-        if (typeof url === 'string' && url.length > 5) {
-          return ImageFilter.isValidHttpUrl(url) ? url : `${window.location.origin}${url}`
-        }
+        if (typeof url === 'string') return ImageFilter.prepareUrl(url)
       }).filter(notEmpty)
     }
 
     return message
-  }
-
-  private static isValidHttpUrl (string: string): boolean {
-    try {
-      const url: URL = new URL(string)
-      return url.protocol === 'http:' || url.protocol === 'https:'
-    } catch {
-      return false
-    }
   }
 }

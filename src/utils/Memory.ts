@@ -1,12 +1,18 @@
 import { _Performance } from './types'
 import { DEBUG } from './debug'
-import { logger } from './Logger'
+import { ILogger } from './Logger'
 
-export class Memory {
+type IMemory = {
+  start: () => void
+}
+
+export class Memory implements IMemory {
   private readonly DEBUG: boolean
   private TIMER: number
+  protected readonly logger: ILogger
 
-  constructor () {
+  constructor (logger: ILogger) {
+    this.logger = logger
     this.DEBUG = DEBUG
     this.TIMER = 0
   }
@@ -19,7 +25,7 @@ export class Memory {
     // Only for Google Chrome
     if (memory !== undefined) {
       const result = this.formatBytes(memory.usedJSHeapSize)
-      logger.log(`Memory usage: ${result}`)
+      this.logger.log(`Memory usage: ${result}`)
 
       clearTimeout(this.TIMER)
       this.TIMER = window.setTimeout(() => { this.start() }, 7000)

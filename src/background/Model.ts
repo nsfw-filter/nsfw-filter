@@ -1,5 +1,6 @@
 import { NSFWJS } from 'nsfw-filter-nsfwjs'
 import { responseType } from '../utils/types'
+import { ILogger } from '../utils/Logger'
 
 type IModel = {
   predictImage: (url: string) => Promise<boolean>
@@ -10,12 +11,16 @@ export class Model implements IModel {
   private readonly GIF_REGEX: RegExp
   private readonly FILTER_LIST: string[]
   private readonly IMAGE_SIZE: number
+  private readonly logger: ILogger
 
-  constructor (model: NSFWJS) {
+  constructor (model: NSFWJS, logger: ILogger) {
     this.model = model
+    this.logger = logger
     this.GIF_REGEX = /^.*(.gif)($|\W.*$)/
     this.FILTER_LIST = ['Hentai', 'Porn', 'Sexy']
     this.IMAGE_SIZE = 224
+
+    this.logger.log('Model is loaded')
   }
 
   private async loadImage (url: string): Promise<HTMLImageElement> {
@@ -34,7 +39,10 @@ export class Model implements IModel {
 
     const prediction = await this.model.classify(image, 1)
     const result: Boolean = prediction.length > 0 && this.FILTER_LIST.includes(prediction[0].className)
-    if (result === true) return Boolean(result)
+    if (result === true) {
+      this.logger.log(`IMG prediction for ${url} is ${prediction[0].className} ${prediction[0].probability}`)
+      return Boolean(result)
+    }
 
     if (this.GIF_REGEX.test(url)) {
       const predictionGIF = await this.model.classifyGif(image, { topk: 1, fps: 0.1 })
@@ -42,6 +50,7 @@ export class Model implements IModel {
       return Boolean(resultGIF)
     }
 
+    this.logger.log(`IMG prediction for ${url} is ${prediction[0].className} ${prediction[0].probability}`)
     return Boolean(result)
   }
 

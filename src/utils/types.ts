@@ -10,8 +10,9 @@ export type _Performance = Performance & PerformanceMemory
 
 export type requestType = {
   url: string
-  urls?: string[]
   lazyUrls?: string[]
+  _reconectTimer?: number
+  _reconectCount?: number
 }
 
 export type responseType = {
@@ -23,8 +24,6 @@ type customType = {
   _isChecked: boolean
   _fullRawImageTimer?: number
   _fullRawImageCounter?: number
-  _reconectTimer?: number
-  _reconectCount?: number
 }
 
 export type _HTMLImageElement = HTMLImageElement & customType
