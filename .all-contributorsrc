@@ -67,11 +67,20 @@
       "contributions": [
         "review"
       ]
+    },
+    {
+      "login": "bradydowling",
+      "name": "Brady Dowling",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/6668371?v=4",
+      "profile": "https://www.youtube.com/channel/UCPGv2tVqEt6iBFnnMTjnRBA",
+      "contributions": [
+        "ideas"
+      ]
     }
   ],
   "contributorsPerLine": 7,
   "projectName": "nsfw-filter",
-  "projectOwner": "navendu-pottekkat",
+  "projectOwner": "nsfw-filter",
   "repoType": "github",
   "repoHost": "https://github.com",
   "skipCi": true
