@@ -269,7 +269,7 @@ This project follows the [all-contributors](https://github.com/all-contributors/
 
 This is a completely Open Source project and it is free for use. A contribution from you would go a long way to lift my spirits up and push me to build more cool stuff in the future.
 
-You can [click this link](https://opencollective.com/nsfwfilter/donate) for sponsoring.
+You can sponsor on [Open Collective](https://opencollective.com/nsfwfilter/donate) or [become a Patron](https://www.patreon.com/bePatron?u=41162696).
 
 ### Adding new features or fixing bugs
 [(Back to top)](#table-of-contents)
