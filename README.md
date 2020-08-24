@@ -3,6 +3,12 @@
   <a href="https://www.producthunt.com/posts/nsfw-filter?utm_source=badge-featured&utm_medium=badge&utm_souce=badge-nsfw-filter" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=225086&theme=dark" alt="NSFW Filter - Web extension to block NSFW content using AI | Product Hunt Embed" style="width: 250px; height: 54px;" width="250px" height="54px" /></a>
 </p>
 <p align="center">
+  <a href="https://opencollective.com/nsfwfilter/donate" target="_blank">
+  <img src="https://opencollective.com/nsfwfilter/donate/button@2x.png?color=blue" width=300 />
+</a>  
+</p>
+  
+<p align="center">
   <img alt="GitHub release (latest by date including pre-releases)" src="https://img.shields.io/github/v/release/navendu-pottekkat/nsfw-filter?include_prereleases&style=flat-square">
   <a href="https://github.com/navendu-pottekkat/nsfw-filter/commits/master">
   <img src="https://img.shields.io/github/last-commit/navendu-pottekkat/nsfw-filter?style=flat-square"
