@@ -76,6 +76,15 @@
       "contributions": [
         "ideas"
       ]
+    },
+    {
+      "login": "mikecrittenden",
+      "name": "Mike Crittenden",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/32261?v=4",
+      "profile": "http://littlebluelabs.com",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
