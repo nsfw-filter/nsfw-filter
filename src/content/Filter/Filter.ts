@@ -19,13 +19,16 @@ export class Filter implements IFilter {
   }
 
   protected async requestToAnalyzeImage (request: requestType): Promise<boolean> {
-    return await new Promise((resolve) => {
-      this._requestToAnalyzeImage(request, resolve)
+    return await new Promise((resolve, reject) => {
+      try {
+        this._requestToAnalyzeImage(request, resolve)
+      } catch (error) {
+        reject(error)
+      }
     })
   }
 
-  // @ts-expect-error
-  private _requestToAnalyzeImage (request: requestType, resolve): void {
+  private _requestToAnalyzeImage (request: requestType, resolve: (value: boolean) => void): void {
     chrome.runtime.sendMessage(request, (response: responseType) => {
       if (chrome.runtime.lastError !== undefined) {
         this._handleBackgroundErrors(request, resolve, chrome.runtime.lastError.message)
@@ -37,8 +40,7 @@ export class Filter implements IFilter {
     })
   }
 
-  // @ts-expect-error
-  private _handleBackgroundErrors (request: requestType, resolve, message: string | undefined): void {
+  private _handleBackgroundErrors (request: requestType, resolve: (value: boolean) => void, message: string | undefined): void {
     request._reconectCount = request._reconectCount ?? 0
     this.logger.log(`Cannot connect to background worker for ${request.url} image, attempt ${request._reconectCount}, error: ${message}`)
     request._reconectCount++

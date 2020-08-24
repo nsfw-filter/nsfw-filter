@@ -19,7 +19,7 @@ export class ImageFilter extends Filter implements IImageFilter {
         image.style.visibility = 'hidden'
 
         this.logger.log(`Analyze image ${image.src}`)
-        this._analyzeImage(image).then(() => {}, () => {})
+        this._analyzeImage(image)
       }
     }
   }
@@ -32,17 +32,20 @@ export class ImageFilter extends Filter implements IImageFilter {
       const url: string | undefined = ImageFilter.prepareUrl(div.style.backgroundImage.slice(5, -2))
       if (url === undefined) return
 
-      const result = await this.requestToAnalyzeImage({ url })
-      if (result) {
-        this.blockedItems++
-        return
-      }
-
-      div.style.visibility = 'visible'
+      this.requestToAnalyzeImage({ url })
+        .then(result => {
+          if (result) {
+            this.blockedItems++
+          } else {
+            div.style.visibility = 'visible'
+          }
+        }).catch(_error => {
+          div.style.visibility = 'visible'
+        })
     }
   }
 
-  private async _analyzeImage (image: _Image): Promise<void> {
+  private _analyzeImage (image: _Image): void {
     // For google images case, where raw image has invalid url with slashes
     if (Array.isArray(image.src.match(/\/\/\/\/\//))) {
       this.handleInvalidRawDate(image)
@@ -50,14 +53,16 @@ export class ImageFilter extends Filter implements IImageFilter {
     }
 
     const request: requestType = ImageFilter.buildRequest(image)
-    const result = await this.requestToAnalyzeImage(request)
-
-    if (result) {
-      this.blockedItems++
-      return
-    }
-
-    image.style.visibility = 'visible'
+    this.requestToAnalyzeImage(request)
+      .then(result => {
+        if (result) {
+          this.blockedItems++
+        } else {
+          image.style.visibility = 'visible'
+        }
+      }).catch(_error => {
+        image.style.visibility = 'visible'
+      })
   }
 
   private handleInvalidRawDate (image: _Image): void {
@@ -67,8 +72,7 @@ export class ImageFilter extends Filter implements IImageFilter {
     clearTimeout(image._fullRawImageTimer)
 
     if (image._fullRawImageCounter < 77) {
-      // eslint-disable-next-line @typescript-eslint/no-misused-promises
-      image._fullRawImageTimer = window.setTimeout(async () => await this._analyzeImage(image), 100)
+      image._fullRawImageTimer = window.setTimeout(() => this._analyzeImage(image), 100)
       return
     }
 
