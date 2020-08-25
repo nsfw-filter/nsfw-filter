@@ -1,6 +1,6 @@
 // Used @ts-expect-error because of https://github.com/microsoft/TypeScript/issues/13086
 
-import { NSFWJS } from 'nsfw-filter-nsfwjs'
+import { NSFWJS } from '@nsfw-filter/nsfwjs'
 import { responseType } from '../utils/types'
 import { ILogger } from '../utils/Logger'
 

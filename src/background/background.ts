@@ -1,5 +1,5 @@
 import * as tf from '@tensorflow/tfjs'
-import { load as loadModel } from 'nsfw-filter-nsfwjs'
+import { load as loadModel } from '@nsfw-filter/nsfwjs'
 
 import { Memory } from '../utils/Memory'
 import { promiseSomeRace } from '../utils/promiseSomeRace'
