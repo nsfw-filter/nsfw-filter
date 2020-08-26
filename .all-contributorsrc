@@ -85,6 +85,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "garfieldbanks",
+      "name": "garfieldbanks",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/12904270?v=4",
+      "profile": "https://github.com/garfieldbanks",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7,
