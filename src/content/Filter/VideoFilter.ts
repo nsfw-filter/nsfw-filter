@@ -11,8 +11,7 @@ export class VideoFilter extends Filter implements IVideoFilter {
 
     if (video._isChecked === undefined && typeof url === 'string') {
       video._isChecked = true
-      video.style.visibility = 'hidden'
-      video.pause()
+      this.hideVideo(video)
       this._analyzeVideo(video).then(() => {}, () => {})
     }
   }
@@ -26,12 +25,20 @@ export class VideoFilter extends Filter implements IVideoFilter {
         return
       }
 
-      video.style.visibility = 'visible'
-      video.play().then(() => {}, () => {})
+      this.showVideo(video)
     } catch {
-      video.style.visibility = 'visible'
-      video.play().then(() => {}, () => {})
+      this.showVideo(video)
     }
+  }
+
+  private hideVideo (video: Video): void {
+    video.style.visibility = 'hidden'
+    video.pause()
+  }
+
+  private showVideo (video: Video): void {
+    video.style.visibility = 'visible'
+    video.play().then(() => {}, () => {})
   }
 
   private async _checkPoster (url: string): Promise<boolean> {
