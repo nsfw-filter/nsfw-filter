@@ -1,6 +1,6 @@
 // Used @ts-expect-error because of https://github.com/microsoft/TypeScript/issues/13086
 
-import { NSFWJS } from '@nsfw-filter/nsfwjs'
+import { NSFWJS, predictionType } from '@nsfw-filter/nsfwjs'
 import { responseType } from '../utils/types'
 import { ILogger } from '../utils/Logger'
 
@@ -79,19 +79,20 @@ export class Model implements IModel {
     const image = await this.loadImage(url)
 
     const prediction = await this.model.classify(image, 1)
-    const result: boolean = prediction.length > 0 && this.FILTER_LIST.includes(prediction[0].className)
+    const { result, className, probability } = this.handlePredictions([prediction])
     if (result) {
-      this.logger.log(`IMG prediction for ${url} is ${prediction[0].className} ${prediction[0].probability}`)
+      this.logger.log(`IMG prediction for ${url} is ${className} ${probability}`)
       return result
     }
 
     if (this.GIF_REGEX.test(url)) {
       const predictionGIF = await this.model.classifyGif(image, { topk: 1, fps: 0.1 })
-      const resultGIF = Boolean(predictionGIF.find(array => this.FILTER_LIST.includes(array[0].className)))
-      return resultGIF
+      const { result, className, probability } = this.handlePredictions(predictionGIF)
+      this.logger.log(`GIF prediction for ${url} is ${className} ${probability}`)
+      return result
     }
 
-    this.logger.log(`IMG prediction for ${url} is ${prediction[0].className} ${prediction[0].probability}`)
+    this.logger.log(`IMG prediction for ${url} is ${className} ${probability}`)
     return Boolean(result)
   }
 
@@ -101,5 +102,17 @@ export class Model implements IModel {
       : `Prediction result is ${result} for image ${url}`
 
     return { result, message }
+  }
+
+  private handlePredictions (predictions: predictionType[][]): { result: boolean, className: string, probability: number } {
+    const flattenArr = predictions.flat()
+
+    const prediction = flattenArr.find(({ className, probability }) => {
+      return this.FILTER_LIST.includes(className) && probability > 0.45
+    })
+
+    if (prediction !== undefined) return ({ result: true, ...prediction })
+
+    return ({ result: false, className: flattenArr[0].className, probability: flattenArr[0].probability })
   }
 }
