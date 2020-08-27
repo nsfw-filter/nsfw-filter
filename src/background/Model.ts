@@ -108,7 +108,7 @@ export class Model implements IModel {
     const flattenArr = predictions.flat()
 
     const prediction = flattenArr.find(({ className, probability }) => {
-      return this.FILTER_LIST.includes(className) && probability > 0.45
+      return this.FILTER_LIST.includes(className) && probability > 0.4
     })
 
     if (prediction !== undefined) return ({ result: true, ...prediction })
