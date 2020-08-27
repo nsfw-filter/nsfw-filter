@@ -16,8 +16,7 @@ export class ImageFilter extends Filter implements IImageFilter {
     if ((image.width > 32 && image.height > 32) || image.width === 0 || image.height === 0) {
       if (image._isChecked === undefined && image.src.length > 0) {
         image._isChecked = true
-        image.style.visibility = 'hidden'
-
+        this.hideImage(image)
         this.logger.log(`Analyze image ${image.src}`)
         this._analyzeImage(image)
       }
@@ -27,7 +26,7 @@ export class ImageFilter extends Filter implements IImageFilter {
   public async analyzeDiv (div: _Image): Promise<void> {
     if (div._isChecked === undefined && typeof div.style.backgroundImage === 'string' && div.style.backgroundImage.length > 0) {
       div._isChecked = true
-      div.style.visibility = 'hidden'
+      this.hideImage(div)
 
       const url: string | undefined = ImageFilter.prepareUrl(div.style.backgroundImage.slice(5, -2))
       if (url === undefined) return
@@ -37,17 +36,17 @@ export class ImageFilter extends Filter implements IImageFilter {
           if (result) {
             this.blockedItems++
           } else {
-            div.style.visibility = 'visible'
+            this.showImage(div)
           }
         }).catch(_error => {
-          div.style.visibility = 'visible'
+          this.showImage(div)
         })
     }
   }
 
   private _analyzeImage (image: _Image): void {
     // For google images case, where raw image has invalid url with slashes
-    if (Array.isArray(image.src.match(/\/\/\/\/\//))) {
+    if (Array.isArray(image.src.match(/\/\/\//))) {
       this.handleInvalidRawDate(image)
       return
     }
@@ -58,10 +57,10 @@ export class ImageFilter extends Filter implements IImageFilter {
         if (result) {
           this.blockedItems++
         } else {
-          image.style.visibility = 'visible'
+          this.showImage(image)
         }
       }).catch(_error => {
-        image.style.visibility = 'visible'
+        this.showImage(image)
       })
   }
 
@@ -76,7 +75,7 @@ export class ImageFilter extends Filter implements IImageFilter {
       return
     }
 
-    image.style.visibility = 'visible'
+    this.showImage(image)
     this.logger.log(`Invalid raw image, marked as visible ${image.src}`)
   }
 
@@ -90,5 +89,21 @@ export class ImageFilter extends Filter implements IImageFilter {
     }
 
     return message
+  }
+
+  private hideImage (image: _Image): void {
+    if (image.parentNode?.nodeName === 'BODY' && image.nodeName === 'IMG') {
+      image.hidden = true
+    }
+
+    image.style.visibility = 'hidden'
+  }
+
+  private showImage (image: _Image): void {
+    if (image.parentNode?.nodeName === 'BODY' && image.nodeName === 'IMG') {
+      image.hidden = false
+    }
+
+    image.style.visibility = 'visible'
   }
 }

@@ -17,13 +17,11 @@ export class DOMWatcher implements IDOMWatcher {
   private readonly observer: MutationObserver
   private readonly imageFilter: IImageFilter
   private readonly videoFilter: IVideoFilter
-  private readonly IGNORE_TAGES: string[]
 
   constructor (imageFilter: IImageFilter, videoFilter: IVideoFilter) {
     this.imageFilter = imageFilter
     this.videoFilter = videoFilter
     this.observer = new MutationObserver(this.callback.bind(this))
-    this.IGNORE_TAGES = ['META', 'NOSCRIPT', 'SCRIPT', 'STYLE']
   }
 
   public watch (): void {
@@ -49,7 +47,6 @@ export class DOMWatcher implements IDOMWatcher {
 
     for (let i = 0; i < mutation.addedNodes.length; i++) {
       if (mutation.addedNodes[i].nodeType !== 1) break
-      if (this.IGNORE_TAGES.includes(mutation.addedNodes[i].nodeName)) break
       shouldCheck = true
     }
 
