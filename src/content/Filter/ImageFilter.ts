@@ -92,18 +92,14 @@ export class ImageFilter extends Filter implements IImageFilter {
   }
 
   private hideImage (image: _Image): void {
-    if (image.parentNode?.nodeName === 'BODY' && image.nodeName === 'IMG') {
-      image.hidden = true
-    }
-
     image.style.visibility = 'hidden'
+
+    if (image.parentNode?.nodeName === 'BODY') image.hidden = true
   }
 
   private showImage (image: _Image): void {
-    if (image.parentNode?.nodeName === 'BODY' && image.nodeName === 'IMG') {
-      image.hidden = false
-    }
-
     image.style.visibility = 'visible'
+
+    if (image.parentNode?.nodeName === 'BODY') image.hidden = false
   }
 }
