@@ -30,7 +30,7 @@ export class Filter implements IFilter {
 
   private _requestToAnalyzeImage (request: requestType, resolve: (value: boolean) => void): void {
     chrome.runtime.sendMessage(request, (response: responseType) => {
-      if (chrome.runtime.lastError !== undefined) {
+      if (chrome.runtime.lastError !== null && chrome.runtime.lastError !== undefined) {
         this._handleBackgroundErrors(request, resolve, chrome.runtime.lastError.message)
         return
       }
