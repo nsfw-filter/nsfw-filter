@@ -1,17 +1,24 @@
 {
     "env": {
         "browser": true,
-        "es2020": true,
-        "webextensions": true
+        "webextensions": true,
+        "es2020": true
     },
     "extends": [
-        "standard"
+        "standard-with-typescript"
     ],
+    "parser": "@typescript-eslint/parser",
     "parserOptions": {
-        "ecmaVersion": 11,
-        "sourceType": "module"
+        "project": "./tsconfig.json"
     },
     "rules": {
-        "standard/no-callback-literal": 0
+        "standard/no-callback-literal": 0,
+        "@typescript-eslint/consistent-type-definitions": ["error", "type"],
+        "@typescript-eslint/restrict-template-expressions": ["error", {
+            "allowNumber": true,
+            "allowBoolean": true,
+            "allowNullish": true
+        }],
+        "@typescript-eslint/no-explicit-any": "error"
     }
 }
