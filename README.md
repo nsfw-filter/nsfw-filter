@@ -5,9 +5,9 @@
 <p align="center">
   <a href="https://opencollective.com/nsfwfilter/donate" target="_blank">
   <img src="https://opencollective.com/nsfwfilter/donate/button@2x.png?color=blue" width=300 />
-</a>  
+</a>
 </p>
-  
+
 <p align="center">
   <img alt="GitHub release (latest by date including pre-releases)" src="https://img.shields.io/github/v/release/navendu-pottekkat/nsfw-filter?include_prereleases&style=flat-square">
   <a href="https://github.com/navendu-pottekkat/nsfw-filter/commits/master">
@@ -67,7 +67,9 @@ As you can see below, the NSFW content in Google Images are hidden as soon as th
 
 Check [**DEMO.md**](./DEMO.md) for more.
 
-![](demo/images/demo_google.gif)
+<p align="center">
+  <img src="demo/images/demo_google_yegor.gif" />
+</p>
 
 # Table of contents
 
