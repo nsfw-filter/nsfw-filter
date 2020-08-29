@@ -61,15 +61,13 @@ Reach out to us! Join the [**Slack channel**](https://join.slack.com/t/nsfwfilte
 
 # Demo
 
-The website used in this demo is [**scroller/nsfw**](https://scrolller.com/nsfw), which randomly loads NSFW images.
+As you can see below, the NSFW content in Google Images are hidden as soon as the page is loaded.
 
-When the extension is installed, the images in the page is hidden.
-
-**You can try loading the same website with and without the extension to see it work. (The page may contain images that are innapropriate for some users)**
+**You can try loading the same page with and without the extension to see it work. (The page may contain images that are innapropriate for some users)**
 
 Check [**DEMO.md**](./DEMO.md) for more.
 
-![](demo/images/demo_new.gif)
+![](demo/images/demo_google.gif)
 
 # Table of contents
 
