@@ -21,7 +21,7 @@
          alt="GitHub pull requests">
   </br>
 
-  <img alt="Contributors" src="https://img.shields.io/badge/all_contributors-5-orange.svg?style=flat-square" href="#contributors-">
+  <img alt="Contributors" src="https://img.shields.io/badge/all_contributors-10-orange.svg?style=flat-square" href="#contributors-">
   <img alt="Contributing" src="https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg" href="code_of_conduct.md">
   <img alt="GitHub" src="https://img.shields.io/github/license/navendu-pottekkat/nsfw-filter?style=flat-square&color=yellow">
     <a href="https://ctt.ac/4e4Jt">
@@ -59,48 +59,28 @@ Supported browsers: [**Google Chrome**](#adding-to-chrome), [**Mozilla Firefox**
 
 Reach out to us! Join the [**Slack channel**](https://join.slack.com/t/nsfwfilter/shared_invite/zt-gfx0dewg-Hc0~3gu4jXcCDYWQxu3lZA).
 
-# What's new?
-
-**v1.1.0** released!
-
-Released in Chrome Webstore! Check above for the link!
-
-The images are now hidden when a page loads and become visible only when they are found to be not NSFW. The NSFW images remain hidden.
-
-Performance improvements.
-
-Bug fixes.
-
 # Demo
 
-The website used in this demo is [**scroller/nsfw**](https://scrolller.com/nsfw), which randomly loads NSFW images.
+As you can see below, the NSFW content in Google Images are hidden as soon as the page is loaded.
 
-When the extension is installed, the images in the page is hidden.
-
-**You can try loading the same website with and without the extension to see it work. (The page may contain images that are innapropriate for some users)**
+**You can try loading the same page with and without the extension to see it work. (The page may contain images that are innapropriate for some users)**
 
 Check [**DEMO.md**](./DEMO.md) for more.
 
-![](demo/images/demo_new.gif)
+![](demo/images/demo_google.gif)
 
 # Table of contents
 
 - [NSFW Filter](#nsfw-filter)
-- [What's new?](#whats-new)
 - [Demo](#demo)
 - [Table of contents](#table-of-contents)
 - [Installation](#installation)
     - [Adding to Chrome](#adding-to-chrome)
     - [Adding to Firefox](#adding-to-firefox)
 - [Usage](#usage)
-- [Development](#development)
-    - [Dependencies](#dependencies)
-    - [Project tree](#project-tree)
-    - [Guidelines](#guidelines)
 - [Contribute](#contribute)
     - [Contributors ✨](#contributors-)
     - [Sponsor](#sponsor)
-    - [Adding new features or fixing bugs](#adding-new-features-or-fixing-bugs)
 - [License](#license)
 - [Privacy](#privacy)
 
@@ -156,85 +136,9 @@ That's it! The extension is now ready to be used in Firefox!
 
 After adding the extension to Chrome/Firefox, it will light-up everytime you load a compatable website.
 
-When a page is loaded, the extension would check for images as you scroll across the page and runs the images through the algorithm and if NSFW images are found, it is hidden automatically.
+When a page is loaded, the extension would hide all the images in the page and only show images that have been classified as **NOT NSFW**.
 
 You can toggle(off/on) the extension from the ```chrome://extensions``` page in Chrome and ```about:debugging#/runtime/this-firefox``` in Firefox.
-
-# Development
-[(Back to top)](#table-of-contents)
-
-Check the [**wiki**](https://github.com/navendu-pottekkat/nsfw-filter/wiki) for detailed info.
-
-By default the code runs in production mode. This can be disabled during development by commenting out ```tf.enableProdMode ()``` in the ```/src/background.js``` file. This is enabled by default to improve the performance.
-
-### Dependencies
-[(Back to top)](#table-of-contents)
-
-```
-"@tensorflow/tfjs": "^2.0.1",
-"nsfwjs": "^2.2.0"
-```
-
-**devDependencies**
-
-```
-"parcel-bundler": "^1.12.4"
-```
-
-Run ```npm i``` to install the dependencies.
-
-### Project tree
-[(Back to top)](#table-of-contents)
-
-```
-├── CODE_OF_CONDUCT.md
-├── CONTRIBUTING.md
-├── demo
-│   └── images
-│       ├── banner.png
-│       ├── demo.gif
-│       ├── demo_new.gif
-│       ├── download.png
-│       ├── icon32.png
-│       ├── install_instructions_firefox.png
-│       ├── install_instructions.png
-│       ├── logo.png
-│       └── preview.png
-├── DEMO.md
-├── dist
-│   ├── images
-│   │   ├── icon128.png
-│   │   ├── icon16.png
-│   │   ├── icon32.png
-│   │   ├── icon48.png
-│   │   └── icon.png
-│   ├── manifest.json
-│   └── models
-│       ├── group1-shard1of1
-│       └── model.json
-├── docs
-│   └── README.md
-├── ISSUE_TEMPLATE.md
-├── LICENSE
-├── package.json
-├── package-lock.json
-├── PULL_REQ_TEMPLATE.md
-├── README.md
-└── src
-    ├── background.js
-    └── content.js
-```
-
-### Guidelines
-[(Back to top)](#table-of-contents)
-
-Edit the ```background.js```, ```utils.js``` and ```content.js``` files in the ```/src``` folder in the root directory and **NOT** the one in ```/dist/src```.
-
-The contents of ```/dist/src``` folder is automatically created when you run ```npm run build``` and should **NOT** be tampered.
-
-The model use for this project [nsfwjs](https://github.com/infinitered/nsfwjs) is stored in ```dist/models```. This can be changed to use your own models built using TensorFlow JS. You can read the [docs](https://www.tensorflow.org/js) from TensorFlow to learn more.
-
-While making changes or adding new files, make sure to add it in the ```/dist``` folder and add it to ```/dist/manifest.json``` file.
 
 # Contribute
 [(Back to top)](#table-of-contents)
@@ -270,25 +174,16 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 
 This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
 
+Please check the [**Contributing Guidelines**](https://github.com/navendu-pottekkat/nsfw-filter/blob/master/CONTRIBUTING.md) before contributing.
+
 ### Sponsor
 [(Back to top)](#table-of-contents)
 
-This is a completely Open Source project and it is free for use. A contribution from you would go a long way to lift my spirits up and push me to build more cool stuff in the future.
+This is a completely Open Source project and it is free for use.
+
+Help us in keeping this project maintained.
 
 You can sponsor on [Open Collective](https://opencollective.com/nsfwfilter/donate) or [become a Patron](https://www.patreon.com/bePatron?u=41162696).
-
-### Adding new features or fixing bugs
-[(Back to top)](#table-of-contents)
-
-Check out [Development](#development) for setting up your development environment.
-
-Submit a **pull request**, wait for **review**. I will check(usually) every-other-day.
-
-Please follow the [**Code of Conduct**](./CODE_OF_CONDUCT.md).
-
-Contributions of any kind are welcome! Reach out to us through this [**Slack channel**](https://join.slack.com/t/nsfwfilter/shared_invite/zt-gfx0dewg-Hc0~3gu4jXcCDYWQxu3lZA).
-
-Check the [**guidelines**](https://github.com/navendu-pottekkat/nsfw-filter/blob/master/CONTRIBUTING.md) before contributing.
 
 # License
 [(Back to top)](#table-of-contents)
