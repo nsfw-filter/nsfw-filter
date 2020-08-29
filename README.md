@@ -21,7 +21,7 @@
          alt="GitHub pull requests">
   </br>
 
-  <img alt="Contributors" src="https://img.shields.io/badge/all_contributors-5-orange.svg?style=flat-square" href="#contributors-">
+  <img alt="Contributors" src="https://img.shields.io/badge/all_contributors-10-orange.svg?style=flat-square" href="#contributors-">
   <img alt="Contributing" src="https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg" href="code_of_conduct.md">
   <img alt="GitHub" src="https://img.shields.io/github/license/navendu-pottekkat/nsfw-filter?style=flat-square&color=yellow">
     <a href="https://ctt.ac/4e4Jt">
@@ -174,7 +174,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 
 This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
 
-Please check the **[Contributing Guidelines**](https://github.com/navendu-pottekkat/nsfw-filter/blob/master/CONTRIBUTING.md) before contributing.
+Please check the [**Contributing Guidelines**](https://github.com/navendu-pottekkat/nsfw-filter/blob/master/CONTRIBUTING.md) before contributing.
 
 ### Sponsor
 [(Back to top)](#table-of-contents)
