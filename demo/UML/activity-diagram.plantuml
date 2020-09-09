@@ -1,0 +1,89 @@
+@startuml NSFW Filter
+
+!include https://raw.githubusercontent.com/bschwarz/puml-themes/master/themes/lightgray/puml-theme-lightgray.puml
+
+start
+
+:user opens webpage;
+
+partition content_script {
+  :DOMWatcher catches DOM mutation;
+
+  if (Does mutation contain an img?) then (Yes)
+    :hide img HTML element;
+
+    if (Does img contain dataset attribute?) then (Yes)
+      :create new Request(image.src, lazyUrls);
+    else (No)
+      :create new Request(image.src);
+    endif
+
+  elseif (Does mutation contain a div?) then (Yes)
+    if (Does div contain style.backgroundImage attribute?) then (Yes)
+      :hide div HTML element;
+      :create new Request(div.style.backgroundImage);
+    else (No)
+      stop
+    endif
+
+  elseif (Does mutation contain a video?) then (Yes)
+    if (Does video contain poster attribute?) then (Yes)
+      :hide video HTML element;
+      :create new Request(video.poster);
+    else (No)
+      stop
+    endif
+  else (Nothing)
+    stop
+  endif
+
+  repeat
+  :send request to background_script;
+  repeat while (Are there any errors during the sending?) is (Yes)
+  ->No;
+}
+
+partition background_script {
+  :predict request.url image;
+
+    if (Is request.url image a NSFW?) then (Yes)
+      :send TRUE to content_script;
+    else (No)
+      if (Does request.lazyUrls contain urls?) then (Yes)
+        :predict request.lazyUrls images and wait for first TRUE;
+        fork
+          :predict lazyUrl_1 image;
+        fork again
+          :predict lazyUrl_2 image;
+        fork again
+          :predict lazyUrl_N image;
+        end fork
+
+        note right: Promise.race()
+
+      if (Is one of request.lazyUrls images a NSFW?) then (Yes)
+        :send TRUE to content_script;
+      else (No)
+        :send FALSE to content_script;
+      endif
+
+
+      else (No)
+        :send FALSE to content_script;
+      endif
+    endif
+}
+
+partition content_script {
+  :receive response from background_script;
+
+    if (Is response a TRUE?) then (Yes)
+      stop
+    else (No)
+      :show HTML element (img/div/video);
+    endif
+}
+
+stop
+
+@enduml
