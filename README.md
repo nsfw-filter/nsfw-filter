@@ -140,6 +140,8 @@ When a page is loaded, the extension would hide all the images in the page and o
 
 You can toggle(off/on) the extension from the ```chrome://extensions``` page in Chrome and ```about:debugging#/runtime/this-firefox``` in Firefox.
 
+![](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/nsfw-filter/nsfw-filter/master/demo/UML/activity-diagram.plantuml)
+
 # Contribute
 [(Back to top)](#table-of-contents)
 
