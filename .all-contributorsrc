@@ -130,6 +130,15 @@
       "contributions": [
         "ideas"
       ]
+    },
+    {
+      "login": "miaokun-normal",
+      "name": "miaokun-normal",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/67724210?v=4",
+      "profile": "https://github.com/miaokun-normal",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7,
