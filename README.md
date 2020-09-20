@@ -40,17 +40,18 @@
   </a>
 </p>
 
-<p style="font-weight: 700;font-size: 30px;" align=center>
-  <span style="color:#7C82DC;">NSFW F<span/><span style="color:#ffffff;">ilter<span/>
+<p align=center>
+  <span style="font-weight: 700;font-size: 30px;color:#7C82DC;">NSFW F<span/><span style="font-weight: 700;font-size: 30px;color:#ffffff;">ilter<span/>
 <p/>
 
-A Google Chrome / Firefox extension that blocks NSFW images from the web pages that you load using TensorFlow JS.
+A Google Chrome/Firefox extension that blocks NSFW images from the web pages that you load using TensorFlowJS.
 
 ***This extension does **NOT** collect/send any user data. All the operations on the images are done locally on the browser. No user data is being sent to a server for processing.***
 <br/><br/>
 
-![](./demo/images/demo_v2.gif)
-
+<p align="center">
+  <img alt="GitHub release" src="https://raw.githubusercontent.com/nsfw-filter/nsfw-filter/fix/redundant-readme-parts/demo/images/demo_v2.gif">
+<p/>
 
 A Web extension that filters out NSFW images from websites. It uses TensorFlow JS- a Machine Learning framework- to check for NSFW images when a web page is loaded. When a web page is loaded, all the images remain hidden until they are found to be NSFW or not. If they are found to be NSFW, they remain hidden. Otherwise, they become visible.
 <br/>
