@@ -1,99 +1,102 @@
 ![](./demo/images/preview.png)
+
 <p align="center">
-  <a href="https://www.producthunt.com/posts/nsfw-filter?utm_source=badge-featured&utm_medium=badge&utm_souce=badge-nsfw-filter" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=225086&theme=dark" alt="NSFW Filter - Web extension to block NSFW content using AI | Product Hunt Embed" style="width: 250px; height: 54px;" width="250px" height="54px" /></a>
-</p>
-<p align="center">
-  <a href="https://opencollective.com/nsfwfilter/donate" target="_blank">
-  <img src="https://opencollective.com/nsfwfilter/donate/button@2x.png?color=blue" width=300 />
-</a>  
-</p>
-  
-<p align="center">
-  <img alt="GitHub release (latest by date including pre-releases)" src="https://img.shields.io/github/v/release/navendu-pottekkat/nsfw-filter?include_prereleases&style=flat-square">
-  <a href="https://github.com/navendu-pottekkat/nsfw-filter/commits/master">
-  <img src="https://img.shields.io/github/last-commit/navendu-pottekkat/nsfw-filter?style=flat-square"
-         alt="GitHub last commit">
-  <a href="https://github.com/navendu-pottekkat/nsfw-filter/issues">
-  <img src="https://img.shields.io/github/issues/navendu-pottekkat/nsfw-filter?style=flat-square&color=red"
-         alt="GitHub issues">
-  <a href="https://github.com/navendu-pottekkat/nsfw-filter/pulls">
-  <img src="https://img.shields.io/github/issues-pr/navendu-pottekkat/nsfw-filter?style=flat-square&color=blue"
-         alt="GitHub pull requests">
+  <a href="https://github.com/nsfw-filter/nsfw-filter/releases/" target="_blank">
+    <img alt="GitHub release" src="https://img.shields.io/github/v/release/navendu-pottekkat/nsfw-filter?include_prereleases&style=flat-square">
+  </a>
+
+  <a href="https://github.com/navendu-pottekkat/nsfw-filter/commits/master" target="_blank">
+    <img src="https://img.shields.io/github/last-commit/navendu-pottekkat/nsfw-filter?style=flat-square" alt="GitHub last commit">
+  </a>
+
+  <a href="https://github.com/navendu-pottekkat/nsfw-filter/issues" target="_blank">
+    <img src="https://img.shields.io/github/issues/navendu-pottekkat/nsfw-filter?style=flat-square&color=red" alt="GitHub issues">
+  </a>
+
+  <a href="https://github.com/navendu-pottekkat/nsfw-filter/pulls" target="_blank">
+    <img src="https://img.shields.io/github/issues-pr/navendu-pottekkat/nsfw-filter?style=flat-square&color=blue" alt="GitHub pull requests">
+  </a>
+
   </br>
 
-  <img alt="Contributors" src="https://img.shields.io/badge/all_contributors-10-orange.svg?style=flat-square" href="#contributors-">
-  <img alt="Contributing" src="https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg" href="code_of_conduct.md">
-  <img alt="GitHub" src="https://img.shields.io/github/license/navendu-pottekkat/nsfw-filter?style=flat-square&color=yellow">
-    <a href="https://ctt.ac/4e4Jt">
-  <img src="https://img.shields.io/twitter/url?style=flat-square&logo=twitter&url=https://ctt.ac/4e4Jt"
-       alt="GitHub tweet"></a>
+  <a href="https://github.com/nsfw-filter/nsfw-filter#contribute" target="_blank">
+    <img alt="Contributors" src="https://img.shields.io/badge/all_contributors-10-orange.svg?style=flat-square">
+  </a>
+
+  <a href="https://standardjs.com" target="_blank">
+    <img alt="ESLint" src="https://img.shields.io/badge/code_style-standard-brightgreen.svg">
+  </a>
+
+  <a href="https://www.producthunt.com/posts/nsfw-filter?utm_source=badge-featured&utm_medium=badge&utm_souce=badge-nsfw-filter" target="_blank">
+    <img alt="ProductHunt" src="https://img.shields.io/badge/ProductHunt-210-green.svg">
+  <a/>
+
+  <a href="https://github.com/nsfw-filter/nsfw-filter/blob/master/LICENSE" target="_blank">
+    <img alt="LICENSE" src="https://img.shields.io/github/license/navendu-pottekkat/nsfw-filter?style=flat-square&color=yellow">
+  <a/>
+
+  <a href="https://ctt.ac/4e4Jt" target="_blank">
+    <img src="https://img.shields.io/twitter/url?style=flat-square&logo=twitter&url=https://ctt.ac/4e4Jt" alt="GitHub tweet">
+  </a>
 </p>
 
-# NSFW Filter
+<p style="font-weight: 700;font-size: 30px;" align=center>
+  <span style="color:#7C82DC;">NSFW F<span/><span style="color:#ffffff;">ilter<span/>
+<p/>
 
-[<img src="https://github.com/navendu-pottekkat/nsfw-filter/blob/master/demo/images/download.png" align="right"
-     alt="Download now" width="120" height="178">](https://github.com/navendu-pottekkat/nsfw-filter/archive/master.zip)
+A Google Chrome / Firefox extension that blocks NSFW images from the web pages that you load using TensorFlow JS.
 
-A Web extension that filters out NSFW images from websites.
+***This extension does **NOT** collect/send any user data. All the operations on the images are done locally on the browser. No user data is being sent to a server for processing.***
+<br/><br/>
 
-It uses TensorFlow JS- a Machine Learning framework- to check for NSFW images when a web page is loaded.
+![](./demo/images/demo_v2.gif)
 
-When a web page is loaded, all the images remain hidden until they are found to be NSFW or not. If they are found to be NSFW, they remain hidden. Otherwise, they become visible.
 
-***The extension runs completely on your browser. i.e No user data is being sent to a server for processing.***
+A Web extension that filters out NSFW images from websites. It uses TensorFlow JS- a Machine Learning framework- to check for NSFW images when a web page is loaded. When a web page is loaded, all the images remain hidden until they are found to be NSFW or not. If they are found to be NSFW, they remain hidden. Otherwise, they become visible.
+<br/>
+<p align="center">
+  <a href="https://chrome.google.com/webstore/detail/nsfw-filter/kmgagnlkckiamnenbpigfaljmanlbbhh" target="_blank">
+    <img src="https://raw.githubusercontent.com/navendu-pottekkat/files/master/nsfw-filter/chrome.gif" alt="Download now" width="160">
+  <a/>
+  <a href="https://addons.mozilla.org/en-US/firefox/addon/nsfw-filter/" target="_blank">
+    <img src="https://raw.githubusercontent.com/navendu-pottekkat/files/master/nsfw-filter/firefox.gif" alt="Download now" width="160">
+  <a/>
+<p/>
+
+
+<a href="https://chrome.google.com/webstore/detail/nsfw-filter/kmgagnlkckiamnenbpigfaljmanlbbhh" target="_blank"><strong>Download for Chrome<strong/><a/> | <a href="https://addons.mozilla.org/en-US/firefox/addon/nsfw-filter/" target="_blank"><strong>Download for Firefox<strong/><a/>
+
 
 Read about the release in [**Hacker Noon**](https://hackernoon.com/nsfw-filter-introduction-building-a-safer-internet-using-ai-jq1e3u2f) or in [**Towards Data Science**](https://towardsdatascience.com/building-a-safer-internet-for-everyone-using-ai-175df5e02cee).
 
-Model used- [**nsfwjs**](https://github.com/infinitered/nsfwjs) developed by [**Infinite Red, Inc.**](https://github.com/infinitered)
-
-[<img src="https://github.com/navendu-pottekkat/files/blob/master/nsfw-filter/source.gif" align="center"
-     alt="Download now" width="120">](https://github.com/navendu-pottekkat/nsfw-filter/archive/master.zip)
-[<img src="https://github.com/navendu-pottekkat/files/blob/master/nsfw-filter/chrome.gif" align="center"
-     alt="Download now" width="120">](https://chrome.google.com/webstore/detail/nsfw-filter/kmgagnlkckiamnenbpigfaljmanlbbhh)
-[<img src="https://github.com/navendu-pottekkat/files/blob/master/nsfw-filter/firefox.gif" align="center"
-     alt="Download now" width="120">](https://addons.mozilla.org/en-US/firefox/addon/nsfw-filter/)
-
-[**Download NSFW Filter**](https://github.com/navendu-pottekkat/nsfw-filter/archive/master.zip) | [**Download for Chrome**](https://chrome.google.com/webstore/detail/nsfw-filter/kmgagnlkckiamnenbpigfaljmanlbbhh) | [**Download for Firefox**](https://addons.mozilla.org/en-US/firefox/addon/nsfw-filter/)
-
-Supported browsers: [**Google Chrome**](#adding-to-chrome), [**Mozilla Firefox**](#adding-to-firefox).
+Model used - [**nsfwjs**](https://github.com/infinitered/nsfwjs) developed by [**Infinite Red, Inc.**](https://github.com/infinitered)
 
 Reach out to us! Join the [**Slack channel**](https://join.slack.com/t/nsfwfilter/shared_invite/zt-gt1lgdiv-K2VR~UVUxwaTPWCLSmDiug).
 
-# Demo
-
-As you can see below, the NSFW content in Google Images are hidden as soon as the page is loaded.
-
-**You can try loading the same page with and without the extension to see it work. (The page may contain images that are innapropriate for some users)**
-
-Check [**DEMO.md**](./DEMO.md) for more.
-
-![](demo/images/demo_google.gif)
-
 # Table of contents
 
-- [NSFW Filter](#nsfw-filter)
-- [Demo](#demo)
-- [Table of contents](#table-of-contents)
+- [Usage](#usage)
 - [Installation](#installation)
     - [Adding to Chrome](#adding-to-chrome)
     - [Adding to Firefox](#adding-to-firefox)
-- [Usage](#usage)
+    - [Activity Diagram](#activity-diagram)
 - [Contribute](#contribute)
-    - [Contributors ✨](#contributors-)
-    - [Sponsor](#sponsor)
-- [License](#license)
-- [Privacy](#privacy)
+
+# Usage
+
+After adding the extension to Chrome/Firefox, it will light-up everytime you load a compatable website.
+
+When a page is loaded, the extension would hide all the images in the page and only show images that have been classified as **NOT NSFW**.
+
+You can toggle(off/on) the extension from the ```chrome://extensions``` page in Chrome and ```about:debugging#/runtime/this-firefox``` in Firefox.
 
 # Installation
-[(Back to top)](#table-of-contents)
 
 These instructions are for **developers**.
 
-You can download for use directly from [**chrome.google.com/webstore/nsfw-filter**](https://chrome.google.com/webstore/detail/nsfw-filter/kmgagnlkckiamnenbpigfaljmanlbbhh) and [**addons.mozilla/nsfw-filter**](https://addons.mozilla.org/en-US/firefox/addon/nsfw-filter/).
-
 Clone this repository and navigate inside the project folder and install the dependencies by running:
 
-```
+```sh
 npm ci
 ```
 
@@ -104,7 +107,6 @@ npm run build
 ```
 
 ### Adding to Chrome
-[(Back to top)](#table-of-contents)
 
 To install the developer version follow the steps below. To just use the extension download from [**chrome.google.com/webstore/nsfw-filter**](https://chrome.google.com/webstore/detail/nsfw-filter/kmgagnlkckiamnenbpigfaljmanlbbhh)
 
@@ -114,12 +116,13 @@ Enable Developer Mode by clicking the toggle switch next to Developer mode.
 
 Click the LOAD UNPACKED button and select the extension directory(```.../dist```).
 
-<img src="./demo/images/install_instructions.png" alt="Install Instructions">
+<p align="center">
+  <img src="./demo/images/install_instructions.png" alt="Install Instructions">
+<p/>
 
 Voila! The extension is now installed and ready to be used!
 
 ### Adding to Firefox
-[(Back to top)](#table-of-contents)
 
 To install the developer version follow the steps below. To just use the extension download from [**addons.mozilla/nsfw-filter**](https://addons.mozilla.org/en-US/firefox/addon/nsfw-filter/)
 
@@ -127,26 +130,21 @@ After finishing [Installation](#installation), open Firefox and open the Debug A
 
 Click Load Temporary Add-on and select the ```manifest.json``` file from the ```.../dist``` directory.
 
-<img src="./demo/images/install_instructions_firefox.png" alt="Install Instructions">
+<p align="center">
+  <img src="./demo/images/install_instructions_firefox.png" width="470px" alt="Install Instructions">
+<p/>
 
 That's it! The extension is now ready to be used in Firefox!
 
-# Usage
-[(Back to top)](#table-of-contents)
-
-After adding the extension to Chrome/Firefox, it will light-up everytime you load a compatable website.
-
-When a page is loaded, the extension would hide all the images in the page and only show images that have been classified as **NOT NSFW**.
-
-You can toggle(off/on) the extension from the ```chrome://extensions``` page in Chrome and ```about:debugging#/runtime/this-firefox``` in Firefox.
+### Activity Diagram
 
 ![](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/nsfw-filter/nsfw-filter/master/demo/UML/activity-diagram.plantuml)
 
 # Contribute
-[(Back to top)](#table-of-contents)
 
-### Contributors ✨
-[(Back to top)](#table-of-contents)
+Please check the [**Contributing Guidelines**](https://github.com/navendu-pottekkat/nsfw-filter/blob/master/CONTRIBUTING.md) before contributing.
+
+Also you can sponsor on [Open Collective](https://opencollective.com/nsfwfilter/donate) or [become a Patron](https://www.patreon.com/bePatron?u=41162696).
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
 
@@ -179,24 +177,3 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
 This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
-
-Please check the [**Contributing Guidelines**](https://github.com/navendu-pottekkat/nsfw-filter/blob/master/CONTRIBUTING.md) before contributing.
-
-### Sponsor
-[(Back to top)](#table-of-contents)
-
-This is a completely Open Source project and it is free for use.
-
-Help us in keeping this project maintained.
-
-You can sponsor on [Open Collective](https://opencollective.com/nsfwfilter/donate) or [become a Patron](https://www.patreon.com/bePatron?u=41162696).
-
-# License
-[(Back to top)](#table-of-contents)
-
-[GNU General Public License version 3](https://opensource.org/licenses/GPL-3.0)
-
-# Privacy
-[(Back to top)](#table-of-contents)
-
-This extension does **NOT** collect and send any user data. All the operations on the images are done locally on the browser.
