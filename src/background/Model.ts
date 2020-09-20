@@ -1,7 +1,4 @@
-// Used @ts-expect-error because of https://github.com/microsoft/TypeScript/issues/13086
-
 import { NSFWJS, predictionType } from '@nsfw-filter/nsfwjs'
-import { responseType } from '../utils/types'
 import { ILogger } from '../utils/Logger'
 
 type IModel = {
@@ -46,14 +43,14 @@ export class Model implements IModel {
       const queueName = url
 
       if (this.requestQueue.has(queueName)) {
-        // @ts-expect-error
+        // @ts-expect-error https://github.com/microsoft/TypeScript/issues/13086
         this.requestQueue.get(queueName).push([{ resolve, reject }])
       } else {
         this.requestQueue.set(queueName, [[{ resolve, reject }]])
 
         this._predictImage(url)
           .then(result => {
-            // @ts-expect-error
+            // @ts-expect-error https://github.com/microsoft/TypeScript/issues/13086
             for (const [{ resolve }] of this.requestQueue.get(queueName)) {
               resolve(result)
             }
@@ -61,7 +58,7 @@ export class Model implements IModel {
             this.requestQueue.delete(queueName)
           }).catch(error => {
             if (this.requestQueue.has(queueName)) {
-              // @ts-expect-error
+              // @ts-expect-error https://github.com/microsoft/TypeScript/issues/13086
               for (const [{ reject }] of this.requestQueue.get(queueName)) {
                 reject(error)
               }
@@ -94,14 +91,6 @@ export class Model implements IModel {
 
     this.logger.log(`IMG prediction for ${url} is ${className} ${probability}`)
     return Boolean(result)
-  }
-
-  public static buildMsg (result: boolean, url: string, error?: string): responseType {
-    const message = typeof error === 'string' && error.length > 0
-      ? `Prediction result is ${result} for image ${url}, error: ${error}`
-      : `Prediction result is ${result} for image ${url}`
-
-    return { result, message }
   }
 
   private handlePredictions (predictions: predictionType[][]): { result: boolean, className: string, probability: number } {

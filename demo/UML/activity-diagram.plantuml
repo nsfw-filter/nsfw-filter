@@ -59,7 +59,7 @@ partition background_script {
           :predict lazyUrl_N image;
         end fork
 
-        note right: Promise.race()
+        note right: Promise.any()
 
       if (Is one of request.lazyUrls images a NSFW?) then (Yes)
         :send TRUE to content_script;

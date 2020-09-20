@@ -1,6 +1,6 @@
 // Tests are here https://stackoverflow.com/a/51160869/10432429
 
-export const promiseSomeRace = async (arr: Array<Promise<boolean>>): Promise<boolean> => {
+export const promiseAny = async (arr: Array<Promise<boolean>>): Promise<boolean> => {
   // Don't mutate arguemnts
   const arrCopy = arr.slice(0)
 

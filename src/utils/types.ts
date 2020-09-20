@@ -8,18 +8,6 @@ type PerformanceMemory = {
 
 export type _Performance = Performance & PerformanceMemory
 
-export type requestType = {
-  url: string
-  lazyUrls?: string[]
-  _reconectTimer?: number
-  _reconectCount?: number
-}
-
-export type responseType = {
-  result: boolean
-  message: string
-}
-
 type customType = {
   _isChecked: boolean
   _fullRawImageTimer?: number

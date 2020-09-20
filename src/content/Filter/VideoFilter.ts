@@ -1,5 +1,7 @@
-import { _HTMLVideoElement as Video, requestType } from '../../utils/types'
+import { PredictionRequest } from '../../utils/messages'
+import { _HTMLVideoElement as Video } from '../../utils/types'
 import { Filter } from './Filter'
+import { prepareUrl } from '../../utils/prepareUrl'
 
 export type IVideoFilter = {
   analyzeVideo: (video: Video) => void
@@ -7,7 +9,7 @@ export type IVideoFilter = {
 
 export class VideoFilter extends Filter implements IVideoFilter {
   public analyzeVideo (video: Video): void {
-    const url = VideoFilter.prepareUrl(video.poster)
+    const url = prepareUrl(video.poster)
 
     if (video._isChecked === undefined && typeof url === 'string') {
       video._isChecked = true
@@ -43,7 +45,7 @@ export class VideoFilter extends Filter implements IVideoFilter {
 
   private async _checkPoster (url: string): Promise<boolean> {
     this.logger.log(`Analyze video ${url}`)
-    const request: requestType = { url }
+    const request = new PredictionRequest(url)
 
     return await this.requestToAnalyzeImage(request)
   }

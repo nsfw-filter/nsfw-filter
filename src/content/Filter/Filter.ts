@@ -1,5 +1,5 @@
-import { requestType, responseType } from '../../utils/types'
 import { ILogger } from '../../utils/Logger'
+import { PredictionRequest, PredictionResponse } from '../../utils/messages'
 
 type IFilter = {
   getBlockAmount: () => number
@@ -18,7 +18,7 @@ export class Filter implements IFilter {
     return this.blockedItems
   }
 
-  protected async requestToAnalyzeImage (request: requestType): Promise<boolean> {
+  protected async requestToAnalyzeImage (request: PredictionRequest): Promise<boolean> {
     return await new Promise((resolve, reject) => {
       try {
         this._requestToAnalyzeImage(request, resolve)
@@ -28,8 +28,8 @@ export class Filter implements IFilter {
     })
   }
 
-  private _requestToAnalyzeImage (request: requestType, resolve: (value: boolean) => void): void {
-    chrome.runtime.sendMessage(request, (response: responseType) => {
+  private _requestToAnalyzeImage (request: PredictionRequest, resolve: (value: boolean) => void): void {
+    chrome.runtime.sendMessage(request, (response: PredictionResponse) => {
       if (chrome.runtime.lastError !== null && chrome.runtime.lastError !== undefined) {
         this._handleBackgroundErrors(request, resolve, chrome.runtime.lastError.message)
         return
@@ -40,27 +40,15 @@ export class Filter implements IFilter {
     })
   }
 
-  private _handleBackgroundErrors (request: requestType, resolve: (value: boolean) => void, message: string | undefined): void {
-    request._reconectCount = request._reconectCount ?? 0
-    this.logger.log(`Cannot connect to background worker for ${request.url} image, attempt ${request._reconectCount}, error: ${message}`)
-    request._reconectCount++
-    clearTimeout(request._reconectTimer)
+  private _handleBackgroundErrors (request: PredictionRequest, resolve: (value: boolean) => void, message: string | undefined): void {
+    const reconnectCount = request.clearTimer()
+    this.logger.log(`Cannot connect to background worker for ${request.url} image, attempt ${reconnectCount}, error: ${message}`)
 
-    if (request._reconectCount > 15) {
+    if (reconnectCount > 15) {
       resolve(true)
       this.logger.log(`Background worker is down, marked as visible ${request.url}`)
     } else {
-      request._reconectTimer = window.setTimeout(() => this._requestToAnalyzeImage(request, resolve), 100)
-    }
-  }
-
-  protected static prepareUrl (string: string): string | undefined {
-    try {
-      const url: URL = new URL(string)
-      return (url.protocol === 'http:' || url.protocol === 'https:') ? string : undefined
-    } catch {
-      const FIRST_SLASH_REGEX = /^\/.*$/
-      return FIRST_SLASH_REGEX.test(string) ? `${window.location.origin}${string}` : undefined
+      request.reconectTimer = window.setTimeout(() => this._requestToAnalyzeImage(request, resolve), 100)
     }
   }
 }

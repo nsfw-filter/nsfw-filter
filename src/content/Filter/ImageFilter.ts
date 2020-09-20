@@ -1,9 +1,7 @@
-import { requestType, _HTMLImageElement as _Image } from '../../utils/types'
+import { _HTMLImageElement as _Image } from '../../utils/types'
 import { Filter } from './Filter'
-
-const notEmpty = <T>(value: T | null | undefined): value is T => {
-  return value !== null && value !== undefined
-}
+import { PredictionRequest } from '../../utils/messages'
+import { prepareUrl } from '../../utils/prepareUrl'
 
 export type IImageFilter = {
   analyzeImage: (image: _Image) => void
@@ -28,10 +26,11 @@ export class ImageFilter extends Filter implements IImageFilter {
       div._isChecked = true
       this.hideImage(div)
 
-      const url: string | undefined = ImageFilter.prepareUrl(div.style.backgroundImage.slice(5, -2))
+      const url: string | undefined = prepareUrl(div.style.backgroundImage.slice(5, -2))
       if (url === undefined) return
 
-      this.requestToAnalyzeImage({ url })
+      const request = new PredictionRequest(url)
+      this.requestToAnalyzeImage(request)
         .then(result => {
           if (result) {
             this.blockedItems++
@@ -51,7 +50,7 @@ export class ImageFilter extends Filter implements IImageFilter {
       return
     }
 
-    const request: requestType = ImageFilter.buildRequest(image)
+    const request = new PredictionRequest(image.src, image.dataset)
     this.requestToAnalyzeImage(request)
       .then(result => {
         if (result) {
@@ -77,18 +76,6 @@ export class ImageFilter extends Filter implements IImageFilter {
 
     this.showImage(image)
     this.logger.log(`Invalid raw image, marked as visible ${image.src}`)
-  }
-
-  private static buildRequest (image: _Image): requestType {
-    const message: requestType = { url: image.src }
-
-    if (Object.values(image.dataset).length > 0) {
-      message.lazyUrls = Object.values(image.dataset).map(url => {
-        if (typeof url === 'string') return ImageFilter.prepareUrl(url)
-      }).filter(notEmpty)
-    }
-
-    return message
   }
 
   private hideImage (image: _Image): void {
