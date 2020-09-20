@@ -100,7 +100,7 @@ npm ci
 
 After installing the dependencies, build the project by executing:
 
-```
+```sh
 npm run build
 ```
 
