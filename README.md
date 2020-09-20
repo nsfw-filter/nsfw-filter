@@ -41,13 +41,12 @@
 </p>
 
 <p align=center>
-  <span style="font-weight: 700;font-size: 30px;color:#7C82DC;">NSFW F<span/><span style="font-weight: 700;font-size: 30px;color:#ffffff;">ilter<span/>
+  <img alt='logo name' src='./demo/images/logo_name.png'>
 <p/>
 
 A Google Chrome/Firefox extension that blocks NSFW images from the web pages that you load using TensorFlowJS.
 
 ***This extension does **NOT** collect/send any user data. All the operations on the images are done locally on the browser. No user data is being sent to a server for processing.***
-<br/><br/>
 
 <p align="center">
   <img alt="GitHub release" src="https://raw.githubusercontent.com/nsfw-filter/nsfw-filter/fix/redundant-readme-parts/demo/images/demo_v2.gif">
