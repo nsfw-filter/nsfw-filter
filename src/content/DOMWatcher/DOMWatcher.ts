@@ -5,7 +5,7 @@
 // @TODO Canvas and SVG
 // @TODO Lazy loading for div.style.background-image?
 
-import { _HTMLImageElement as _Image, _HTMLVideoElement as Video } from '../../utils/types'
+import { _HTMLImageElement as _Image } from '../../utils/types'
 import { IVideoFilter } from '../Filter/VideoFilter'
 import { IImageFilter } from '../Filter/ImageFilter'
 
