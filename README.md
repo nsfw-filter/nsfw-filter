@@ -92,8 +92,6 @@ You can toggle(off/on) the extension from the ```chrome://extensions``` page in 
 
 # Installation
 
-These instructions are for **developers**.
-
 Clone this repository and navigate inside the project folder and install the dependencies by running:
 
 ```sh
