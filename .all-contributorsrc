@@ -139,6 +139,15 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "kitsune7",
+      "name": "Christopher Bradshaw",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/1205871?v=4",
+      "profile": "https://christopher-bradshaw.com",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7,
