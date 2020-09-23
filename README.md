@@ -24,11 +24,11 @@
   </a>
 
   <a href="https://standardjs.com" target="_blank">
-    <img alt="ESLint" src="https://img.shields.io/badge/code_style-standard-brightgreen.svg">
+    <img alt="ESLint" src="https://img.shields.io/badge/code_style-standard-brightgreen.svg?style=flat-square">
   </a>
 
   <a href="https://www.producthunt.com/posts/nsfw-filter?utm_source=badge-featured&utm_medium=badge&utm_souce=badge-nsfw-filter" target="_blank">
-    <img alt="ProductHunt" src="https://img.shields.io/badge/ProductHunt-210-green.svg">
+    <img alt="ProductHunt" src="https://img.shields.io/badge/ProductHunt-210-green.svg?style=flat-square">
   <a/>
 
   <a href="https://github.com/nsfw-filter/nsfw-filter/blob/master/LICENSE" target="_blank">
@@ -40,9 +40,9 @@
   </a>
 </p>
 
-<p align="center">
+<p align="left">
   <img alt='logo name' src='./demo/images/logo_name.png'>
-<p/>
+</p>
 
 A Google Chrome/Firefox extension that blocks NSFW images from the web pages that you load using TensorFlowJS.
 
@@ -50,22 +50,22 @@ A Google Chrome/Firefox extension that blocks NSFW images from the web pages tha
 
 <p align="center">
   <img alt="GitHub release" src="https://raw.githubusercontent.com/nsfw-filter/nsfw-filter/master/demo/images/demo_v3.gif">
-<p/>
+</p>
 
 A Web extension that filters out NSFW images from websites. It uses TensorFlow JS- a Machine Learning framework- to check for NSFW images when a web page is loaded. When a web page is loaded, all the images remain hidden until they are found to be NSFW or not. If they are found to be NSFW, they remain hidden. Otherwise, they become visible.
-<br/>
+</br>
 <p align="center">
   <a href="https://chrome.google.com/webstore/detail/nsfw-filter/kmgagnlkckiamnenbpigfaljmanlbbhh" target="_blank">
-    <img src="https://raw.githubusercontent.com/navendu-pottekkat/files/master/nsfw-filter/chrome.gif" alt="Download now" width="160">
-  <a/>
+    <img src="./demo/images/chrome.gif" alt="Download now" width="160">
+  </a>
   <a href="https://addons.mozilla.org/en-US/firefox/addon/nsfw-filter/" target="_blank">
-    <img src="https://raw.githubusercontent.com/navendu-pottekkat/files/master/nsfw-filter/firefox.gif" alt="Download now" width="160">
-  <a/>
-<p/>
+    <img src="./demo/images/firefox.gif" alt="Download now" width="160">
+  </a>
+</p>
 
-
-<a href="https://chrome.google.com/webstore/detail/nsfw-filter/kmgagnlkckiamnenbpigfaljmanlbbhh" target="_blank"><strong>Download for Chrome<strong/><a/> | <a href="https://addons.mozilla.org/en-US/firefox/addon/nsfw-filter/" target="_blank"><strong>Download for Firefox<strong/><a/>
-
+<p align="center">
+<a href="https://chrome.google.com/webstore/detail/nsfw-filter/kmgagnlkckiamnenbpigfaljmanlbbhh" target="_blank"><strong>Download for Chrome</strong></a> | <a href="https://addons.mozilla.org/en-US/firefox/addon/nsfw-filter/" target="_blank"><strong>Download for Firefox</strong></a>
+</p>
 
 Read about the release in [**Hacker Noon**](https://hackernoon.com/nsfw-filter-introduction-building-a-safer-internet-using-ai-jq1e3u2f) or in [**Towards Data Science**](https://towardsdatascience.com/building-a-safer-internet-for-everyone-using-ai-175df5e02cee).
 
