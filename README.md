@@ -144,7 +144,7 @@ That's it! The extension is now ready to be used in Firefox!
 
 Please check the [**Contributing Guidelines**](https://github.com/navendu-pottekkat/nsfw-filter/blob/master/CONTRIBUTING.md) before contributing.
 
-Also you can sponsor on [Open Collective](https://opencollective.com/nsfwfilter/donate) or [become a Patron](https://www.patreon.com/bePatron?u=41162696).
+You can also sponsor on [**Open Collective**](https://opencollective.com/nsfwfilter/donate) or [**become a Patron**](https://www.patreon.com/bePatron?u=41162696).
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
 
