@@ -39,6 +39,7 @@
     <img src="https://img.shields.io/twitter/url?style=flat-square&logo=twitter&url=https://ctt.ac/4e4Jt" alt="GitHub tweet">
   </a>
 </p>
+<hr>
 
 <p align="left">
   <img alt='logo name' src='./demo/images/logo_name.png'>
@@ -46,13 +47,17 @@
 
 A Google Chrome/Firefox extension that blocks NSFW images from the web pages that you load using TensorFlowJS.
 
-***This extension does **NOT** collect/send any user data. All the operations on the images are done locally on the browser. No user data is being sent to a server for processing.***
+*This extension **does NOT** collect/send any user data. All the operations on the images are done locally on the browser. No user data is being sent to a server for processing.*
 
 <p align="center">
   <img alt="GitHub release" src="https://raw.githubusercontent.com/nsfw-filter/nsfw-filter/master/demo/images/demo_v3.gif">
 </p>
 
-A Web extension that filters out NSFW images from websites. It uses TensorFlow JS- a Machine Learning framework- to check for NSFW images when a web page is loaded. When a web page is loaded, all the images remain hidden until they are found to be NSFW or not. If they are found to be NSFW, they remain hidden. Otherwise, they become visible.
+It uses TensorFlow JS- a Machine Learning framework- to check for NSFW images when a web page is loaded. 
+
+When a web page is loaded, all the images remain hidden until they are found to be NSFW or not. If they are found to be NSFW, they remain hidden. Otherwise, they become visible.
+
+It is free and is currently supported on both Chrome and Firefox. We are working on porting this to Safari also.
 </br>
 <p align="center">
   <a href="https://chrome.google.com/webstore/detail/nsfw-filter/kmgagnlkckiamnenbpigfaljmanlbbhh" target="_blank">
