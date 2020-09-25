@@ -70,7 +70,7 @@ export class DOMWatcher implements IDOMWatcher {
 
   private checkAttributeMutation (mutation: MutationRecord): void {
     if ((mutation.target as _Image).tagName === 'IMG') {
-      this.imageFilter.analyzeImage(mutation.target as _Image, true)
+      this.imageFilter.analyzeImage(mutation.target as _Image, mutation.attributeName === 'src')
     }
 
     // @TODO improve
@@ -85,7 +85,7 @@ export class DOMWatcher implements IDOMWatcher {
       subtree: true,
       childList: true,
       attributes: true,
-      attributeFilter: ['src']
+      attributeFilter: ['src', 'width', 'height']
     }
 
     return config

@@ -5,7 +5,7 @@
   "scripts": {
     "lint": "eslint .",
     "clean": "rimraf dist/src",
-    "dev": "npm run clean && webpack --config webpack/webpack.dev.js",
+    "dev": "npm run clean && webpack -w --config webpack/webpack.dev.js",
     "build": "npm run clean && webpack --config webpack/webpack.prod.js"
   },
   "author": {

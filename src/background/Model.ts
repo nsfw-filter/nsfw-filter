@@ -1,5 +1,6 @@
 import { NSFWJS, predictionType } from '@nsfw-filter/nsfwjs'
 import { ILogger } from '../utils/Logger'
+import { LRUCache } from '../utils/LRUCache'
 
 type IModel = {
   predictImage: (url: string) => Promise<boolean>
@@ -12,6 +13,8 @@ export class Model implements IModel {
   private readonly IMAGE_SIZE: number
   private readonly logger: ILogger
   private counter: number
+  private readonly LRUCache: LRUCache
+  private readonly loadedImages: Map<string, Promise<HTMLImageElement>>
   private readonly requestQueue: Map<string, Array<Array<{
     resolve: (value: boolean) => void
     reject: (error: Error) => void
@@ -24,20 +27,11 @@ export class Model implements IModel {
     this.FILTER_LIST = ['Hentai', 'Porn', 'Sexy']
     this.IMAGE_SIZE = 224
     this.requestQueue = new Map()
+    this.loadedImages = new Map()
     this.counter = 0
+    this.LRUCache = new LRUCache(300)
 
     this.logger.log('Model is loaded')
-  }
-
-  private async loadImage (url: string): Promise<HTMLImageElement> {
-    const image: HTMLImageElement = new Image(this.IMAGE_SIZE, this.IMAGE_SIZE)
-
-    return await new Promise((resolve, reject) => {
-      image.crossOrigin = 'anonymous'
-      image.onload = () => resolve(image)
-      image.onerror = (err) => reject(err)
-      image.src = url
-    })
   }
 
   public async predictImage (url: string): Promise<boolean> {
@@ -49,6 +43,8 @@ export class Model implements IModel {
         this.requestQueue.get(queueName).push([{ resolve, reject }])
       } else {
         this.requestQueue.set(queueName, [[{ resolve, reject }]])
+        this.loadedImages.set(url, this.loadImage(url))
+
         if (this.requestQueue.size <= 1) {
           this.addPrediction({ url, reject })
         }
@@ -68,6 +64,7 @@ export class Model implements IModel {
         }
 
         this.requestQueue.delete(queueName)
+        this.loadedImages.delete(queueName)
         this.goNext()
       }).catch(error => {
         if (this.requestQueue.has(queueName)) {
@@ -75,10 +72,12 @@ export class Model implements IModel {
           for (const [{ reject }] of this.requestQueue.get(queueName)) {
             reject(error)
           }
-          this.requestQueue.delete(queueName)
         } else {
           reject(error)
         }
+
+        this.requestQueue.delete(queueName)
+        this.loadedImages.delete(queueName)
         this.goNext()
       })
   }
@@ -95,24 +94,40 @@ export class Model implements IModel {
   }
 
   private async _predictImage (url: string): Promise<boolean> {
-    const image = await this.loadImage(url)
+    // @ts-expect-error https://github.com/microsoft/TypeScript/issues/13086
+    if (this.LRUCache.has(url)) return this.LRUCache.get(url)
+
+    // @ts-expect-error https://github.com/microsoft/TypeScript/issues/13086
+    const image: HTMLImageElement = this.loadedImages.has(url) ? await this.loadedImages.get(url) : await this.loadImage(url)
 
     const prediction = await this.model.classify(image, 1)
     const { result, className, probability } = this.handlePredictions([prediction])
     if (result) {
       this.logger.log(`IMG prediction for ${url} is ${className} ${probability}`)
+      this.LRUCache.set(url, result)
       return result
-    }
-
-    if (this.GIF_REGEX.test(url)) {
+    } else if (this.GIF_REGEX.test(url)) {
       const predictionGIF = await this.model.classifyGif(image, { topk: 1, fps: 0.1 })
       const { result, className, probability } = this.handlePredictions(predictionGIF)
       this.logger.log(`GIF prediction for ${url} is ${className} ${probability}`)
+      this.LRUCache.set(url, result)
+      return result
+    } else {
+      this.logger.log(`IMG prediction for ${url} is ${className} ${probability}`)
+      this.LRUCache.set(url, result)
       return result
     }
+  }
 
-    this.logger.log(`IMG prediction for ${url} is ${className} ${probability}`)
-    return Boolean(result)
+  private async loadImage (url: string): Promise<HTMLImageElement> {
+    const image: HTMLImageElement = new Image(this.IMAGE_SIZE, this.IMAGE_SIZE)
+
+    return await new Promise((resolve, reject) => {
+      image.crossOrigin = 'anonymous'
+      image.onload = () => resolve(image)
+      image.onerror = (err) => reject(err)
+      image.src = url
+    })
   }
 
   private handlePredictions (predictions: predictionType[][]): { result: boolean, className: string, probability: number } {

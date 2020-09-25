@@ -1,20 +1,28 @@
 import { _Image } from './types'
 import { Filter } from './Filter'
 import { PredictionRequest } from '../../utils/messages'
+import { ILogger } from 'utils/Logger'
 
 export type IImageFilter = {
-  analyzeImage: (image: _Image, attribute: boolean) => void
+  analyzeImage: (image: _Image, srcAttribute: boolean) => void
   // analyzeDiv: (div: _Image) => void
 }
 
 export class ImageFilter extends Filter implements IImageFilter {
-  public analyzeImage (image: _Image, attribute: boolean = false): void {
+  private readonly MIN_IMAGE_SIZE: number
+
+  constructor (_logger: ILogger) {
+    super(_logger)
+    this.MIN_IMAGE_SIZE = 41
+  }
+
+  public analyzeImage (image: _Image, srcAttribute: boolean = false): void {
     // @TODO @refactor Skip small images, but pass pending
     if (
       image.src.length > 0 &&
-      ((image.width > 32 && image.height > 32) || image.width === 0 || image.height === 0)
+      (image.width > this.MIN_IMAGE_SIZE && image.height > this.MIN_IMAGE_SIZE)
     ) {
-      if (attribute) {
+      if (srcAttribute) {
         this._analyzeImage(image)
       } else if (image._isChecked === undefined) {
         this._analyzeImage(image)
