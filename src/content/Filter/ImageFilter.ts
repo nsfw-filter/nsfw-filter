@@ -12,7 +12,7 @@ export class ImageFilter extends Filter implements IImageFilter {
     // @TODO @refactor Skip small images, but pass pending
     if (
       image.src.length > 0 &&
-      ((image.width > 32 && image.height > 32) || image.width === 0 || image.height === 0)
+      (image.width > 32 && image.height > 32)
     ) {
       if (attribute) {
         this._analyzeImage(image)
