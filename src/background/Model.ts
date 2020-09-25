@@ -14,6 +14,7 @@ export class Model implements IModel {
   private readonly logger: ILogger
   private counter: number
   private readonly LRUCache: LRUCache
+  private readonly loadedImages: Map<string, Promise<HTMLImageElement>>
   private readonly requestQueue: Map<string, Array<Array<{
     resolve: (value: boolean) => void
     reject: (error: Error) => void
@@ -26,6 +27,7 @@ export class Model implements IModel {
     this.FILTER_LIST = ['Hentai', 'Porn', 'Sexy']
     this.IMAGE_SIZE = 224
     this.requestQueue = new Map()
+    this.loadedImages = new Map()
     this.counter = 0
     this.LRUCache = new LRUCache(300)
 
@@ -41,6 +43,8 @@ export class Model implements IModel {
         this.requestQueue.get(queueName).push([{ resolve, reject }])
       } else {
         this.requestQueue.set(queueName, [[{ resolve, reject }]])
+        this.loadedImages.set(url, this.loadImage(url))
+
         if (this.requestQueue.size <= 1) {
           this.addPrediction({ url, reject })
         }
@@ -60,6 +64,7 @@ export class Model implements IModel {
         }
 
         this.requestQueue.delete(queueName)
+        this.loadedImages.delete(queueName)
         this.goNext()
       }).catch(error => {
         if (this.requestQueue.has(queueName)) {
@@ -67,10 +72,12 @@ export class Model implements IModel {
           for (const [{ reject }] of this.requestQueue.get(queueName)) {
             reject(error)
           }
-          this.requestQueue.delete(queueName)
         } else {
           reject(error)
         }
+
+        this.requestQueue.delete(queueName)
+        this.loadedImages.delete(queueName)
         this.goNext()
       })
   }
@@ -87,12 +94,11 @@ export class Model implements IModel {
   }
 
   private async _predictImage (url: string): Promise<boolean> {
-    if (this.LRUCache.has(url)) {
-      // @ts-expect-error https://github.com/microsoft/TypeScript/issues/13086
-      return this.LRUCache.get(url)
-    }
+    // @ts-expect-error https://github.com/microsoft/TypeScript/issues/13086
+    if (this.LRUCache.has(url)) return this.LRUCache.get(url)
 
-    const image = await this.loadImage(url)
+    // @ts-expect-error https://github.com/microsoft/TypeScript/issues/13086
+    const image: HTMLImageElement = this.loadedImages.has(url) ? await this.loadedImages.get(url) : await this.loadImage(url)
 
     const prediction = await this.model.classify(image, 1)
     const { result, className, probability } = this.handlePredictions([prediction])

@@ -70,7 +70,7 @@ export class DOMWatcher implements IDOMWatcher {
 
   private checkAttributeMutation (mutation: MutationRecord): void {
     if ((mutation.target as _Image).tagName === 'IMG') {
-      this.imageFilter.analyzeImage(mutation.target as _Image, true)
+      this.imageFilter.analyzeImage(mutation.target as _Image, mutation.attributeName === 'src')
     }
 
     // @TODO improve
