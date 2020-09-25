@@ -14,4 +14,4 @@ const init = (): void => {
 }
 
 // Ignore iframes, https://stackoverflow.com/a/326076/10432429
-try { if (window.self === window.top) init() } catch {}
+try { if (window.self === window.top) init() } catch { }
