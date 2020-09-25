@@ -1,6 +1,13 @@
-import { _Performance } from './types'
 import { DEBUG } from './debug'
 import { ILogger } from './Logger'
+
+type _Performance = Performance & {
+  readonly memory: {
+    jsHeapSizeLimit: number
+    totalJSHeapSize: number
+    usedJSHeapSize: number
+  }
+}
 
 type IMemory = {
   start: () => void
@@ -28,7 +35,7 @@ export class Memory implements IMemory {
       this.logger.log(`Memory usage: ${result}`)
 
       clearTimeout(this.TIMER)
-      this.TIMER = window.setTimeout(() => { this.start() }, 7000)
+      this.TIMER = window.setTimeout(() => { this.start() }, 10000)
     }
   }
 

@@ -1,7 +1,4 @@
-// Used @ts-expect-error because of https://github.com/microsoft/TypeScript/issues/13086
-
 import { NSFWJS, predictionType } from '@nsfw-filter/nsfwjs'
-import { responseType } from '../utils/types'
 import { ILogger } from '../utils/Logger'
 
 type IModel = {
@@ -14,6 +11,7 @@ export class Model implements IModel {
   private readonly FILTER_LIST: string[]
   private readonly IMAGE_SIZE: number
   private readonly logger: ILogger
+  private counter: number
   private readonly requestQueue: Map<string, Array<Array<{
     resolve: (value: boolean) => void
     reject: (error: Error) => void
@@ -26,6 +24,7 @@ export class Model implements IModel {
     this.FILTER_LIST = ['Hentai', 'Porn', 'Sexy']
     this.IMAGE_SIZE = 224
     this.requestQueue = new Map()
+    this.counter = 0
 
     this.logger.log('Model is loaded')
   }
@@ -46,33 +45,53 @@ export class Model implements IModel {
       const queueName = url
 
       if (this.requestQueue.has(queueName)) {
-        // @ts-expect-error
+        // @ts-expect-error https://github.com/microsoft/TypeScript/issues/13086
         this.requestQueue.get(queueName).push([{ resolve, reject }])
       } else {
         this.requestQueue.set(queueName, [[{ resolve, reject }]])
-
-        this._predictImage(url)
-          .then(result => {
-            // @ts-expect-error
-            for (const [{ resolve }] of this.requestQueue.get(queueName)) {
-              resolve(result)
-            }
-
-            this.requestQueue.delete(queueName)
-          }).catch(error => {
-            if (this.requestQueue.has(queueName)) {
-              // @ts-expect-error
-              for (const [{ reject }] of this.requestQueue.get(queueName)) {
-                reject(error)
-              }
-
-              this.requestQueue.delete(queueName)
-            } else {
-              reject(error)
-            }
-          })
+        if (this.requestQueue.size <= 1) {
+          this.addPrediction({ url, reject })
+        }
       }
     })
+  }
+
+  private addPrediction ({ url, reject }: { url: string, reject: (reason: Error) => void }): void {
+    this.counter++
+    const queueName = url
+
+    this._predictImage(url)
+      .then(result => {
+        // @ts-expect-error https://github.com/microsoft/TypeScript/issues/13086
+        for (const [{ resolve }] of this.requestQueue.get(queueName)) {
+          resolve(result)
+        }
+
+        this.requestQueue.delete(queueName)
+        this.goNext()
+      }).catch(error => {
+        if (this.requestQueue.has(queueName)) {
+          // @ts-expect-error https://github.com/microsoft/TypeScript/issues/13086
+          for (const [{ reject }] of this.requestQueue.get(queueName)) {
+            reject(error)
+          }
+          this.requestQueue.delete(queueName)
+        } else {
+          reject(error)
+        }
+        this.goNext()
+      })
+  }
+
+  private goNext (): void {
+    this.counter--
+
+    if (this.counter === 0 && this.requestQueue.size > 0) {
+      const [url, { reject }] = this.requestQueue.entries().next().value
+
+      const params = { url, reject }
+      setTimeout(() => this.addPrediction(params), 0)
+    }
   }
 
   private async _predictImage (url: string): Promise<boolean> {
@@ -94,14 +113,6 @@ export class Model implements IModel {
 
     this.logger.log(`IMG prediction for ${url} is ${className} ${probability}`)
     return Boolean(result)
-  }
-
-  public static buildMsg (result: boolean, url: string, error?: string): responseType {
-    const message = typeof error === 'string' && error.length > 0
-      ? `Prediction result is ${result} for image ${url}, error: ${error}`
-      : `Prediction result is ${result} for image ${url}`
-
-    return { result, message }
   }
 
   private handlePredictions (predictions: predictionType[][]): { result: boolean, className: string, probability: number } {
