@@ -41,7 +41,7 @@
 </p>
 <hr>
 
-<p align="left">
+<p align="center">
   <img alt='logo name' src='./demo/images/logo_name.png'>
 </p>
 
