@@ -14,7 +14,7 @@ export class Model implements IModel {
   private readonly logger: ILogger
   private counter: number
   private readonly LRUCache: LRUCache
-  private readonly loadedImages: Map<string, Promise<HTMLImageElement>>
+  private readonly loadingImages: Map<string, Promise<HTMLImageElement>>
   private readonly requestQueue: Map<string, Array<Array<{
     resolve: (value: boolean) => void
     reject: (error: Error) => void
@@ -27,9 +27,9 @@ export class Model implements IModel {
     this.FILTER_LIST = ['Hentai', 'Porn', 'Sexy']
     this.IMAGE_SIZE = 224
     this.requestQueue = new Map()
-    this.loadedImages = new Map()
+    this.loadingImages = new Map()
     this.counter = 0
-    this.LRUCache = new LRUCache(300)
+    this.LRUCache = new LRUCache(200)
 
     this.logger.log('Model is loaded')
   }
@@ -43,54 +43,50 @@ export class Model implements IModel {
         this.requestQueue.get(queueName).push([{ resolve, reject }])
       } else {
         this.requestQueue.set(queueName, [[{ resolve, reject }]])
-        this.loadedImages.set(url, this.loadImage(url))
+        this.loadingImages.set(url, this.loadImage(url))
 
         if (this.requestQueue.size <= 1) {
-          this.addPrediction({ url, reject })
+          this.addPrediction({ url, reject }).then(() => { }, () => { })
         }
       }
     })
   }
 
-  private addPrediction ({ url, reject }: { url: string, reject: (reason: Error) => void }): void {
+  private async addPrediction ({ url, reject }: { url: string, reject: (reason: Error) => void }): Promise<void> {
     this.counter++
     const queueName = url
 
-    this._predictImage(url)
-      .then(result => {
+    try {
+      const result = await this._predictImage(url)
+      // @ts-expect-error https://github.com/microsoft/TypeScript/issues/13086
+      for (const [{ resolve }] of this.requestQueue.get(queueName)) {
+        resolve(result)
+      }
+    } catch (error) {
+      if (this.requestQueue.has(queueName)) {
         // @ts-expect-error https://github.com/microsoft/TypeScript/issues/13086
-        for (const [{ resolve }] of this.requestQueue.get(queueName)) {
-          resolve(result)
-        }
-
-        this.requestQueue.delete(queueName)
-        this.loadedImages.delete(queueName)
-        this.goNext()
-      }).catch(error => {
-        if (this.requestQueue.has(queueName)) {
-          // @ts-expect-error https://github.com/microsoft/TypeScript/issues/13086
-          for (const [{ reject }] of this.requestQueue.get(queueName)) {
-            reject(error)
-          }
-        } else {
+        for (const [{ reject }] of this.requestQueue.get(queueName)) {
           reject(error)
         }
-
-        this.requestQueue.delete(queueName)
-        this.loadedImages.delete(queueName)
-        this.goNext()
-      })
+      } else {
+        reject(error)
+      }
+    } finally {
+      this.counter--
+      if (this.counter === 0) this.setupNext()
+      this.requestQueue.delete(queueName)
+      this.loadingImages.delete(queueName)
+    }
   }
 
-  private goNext (): void {
-    this.counter--
-
-    if (this.counter === 0 && this.requestQueue.size > 0) {
-      const [url, { reject }] = this.requestQueue.entries().next().value
-
-      const params = { url, reject }
-      setTimeout(() => this.addPrediction(params), 0)
-    }
+  private setupNext (): void {
+    setTimeout(() => {
+      if (this.requestQueue.size > 0) {
+        const [url, { reject }] = this.requestQueue.entries().next().value
+        const params = { url, reject }
+        this.addPrediction(params).then(() => { }, () => { })
+      }
+    }, 0)
   }
 
   private async _predictImage (url: string): Promise<boolean> {
@@ -98,7 +94,7 @@ export class Model implements IModel {
     if (this.LRUCache.has(url)) return this.LRUCache.get(url)
 
     // @ts-expect-error https://github.com/microsoft/TypeScript/issues/13086
-    const image: HTMLImageElement = this.loadedImages.has(url) ? await this.loadedImages.get(url) : await this.loadImage(url)
+    const image: HTMLImageElement = this.loadingImages.has(url) ? await this.loadingImages.get(url) : await this.loadImage(url)
 
     const prediction = await this.model.classify(image, 1)
     const { result, className, probability } = this.handlePredictions([prediction])

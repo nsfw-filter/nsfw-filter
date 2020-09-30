@@ -17,14 +17,13 @@ export class ImageFilter extends Filter implements IImageFilter {
   }
 
   public analyzeImage (image: _Image, srcAttribute: boolean = false): void {
-    // @TODO @refactor Skip small images, but pass pending
-    if (
-      image.src.length > 0 &&
-      (image.width > this.MIN_IMAGE_SIZE && image.height > this.MIN_IMAGE_SIZE)
-    ) {
+    if (image.src.length > 0) {
       if (srcAttribute) {
         this._analyzeImage(image)
-      } else if (image._isChecked === undefined) {
+      } else if (
+        image._isChecked === undefined &&
+        ((image.width > this.MIN_IMAGE_SIZE && image.height > this.MIN_IMAGE_SIZE) || image.height === 0 || image.width === 0)
+      ) {
         this._analyzeImage(image)
       }
     }
