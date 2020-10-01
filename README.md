@@ -108,6 +108,12 @@ After installing the dependencies, build the project by executing:
 npm run build
 ```
 
+Run the tests
+
+```sh
+npm run test
+```
+
 ### Adding to Chrome
 
 To install the developer version follow the steps below. To just use the extension download from [**chrome.google.com/webstore/nsfw-filter**](https://chrome.google.com/webstore/detail/nsfw-filter/kmgagnlkckiamnenbpigfaljmanlbbhh)
