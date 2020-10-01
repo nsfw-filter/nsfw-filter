@@ -41,6 +41,13 @@ export class DOMWatcher implements IDOMWatcher {
   }
 
   private checkChildMutation (mutation: MutationRecord): void {
+    if (mutation.target.nodeName === 'TITLE') {
+      const images = document.getElementsByTagName('img')
+      for (let i = 0; i < images.length; i++) {
+        this.imageFilter.analyzeImage(images[i] as _Image, false)
+      }
+    }
+
     for (let i = 0; i < mutation.addedNodes.length; i++) {
       if (mutation.addedNodes[i].nodeName === 'IMG') {
         this.imageFilter.analyzeImage(mutation.addedNodes[i] as _Image, false)

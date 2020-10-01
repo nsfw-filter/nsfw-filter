@@ -4,3 +4,5 @@ dist
 docs
 node_modules
 webpack
+test
+jest.config.js
