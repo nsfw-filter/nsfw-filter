@@ -72,16 +72,17 @@ export class Model implements IModel {
         reject(error)
       }
     } finally {
-      this.counter--
-      if (this.counter === 0) this.setupNext()
+      this.setupNext()
       this.requestQueue.delete(queueName)
       this.loadingImages.delete(queueName)
     }
   }
 
+  // @TODO Predict concurrently 1, 2 or 3 images depends on user CPU info https://stackoverflow.com/a/42147178
   private setupNext (): void {
     setTimeout(() => {
-      if (this.requestQueue.size > 0) {
+      this.counter--
+      if (this.counter === 0 && this.requestQueue.size > 0) {
         const [url, { reject }] = this.requestQueue.entries().next().value
         const params = { url, reject }
         this.addPrediction(params).then(() => { }, () => { })

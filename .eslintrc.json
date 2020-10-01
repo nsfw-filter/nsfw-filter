@@ -19,6 +19,7 @@
             "allowBoolean": true,
             "allowNullish": true
         }],
-        "@typescript-eslint/no-explicit-any": "error"
+        "@typescript-eslint/no-explicit-any": "error",
+        "prefer-promise-reject-errors": "off"
     }
 }

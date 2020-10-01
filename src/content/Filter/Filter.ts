@@ -22,8 +22,8 @@ export class Filter implements IFilter {
     return await new Promise((resolve, reject) => {
       try {
         this._requestToAnalyzeImage(request, resolve)
-      } catch (error) {
-        reject(error)
+      } catch {
+        reject({ url: request.url })
       }
     })
   }
