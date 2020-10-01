@@ -157,6 +157,15 @@
       "contributions": [
         "ideas"
       ]
+    },
+    {
+      "login": "Andrewrick1",
+      "name": "Sagar paul",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/31154843?v=4",
+      "profile": "https://github.com/Andrewrick1",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
