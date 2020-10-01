@@ -116,7 +116,7 @@ After you have finished the [Installation](#installation), open Google Chrome an
 
 Enable Developer Mode by clicking the toggle switch next to Developer mode.
 
-Click the LOAD UNPACKED button and select the extension directory(```.../dist```).
+Click the "Load Unpacked" button and select the extension directory(```.../dist```).
 
 <p align="center">
   <img src="./demo/images/install_instructions.png" alt="Install Instructions">
