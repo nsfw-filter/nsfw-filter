@@ -16,14 +16,16 @@ loadModel(MODEL_PATH)
   .then(NSFWJSModel => {
     const model = new Model(NSFWJSModel, logger)
 
-    chrome.runtime.onMessage.addListener((request: PredictionRequest, _sender, callback: (value: PredictionResponse) => void) => {
+    chrome.runtime.onMessage.addListener((request: PredictionRequest, sender, callback: (value: PredictionResponse) => void) => {
       const { url } = request
 
-      model.predictImage(url)
+      model.predictImage(url, sender.tab?.id)
         .then(result => callback(new PredictionResponse(result, url)))
         .catch(err => callback(new PredictionResponse(false, url, err.message)))
 
       return true // https://stackoverflow.com/a/56483156
     })
+
+    chrome.tabs.onRemoved.addListener(tabId => model.clearByTabId(tabId))
   })
   .catch(err => { throw err })

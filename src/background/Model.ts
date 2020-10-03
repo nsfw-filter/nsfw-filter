@@ -3,7 +3,8 @@ import { ILogger } from '../utils/Logger'
 import { LRUCache } from '../utils/LRUCache'
 
 type IModel = {
-  predictImage: (url: string) => Promise<boolean>
+  predictImage: (url: string, _tabId: number | undefined) => Promise<boolean>
+  clearByTabId: (tabId: number) => void
 }
 
 export class Model implements IModel {
@@ -14,10 +15,12 @@ export class Model implements IModel {
   private readonly logger: ILogger
   private counter: number
   private readonly LRUCache: LRUCache
-  private readonly loadingImages: Map<string, Promise<HTMLImageElement>>
+  private readonly activeTabs: Set<number>
+  private readonly DEFAULT_TAB_ID: number
   private readonly requestQueue: Map<string, Array<Array<{
     resolve: (value: boolean) => void
     reject: (error: Error) => void
+    tabId: number
   }>>>
 
   constructor (model: NSFWJS, logger: ILogger) {
@@ -27,29 +30,38 @@ export class Model implements IModel {
     this.FILTER_LIST = ['Hentai', 'Porn', 'Sexy']
     this.IMAGE_SIZE = 224
     this.requestQueue = new Map()
-    this.loadingImages = new Map()
     this.counter = 0
+    this.DEFAULT_TAB_ID = 999999
+    this.activeTabs = new Set([this.DEFAULT_TAB_ID])
     this.LRUCache = new LRUCache(200)
 
     this.logger.log('Model is loaded')
   }
 
-  public async predictImage (url: string): Promise<boolean> {
+  public async predictImage (url: string, _tabId: number | undefined): Promise<boolean> {
     return await new Promise((resolve, reject) => {
       const queueName = url
+      const tabId = _tabId === undefined ? this.DEFAULT_TAB_ID : _tabId
+
+      if (!this.activeTabs.has(tabId)) this.activeTabs.add(tabId)
 
       if (this.requestQueue.has(queueName)) {
         // @ts-expect-error https://github.com/microsoft/TypeScript/issues/13086
-        this.requestQueue.get(queueName).push([{ resolve, reject }])
+        this.requestQueue.get(queueName).push([{ resolve, reject, tabId }])
       } else {
-        this.requestQueue.set(queueName, [[{ resolve, reject }]])
-        this.loadingImages.set(url, this.loadImage(url))
-
+        this.requestQueue.set(queueName, [[{ resolve, reject, tabId }]])
         if (this.requestQueue.size <= 1) {
           this.addPrediction({ url, reject }).then(() => { }, () => { })
         }
       }
     })
+  }
+
+  // @TODO Add tabs priority, when user opens 5 tabs at once and go to 4th tab - we need to switch to images prediction of 4th tab immediately
+  // @TODO Implement case where user goes back one page - we need to clear pending prediction images of this specific page from queue
+
+  public clearByTabId (tabId: number): void {
+    this.activeTabs.delete(tabId)
   }
 
   private async addPrediction ({ url, reject }: { url: string, reject: (reason: Error) => void }): Promise<void> {
@@ -74,18 +86,27 @@ export class Model implements IModel {
     } finally {
       this.setupNext()
       this.requestQueue.delete(queueName)
-      this.loadingImages.delete(queueName)
+      this.counter--
     }
   }
 
   // @TODO Predict concurrently 1, 2 or 3 images depends on user CPU info https://stackoverflow.com/a/42147178
   private setupNext (): void {
     setTimeout(() => {
-      this.counter--
       if (this.counter === 0 && this.requestQueue.size > 0) {
-        const [url, { reject }] = this.requestQueue.entries().next().value
-        const params = { url, reject }
-        this.addPrediction(params).then(() => { }, () => { })
+        const [url, requestQueueData] = this.requestQueue.entries().next().value
+        const [[{ tabId, reject }]] = requestQueueData
+
+        if (this.activeTabs.has(tabId)) {
+          this.addPrediction({ url, reject }).then(() => { }, () => { })
+        } else {
+          for (const [{ reject }] of requestQueueData) {
+            reject('User closed tab which contains this image url')
+          }
+
+          this.setupNext()
+          this.requestQueue.delete(url)
+        }
       }
     }, 0)
   }
@@ -94,8 +115,7 @@ export class Model implements IModel {
     // @ts-expect-error https://github.com/microsoft/TypeScript/issues/13086
     if (this.LRUCache.has(url)) return this.LRUCache.get(url)
 
-    // @ts-expect-error https://github.com/microsoft/TypeScript/issues/13086
-    const image: HTMLImageElement = this.loadingImages.has(url) ? await this.loadingImages.get(url) : await this.loadImage(url)
+    const image: HTMLImageElement = await this.loadImage(url)
 
     const prediction = await this.model.classify(image, 1)
     const { result, className, probability } = this.handlePredictions([prediction])

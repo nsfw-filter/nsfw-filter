@@ -23,7 +23,7 @@ export class Filter implements IFilter {
       try {
         this._requestToAnalyzeImage(request, resolve)
       } catch {
-        reject({ url: request.url })
+        reject(request)
       }
     })
   }
