@@ -9,7 +9,7 @@ export class LRUCache {
     this.cache = new Map()
   }
 
-  public get (key: string): boolean | undefined {
+  public get (key: string): boolean {
     const item = this.cache.get(key)
 
     if (typeof item === 'boolean') {
@@ -17,7 +17,7 @@ export class LRUCache {
       this.cache.set(key, item)
     }
 
-    return item
+    return Boolean(item)
   }
 
   public has (key: string): boolean {
