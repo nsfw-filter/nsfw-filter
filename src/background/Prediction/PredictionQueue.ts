@@ -11,15 +11,17 @@ type IPredictionQueue = {
 // @TODO Implement case where user goes back one page - we need to clear pending prediction images of this specific page from queue
 // @TODO Predict concurrently 1, 2 or 3 images depends on user CPU info https://stackoverflow.com/a/42147178
 
+type requestQueueValue = Array<Array<{
+  resolve: (value: boolean) => void
+  reject: (error: Error) => void
+  tabId: number
+}>>
+
 export class PredictionQueue extends Model implements IPredictionQueue {
   private counter: number
   private readonly activeTabs: Set<number>
   private readonly DEFAULT_TAB_ID: number
-  private readonly requestQueue: Map<string, Array<Array<{
-    resolve: (value: boolean) => void
-    reject: (error: Error) => void
-    tabId: number
-  }>>>
+  private readonly requestQueue: Map<string, requestQueueValue>
 
   constructor (model: NSFWJS, logger: ILogger) {
     super(model, logger)
@@ -38,8 +40,7 @@ export class PredictionQueue extends Model implements IPredictionQueue {
       if (!this.activeTabs.has(tabId)) this.activeTabs.add(tabId)
 
       if (this.requestQueue.has(queueName)) {
-        // @ts-expect-error https://github.com/microsoft/TypeScript/issues/13086
-        this.requestQueue.get(queueName).push([{ resolve, reject, tabId }])
+        this.requestQueue.get(queueName)?.push([{ resolve, reject, tabId }])
       } else {
         this.requestQueue.set(queueName, [[{ resolve, reject, tabId }]])
         if (this.requestQueue.size <= 1) {
@@ -59,14 +60,12 @@ export class PredictionQueue extends Model implements IPredictionQueue {
 
     try {
       const result = await this.predictImage(url)
-      // @ts-expect-error https://github.com/microsoft/TypeScript/issues/13086
-      for (const [{ resolve }] of this.requestQueue.get(queueName)) {
+      for (const [{ resolve }] of this.requestQueue.get(queueName) as requestQueueValue) {
         resolve(result)
       }
     } catch (error) {
       if (this.requestQueue.has(queueName)) {
-        // @ts-expect-error https://github.com/microsoft/TypeScript/issues/13086
-        for (const [{ reject }] of this.requestQueue.get(queueName)) {
+        for (const [{ reject }] of this.requestQueue.get(queueName) as requestQueueValue) {
           reject(error)
         }
       } else {

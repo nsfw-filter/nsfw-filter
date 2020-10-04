@@ -1,6 +1,6 @@
-export class LRUCache {
+export class LRUCache<K, V> {
   private readonly MAX: number
-  private readonly cache: Map<string, boolean>
+  private readonly cache: Map<K, V>
 
   constructor (_MAX: number) {
     if (typeof _MAX !== 'number') throw new Error('Please set cache max size')
@@ -9,7 +9,7 @@ export class LRUCache {
     this.cache = new Map()
   }
 
-  public get (key: string): boolean {
+  public get (key: K): V | undefined {
     const item = this.cache.get(key)
 
     if (typeof item === 'boolean') {
@@ -17,20 +17,20 @@ export class LRUCache {
       this.cache.set(key, item)
     }
 
-    return Boolean(item)
+    return item
   }
 
-  public has (key: string): boolean {
+  public has (key: K): boolean {
     return this.cache.has(key)
   }
 
-  public set (key: string, val: boolean): void {
+  public set (key: K, val: V): void {
     if (this.cache.has(key)) this.cache.delete(key)
     else if (this.cache.size === this.MAX) this.cache.delete(this.first())
     this.cache.set(key, val)
   }
 
-  private first (): string {
+  private first (): K {
     return this.cache.keys().next().value
   }
 }

@@ -7,7 +7,7 @@ export class Model {
   private readonly logger: ILogger
 
   private readonly IMAGE_SIZE: number
-  private readonly LRUCache: LRUCache
+  private readonly LRUCache: LRUCache<string, boolean>
   private readonly FILTER_LIST: Set<string>
   private readonly GIF_REGEX: RegExp
 
@@ -23,7 +23,7 @@ export class Model {
   }
 
   protected async predictImage (url: string): Promise<boolean> {
-    if (this.LRUCache.has(url)) return this.LRUCache.get(url)
+    if (this.LRUCache.has(url)) return this.LRUCache.get(url) as boolean
 
     const image: HTMLImageElement = await this.loadImage(url)
 
