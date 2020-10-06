@@ -24,10 +24,14 @@
   "license": "GNU General Public License v3.0",
   "dependencies": {
     "@nsfw-filter/nsfwjs": "2.2.0",
-    "@tensorflow/tfjs": "1.7.4"
+    "@tensorflow/tfjs": "1.7.4",
+    "react": "16.13.1",
+    "react-dom": "16.13.1"
   },
   "devDependencies": {
     "@types/chrome": "0.0.122",
+    "@types/react": "16.9.51",
+    "@types/react-dom": "16.9.8",
     "@typescript-eslint/eslint-plugin": "3.8.0",
     "copy-webpack-plugin": "6.0.3",
     "css-loader": "4.2.1",
