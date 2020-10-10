@@ -118,7 +118,13 @@ npm run test
 
 To install the developer version follow the steps below. To just use the extension download from [**chrome.google.com/webstore/nsfw-filter**](https://chrome.google.com/webstore/detail/nsfw-filter/kmgagnlkckiamnenbpigfaljmanlbbhh)
 
-After you have finished the [Installation](#installation), open Google Chrome and open the Extension Management page by navigating to ```chrome://extensions``` or by opening Settings and clicking Extensions from the bottom left.
+To run development version in clean environment use command:
+
+```sh
+npm run dev:chrome
+```
+
+Or open Google Chrome and open the Extension Management page by navigating to ```chrome://extensions``` or by opening Settings and clicking Extensions from the bottom left.
 
 Enable Developer Mode by clicking the toggle switch next to Developer mode.
 
@@ -134,7 +140,13 @@ Voila! The extension is now installed and ready to be used!
 
 To install the developer version follow the steps below. To just use the extension download from [**addons.mozilla/nsfw-filter**](https://addons.mozilla.org/en-US/firefox/addon/nsfw-filter/)
 
-After finishing [Installation](#installation), open Firefox and open the Debug Add-ons page by navigating to ```about:debugging#/runtime/this-firefox``` or by selecting it from Settings dropdown in the add-ons page.
+To run development version in clean environment use command:
+
+```sh
+npm run dev:firefox
+```
+
+Or open Firefox and open the Debug Add-ons page by navigating to ```about:debugging#/runtime/this-firefox``` or by selecting it from Settings dropdown in the add-ons page.
 
 Click Load Temporary Add-on and select the ```manifest.json``` file from the ```.../dist``` directory.
 
