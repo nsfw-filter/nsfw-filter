@@ -40,17 +40,35 @@ export class DOMWatcher implements IDOMWatcher {
     }
   }
 
+  /**
+   * Check the mutation and if title changed analyze every image of document
+   * otherwise search for images in changed nodes and analyze them
+   * @param mutation MutationRecord
+   */
   private checkChildMutation (mutation: MutationRecord): void {
     if (mutation.target.nodeName === 'TITLE') {
       const images = document.getElementsByTagName('img')
       for (let i = 0; i < images.length; i++) {
         this.imageFilter.analyzeImage(images[i] as _Image, false)
       }
+    } else {
+      this.checkImageInNodeList(mutation.addedNodes)
     }
+  }
 
-    for (let i = 0; i < mutation.addedNodes.length; i++) {
-      if (mutation.addedNodes[i].nodeName === 'IMG') {
-        this.imageFilter.analyzeImage(mutation.addedNodes[i] as _Image, false)
+  /**
+   * Look for image node in the list of mutated nodes and its children recursively
+   * analyze if found applying image filter
+   * @param nodeList NodeList
+   */
+  private checkImageInNodeList (nodeList: NodeList): void {
+    for (let i = 0; i < nodeList.length; i++) {
+      if (nodeList[i].nodeName === 'IMG') {
+        this.imageFilter.analyzeImage(nodeList[i] as _Image, false)
+      } else {
+        if (nodeList[i].hasChildNodes()) {
+          this.checkImageInNodeList(nodeList[i].childNodes)
+        }
       }
     }
   }
