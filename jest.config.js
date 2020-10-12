@@ -3,6 +3,9 @@ module.exports = {
       "**/test/**/*.test.js"
     ],
     verbose: true,
-    testTimeout: 20000,
-    maxConcurrency: 1
+    testTimeout: 100000,
+    maxConcurrency: 1,
+    maxWorkers: 1,
+    preset: 'jest-puppeteer',
+    setupFilesAfterEnv: ['./jest.setup.js'],
 }
