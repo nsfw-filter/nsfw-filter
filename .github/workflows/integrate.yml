@@ -7,11 +7,19 @@ on:
 jobs:
   test_pull_request:
     runs-on: ubuntu-latest
+    env:
+      CI: 'true'
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
         with:
           node-version: 12
       - run: npm ci
+        env:
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'true'
       - run: npm run lint
       - run: npm run build
+      - name: Run headful puppeteer tests
+        uses: djp3/puppeteer-headful@master
+        with:
+          args: npm test

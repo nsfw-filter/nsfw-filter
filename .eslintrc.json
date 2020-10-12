@@ -2,7 +2,8 @@
     "env": {
         "browser": true,
         "webextensions": true,
-        "es2020": true
+        "es2020": true,
+        "jest": true
     },
     "extends": [
         "standard-with-typescript",
@@ -46,5 +47,11 @@
         "react": {
           "version": "detect"
         }
+    },
+    "globals": {
+        "page": true,
+        "browser": true,
+        "context": true,
+        "jestPuppeteer": true
     }
 }
