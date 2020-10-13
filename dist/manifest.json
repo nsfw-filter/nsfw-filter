@@ -8,6 +8,7 @@
     "activeTab",
     "declarativeContent",
     "<all_urls>",
+    "storage",
     "tabs"
   ],
   "background": {

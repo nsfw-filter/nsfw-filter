@@ -1,6 +1,11 @@
-import { Model } from './Model'
 import { NSFWJS } from '@nsfw-filter/nsfwjs'
+import { IReduxedStorage } from 'background/background'
+
+import { setFilterEffect } from '../../popup/redux/actions/settings'
+import { setTotalBlocked } from '../../popup/redux/actions/statistics'
 import { ILogger } from '../../utils/Logger'
+
+import { Model, modelSettingsType } from './Model'
 
 type IPredictionQueue = {
   predict: (url: string, _tabId: number | undefined) => Promise<boolean>
@@ -14,18 +19,24 @@ type IPredictionQueue = {
 type requestQueueValue = Array<Array<{
   resolve: (value: boolean) => void
   reject: (error: Error) => void
-  tabId: number
+  processing?: boolean
+  tabId?: number
 }>>
 
 export class PredictionQueue extends Model implements IPredictionQueue {
   private counter: number
+  private totalBlocked: number
+  private readonly store: IReduxedStorage
   private readonly activeTabs: Set<number>
   private readonly DEFAULT_TAB_ID: number
   private readonly requestQueue: Map<string, requestQueueValue>
 
-  constructor (model: NSFWJS, logger: ILogger) {
-    super(model, logger)
+  constructor (model: NSFWJS, logger: ILogger, store: IReduxedStorage, settings: modelSettingsType) {
+    super(model, logger, settings)
 
+    this.store = store
+    this.totalBlocked = this.store.getState().statistics.totalBlocked
+    this.settings.concurrency = settings.concurrency
     this.requestQueue = new Map()
     this.counter = 0
     this.DEFAULT_TAB_ID = 999999
@@ -40,11 +51,13 @@ export class PredictionQueue extends Model implements IPredictionQueue {
       if (!this.activeTabs.has(tabId)) this.activeTabs.add(tabId)
 
       if (this.requestQueue.has(queueName)) {
-        this.requestQueue.get(queueName)?.push([{ resolve, reject, tabId }])
+        this.requestQueue.get(queueName)?.push([{ resolve, reject }])
       } else {
-        this.requestQueue.set(queueName, [[{ resolve, reject, tabId }]])
-        if (this.requestQueue.size <= 1) {
-          this.addPrediction({ url, reject }).then(() => { }, () => { })
+        if (this.counter < this.settings.concurrency) {
+          this.requestQueue.set(queueName, [[{ resolve, reject, tabId, processing: true }]])
+          this.addPrediction({ url, reject })
+        } else {
+          this.requestQueue.set(queueName, [[{ resolve, reject, tabId, processing: false }]])
         }
       }
     })
@@ -60,6 +73,8 @@ export class PredictionQueue extends Model implements IPredictionQueue {
 
     try {
       const result = await this.predictImage(url)
+      if (result) this.totalBlocked++
+
       for (const [{ resolve }] of this.requestQueue.get(queueName) as requestQueueValue) {
         resolve(result)
       }
@@ -80,20 +95,41 @@ export class PredictionQueue extends Model implements IPredictionQueue {
 
   private setupNext (): void {
     setTimeout(() => {
-      if (this.counter === 0 && this.requestQueue.size > 0) {
-        const [url, requestQueueData] = this.requestQueue.entries().next().value
-        const [[{ tabId, reject }]] = requestQueueData
+      if (this.counter < this.settings.concurrency && this.requestQueue.size > 0) {
+        const entries = this.requestQueue.entries()
 
-        if (this.activeTabs.has(tabId)) {
-          this.addPrediction({ url, reject }).then(() => { }, () => { })
-        } else {
-          for (const [{ reject }] of requestQueueData) {
-            reject('User closed tab which contains this image url')
+        for (let i = 0; i < this.settings.concurrency; i++) {
+          const nextQueueValue = entries.next().value
+
+          if (!Array.isArray(nextQueueValue)) break
+
+          const [url, requestQueueData] = nextQueueValue
+          const [[data]] = requestQueueData
+          const { tabId, reject, processing } = data
+
+          if (processing === true) continue
+
+          data.processing = true
+
+          if (this.activeTabs.has(tabId)) {
+            this.addPrediction({ url, reject })
+          } else {
+            for (const [{ reject }] of requestQueueData) {
+              reject('User closed tab which contains this image url')
+            }
+
+            this.setupNext()
+            this.requestQueue.delete(url)
           }
 
-          this.setupNext()
-          this.requestQueue.delete(url)
+          // break
         }
+      } else if (this.requestQueue.size === 0) {
+        const tmpTotalBlocked = this.totalBlocked
+
+        // @DOCS Async operations
+        this.store.dispatch(setTotalBlocked(tmpTotalBlocked))
+        this.store.dispatch(setFilterEffect('blur'))
       }
     }, 0)
   }
