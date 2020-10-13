@@ -5,11 +5,15 @@
         "es2020": true
     },
     "extends": [
-        "standard-with-typescript"
+        "standard-with-typescript",
+        "plugin:react/recommended"
     ],
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
-        "project": "./tsconfig.json"
+        "project": "./tsconfig.json",
+        "ecmaFeatures": {
+            "jsx": true
+        }
     },
     "rules": {
         "standard/no-callback-literal": 0,
@@ -20,6 +24,27 @@
             "allowNullish": true
         }],
         "@typescript-eslint/no-explicit-any": "error",
-        "prefer-promise-reject-errors": "off"
+        "prefer-promise-reject-errors": "off",
+        "import-helpers/order-imports": [
+            "warn",
+            {
+              "newlinesBetween": "always",
+              "alphabetize": { "order": "asc", "ignoreCase": true }
+            }
+        ],
+        "better-styled-components/sort-declarations-alphabetically": 2,
+        "@typescript-eslint/no-floating-promises": "off",
+        "@typescript-eslint/default-param-last": "off",
+        "react/prop-types": [2, { "ignore": ["children"] }]
+    },
+    "plugins": [
+        "react",
+        "eslint-plugin-import-helpers",
+        "better-styled-components"
+    ],
+    "settings": {
+        "react": {
+          "version": "detect"
+        }
     }
 }

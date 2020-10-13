@@ -1,4 +1,3 @@
-import { DEBUG } from './debug'
 import { ILogger } from './Logger'
 
 type _Performance = Performance & {
@@ -14,19 +13,15 @@ type IMemory = {
 }
 
 export class Memory implements IMemory {
-  private readonly DEBUG: boolean
   private TIMER: number
   protected readonly logger: ILogger
 
   constructor (logger: ILogger) {
     this.logger = logger
-    this.DEBUG = DEBUG
     this.TIMER = 0
   }
 
   public start (): void {
-    if (!this.DEBUG) return
-
     const memory = (window.performance as _Performance).memory
 
     // Only for Google Chrome

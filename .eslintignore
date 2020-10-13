@@ -6,3 +6,4 @@ node_modules
 webpack
 test
 jest.config.js
+src/popup/popup.html

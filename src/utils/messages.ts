@@ -1,5 +1,6 @@
 export class PredictionRequest {
   public readonly url: string
+  public readonly type?: string // @DOCS Chrome internal usage
   public reconectTimer?: number
   private _reconectCount: number
 

@@ -5,13 +5,20 @@ type IFilter = {
   getBlockAmount: () => number
 }
 
+type FilterRequestQueueValue = Array<Array<{
+  resolve: (value: PredictionResponse) => void
+  reject: (error: PredictionRequest) => void
+}>>
+
 export class Filter implements IFilter {
   protected readonly logger: ILogger
   protected blockedItems: number
+  private readonly requestQueue: Map<string, FilterRequestQueueValue>
 
   constructor (_logger: ILogger) {
     this.logger = _logger
     this.blockedItems = 0
+    this.requestQueue = new Map()
   }
 
   public getBlockAmount (): number {
@@ -20,10 +27,24 @@ export class Filter implements IFilter {
 
   protected async requestToAnalyzeImage (request: PredictionRequest): Promise<PredictionResponse> {
     return await new Promise((resolve, reject) => {
+      const queueName = request.url
+
       try {
-        this._requestToAnalyzeImage(request, resolve)
+        if (this.requestQueue.has(queueName)) {
+          this.requestQueue.get(queueName)?.push([{ resolve, reject }])
+        } else {
+          this.requestQueue.set(queueName, [[{ resolve, reject }]])
+
+          this._requestToAnalyzeImage(request, resolve)
+        }
       } catch {
-        reject(request)
+        if (this.requestQueue.has(queueName)) {
+          for (const [{ reject }] of this.requestQueue.get(queueName) as FilterRequestQueueValue) {
+            reject(request)
+          }
+        } else {
+          reject(request)
+        }
       }
     })
   }
@@ -36,7 +57,9 @@ export class Filter implements IFilter {
       }
 
       this.logger.log(response.message)
-      resolve(response)
+      for (const [{ resolve }] of this.requestQueue.get(request.url) as FilterRequestQueueValue) {
+        resolve(response)
+      }
     })
   }
 

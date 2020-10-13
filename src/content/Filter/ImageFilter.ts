@@ -1,29 +1,43 @@
-import { _Image } from './types'
-import { Filter } from './Filter'
-import { PredictionRequest } from '../../utils/messages'
 import { ILogger } from 'utils/Logger'
+
+import { PredictionRequest } from '../../utils/messages'
+
+import { Filter } from './Filter'
+import { _Image } from './types'
+
+type imageFilterSettingsType = {
+  filterEffect: 'blur' | 'hide'
+}
 
 export type IImageFilter = {
   analyzeImage: (image: _Image, srcAttribute: boolean) => void
+  setSettings: (settings: imageFilterSettingsType) => void
   // analyzeDiv: (div: _Image) => void
 }
 
 export class ImageFilter extends Filter implements IImageFilter {
   private readonly MIN_IMAGE_SIZE: number
+  private settings: imageFilterSettingsType
 
   constructor (_logger: ILogger) {
     super(_logger)
     this.MIN_IMAGE_SIZE = 41
+
+    this.settings = { filterEffect: 'hide' }
+  }
+
+  public setSettings (settings: imageFilterSettingsType): void {
+    this.settings = settings
   }
 
   public analyzeImage (image: _Image, srcAttribute: boolean = false): void {
-    if (image.src.length > 0) {
+    if (
+      image.src.length > 0 &&
+      ((image.width > this.MIN_IMAGE_SIZE && image.height > this.MIN_IMAGE_SIZE) || image.height === 0 || image.width === 0)
+    ) {
       if (srcAttribute) {
         this._analyzeImage(image)
-      } else if (
-        image._isChecked === undefined &&
-        ((image.width > this.MIN_IMAGE_SIZE && image.height > this.MIN_IMAGE_SIZE) || image.height === 0 || image.width === 0)
-      ) {
+      } else if (image._isChecked === undefined) {
         this._analyzeImage(image)
       }
     }
@@ -38,6 +52,11 @@ export class ImageFilter extends Filter implements IImageFilter {
     this.requestToAnalyzeImage(request)
       .then(({ result, url }) => {
         if (result) {
+          if (this.settings.filterEffect === 'blur') {
+            image.style.filter = 'blur(25px)'
+            this.showImage(image, url)
+          }
+
           this.blockedItems++
         } else {
           this.showImage(image, url)
@@ -48,14 +67,16 @@ export class ImageFilter extends Filter implements IImageFilter {
   }
 
   private hideImage (image: _Image): void {
-    image.style.visibility = 'hidden'
     if (image.parentNode?.nodeName === 'BODY') image.hidden = true
+
+    image.style.visibility = 'hidden'
   }
 
   private showImage (image: _Image, url: string): void {
     if (image.src === url) {
-      image.style.visibility = 'visible'
       if (image.parentNode?.nodeName === 'BODY') image.hidden = false
+
+      image.style.visibility = 'visible'
     }
   }
 

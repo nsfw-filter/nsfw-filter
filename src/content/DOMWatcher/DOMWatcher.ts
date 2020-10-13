@@ -6,23 +6,32 @@
 // @TODO <div> and <a>
 // @TODO video
 
-import { _Image } from '../Filter/types'
-import { IVideoFilter } from '../Filter/VideoFilter'
 import { IImageFilter } from '../Filter/ImageFilter'
+import { _Image } from '../Filter/types'
 
-type IDOMWatcher = {
+type domWatcherSettingsType = {
+  filteringDiv: boolean
+}
+
+export type IDOMWatcher = {
   watch: () => void
+  setSettings: (settings: domWatcherSettingsType) => void
 }
 
 export class DOMWatcher implements IDOMWatcher {
   private readonly observer: MutationObserver
   private readonly imageFilter: IImageFilter
-  private readonly videoFilter: IVideoFilter
+  private settings: domWatcherSettingsType
 
-  constructor (imageFilter: IImageFilter, videoFilter: IVideoFilter) {
+  constructor (imageFilter: IImageFilter) {
     this.imageFilter = imageFilter
-    this.videoFilter = videoFilter
+    this.settings = { filteringDiv: false }
+
     this.observer = new MutationObserver(this.callback.bind(this))
+  }
+
+  public setSettings (settings: domWatcherSettingsType): void {
+    this.settings = settings
   }
 
   public watch (): void {
