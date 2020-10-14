@@ -166,6 +166,16 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "govza",
+      "name": "Rasul",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/1425574?v=4",
+      "profile": "https://github.com/govza",
+      "contributions": [
+        "bug",
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
