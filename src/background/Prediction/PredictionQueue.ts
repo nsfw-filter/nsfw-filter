@@ -1,7 +1,6 @@
 import { NSFWJS } from '@nsfw-filter/nsfwjs'
 import { IReduxedStorage } from 'background/background'
 
-import { setFilterEffect } from '../../popup/redux/actions/settings'
 import { setTotalBlocked } from '../../popup/redux/actions/statistics'
 import { ILogger } from '../../utils/Logger'
 
@@ -129,7 +128,6 @@ export class PredictionQueue extends Model implements IPredictionQueue {
 
         // @DOCS Async operations
         this.store.dispatch(setTotalBlocked(tmpTotalBlocked))
-        this.store.dispatch(setFilterEffect('blur'))
       }
     }, 0)
   }
