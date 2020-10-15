@@ -58,6 +58,7 @@ export class ImageFilter extends Filter implements IImageFilter {
           }
 
           this.blockedItems++
+          image.dataset.nsfwFilterStatus = 'nsfw'
         } else {
           this.showImage(image, url)
         }
@@ -69,6 +70,7 @@ export class ImageFilter extends Filter implements IImageFilter {
   private hideImage (image: _Image): void {
     if (image.parentNode?.nodeName === 'BODY') image.hidden = true
 
+    image.dataset.nsfwFilterStatus = 'processing'
     image.style.visibility = 'hidden'
   }
 
@@ -76,6 +78,7 @@ export class ImageFilter extends Filter implements IImageFilter {
     if (image.src === url) {
       if (image.parentNode?.nodeName === 'BODY') image.hidden = false
 
+      image.dataset.nsfwFilterStatus = 'sfw'
       image.style.visibility = 'visible'
     }
   }
