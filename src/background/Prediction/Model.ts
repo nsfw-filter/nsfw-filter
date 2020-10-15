@@ -49,15 +49,15 @@ export class Model implements IModel {
     const prediction = await this.model.classify(image, 1)
     const { result, className, probability } = this.handlePredictions([prediction])
 
-    if (this.settings.filteringGif && this.GIF_REGEX.test(url)) {
-      const predictionGIF = await this.model.classifyGif(image, { topk: 1, fps: 0.1 })
-      const { result, className, probability } = this.handlePredictions(predictionGIF)
-      this.logger.log(`GIF prediction for ${url} is ${className} ${probability}`)
-      this.LRUCache.set(url, result)
-      return result
-    }
+    // if (this.settings.filteringGif && this.GIF_REGEX.test(url)) {
+    //   const predictionGIF = await this.model.classifyGif(image, { topk: 1, fps: 0.1 })
+    //   const { result, className, probability } = this.handlePredictions(predictionGIF)
+    //   this.logger.log(`GIF prediction for ${url} is ${className} ${probability}`)
+    //   this.LRUCache.set(url, result)
+    //   return result
+    // }
 
-    this.logger.log(`IMG prediction for ${url} is ${className} ${probability}`)
+    this.logger.log(`IMG prediction is ${className} ${probability} for ${url}`)
     this.LRUCache.set(url, result)
     return result
   }
