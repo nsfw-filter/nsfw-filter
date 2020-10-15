@@ -6,7 +6,6 @@ import { useSelector, useDispatch } from 'react-redux'
 
 import {
   toggleLogging,
-  toggleGifFiltering,
   toggleDivFiltering,
   setTrainedModel,
   setFilterEffect,
@@ -25,7 +24,6 @@ export const Testing: React.FC = () => {
   const {
     logging,
     filteringDiv,
-    filteringGif,
     trainedModel,
     filterEffect,
     concurrency
@@ -89,11 +87,11 @@ export const Testing: React.FC = () => {
           onChange={() => dispatch(toggleDivFiltering())}
         >{'Filter backgroundImage of <div> tag'}</StyledCheckbox>
 
-        <StyledCheckbox
+        {/* <StyledCheckbox
           checked={filteringGif}
           style={{ marginLeft: 0, paddingTop: '7px' }}
           onChange={() => dispatch(toggleGifFiltering())}
-        >{'Filter GIF images'}</StyledCheckbox>
+        >{'Filter GIF images'}</StyledCheckbox> */}
       </CheckboxArea>
 
       <BugReport>
