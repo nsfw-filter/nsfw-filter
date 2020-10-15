@@ -30,8 +30,7 @@ let attempts = 0
 const load = ({ logger, store, settings }: loadType): void => {
   const MODEL_PATH = '../models/'
 
-  // @ts-expect-error
-  loadModel(MODEL_PATH, { type: 'graph' })
+  loadModel(MODEL_PATH)
     .then(NSFWJSModel => {
       const pQueue = new PredictionQueue(NSFWJSModel, logger, store, settings)
 
