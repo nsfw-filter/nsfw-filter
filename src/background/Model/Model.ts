@@ -4,29 +4,28 @@ import { ILogger } from '../../utils/Logger'
 
 import { LRUCache } from './LRUCache'
 
-export type modelSettingsType = {
-  filteringGif: boolean
+export type ModelSettings = {
   filterStrictness: number
-  concurrency: number
 }
 
 type IModel = {
-  setSettings: (settings: modelSettingsType) => void
+  predictImage: (url: string) => Promise<boolean>
+  getCache: () => LRUCache<string, boolean>
+  setSettings: (settings: ModelSettings) => void
 }
 
 export class Model implements IModel {
   private readonly model: NSFWJS
   private readonly logger: ILogger
-  protected settings: modelSettingsType
+  private settings: ModelSettings
 
   private readonly IMAGE_SIZE: number
   private readonly LRUCache: LRUCache<string, boolean>
   private readonly FILTER_LIST: Set<string>
-  private readonly GIF_REGEX: RegExp
 
-  constructor (model: NSFWJS, logger: ILogger, settings: modelSettingsType) {
-    this.logger = logger
+  constructor (model: NSFWJS, logger: ILogger, settings: ModelSettings) {
     this.model = model
+    this.logger = logger
     this.settings = settings
 
     this.logger.log('Model is loaded')
@@ -34,28 +33,23 @@ export class Model implements IModel {
     this.IMAGE_SIZE = 224
     this.LRUCache = new LRUCache(200)
     this.FILTER_LIST = new Set(['Hentai', 'Porn', 'Sexy'])
-    this.GIF_REGEX = /^.*(.gif)($|\W.*$)/
   }
 
-  public setSettings (settings: modelSettingsType): void {
+  public setSettings (settings: ModelSettings): void {
     this.settings = settings
   }
 
-  protected async predictImage (url: string): Promise<boolean> {
+  public getCache (): LRUCache<string, boolean> {
+    return this.LRUCache
+  }
+
+  public async predictImage (url: string): Promise<boolean> {
     if (this.LRUCache.has(url)) return this.LRUCache.get(url) as boolean
 
     const image: HTMLImageElement = await this.loadImage(url)
 
     const prediction = await this.model.classify(image, 1)
     const { result, className, probability } = this.handlePredictions([prediction])
-
-    // if (this.settings.filteringGif && this.GIF_REGEX.test(url)) {
-    //   const predictionGIF = await this.model.classifyGif(image, { topk: 1, fps: 0.1 })
-    //   const { result, className, probability } = this.handlePredictions(predictionGIF)
-    //   this.logger.log(`GIF prediction for ${url} is ${className} ${probability}`)
-    //   this.LRUCache.set(url, result)
-    //   return result
-    // }
 
     this.logger.log(`IMG prediction is ${className} ${probability} for ${url}`)
     this.LRUCache.set(url, result)

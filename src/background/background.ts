@@ -10,8 +10,8 @@ import { ILogger, Logger } from '../utils/Logger'
 import { Memory } from '../utils/Memory'
 import { PredictionRequest, PredictionResponse } from '../utils/messages'
 
-import { modelSettingsType } from './Prediction/Model'
-import { PredictionQueue } from './Prediction/PredictionQueue'
+import { Model, ModelSettings } from './Model/Model'
+import { PredictionQueue } from './PredictionQueue/PredictionQueue'
 
 export type IReduxedStorage = {
   getState: () => RootState
@@ -21,20 +21,22 @@ export type IReduxedStorage = {
 export type loadType = {
   logger: ILogger
   store: IReduxedStorage
-  settings: modelSettingsType
+  modelSettings: ModelSettings
 }
 
 enableProdMode()
 let attempts = 0
 
-const load = ({ logger, store, settings }: loadType): void => {
+const load = ({ logger, store, modelSettings }: loadType): void => {
   const MODEL_PATH = '../models/'
 
   // @ts-expect-error
   loadModel(MODEL_PATH, { type: 'graph' })
     .then(NSFWJSModel => {
-      const pQueue = new PredictionQueue(NSFWJSModel, logger, store, settings)
+      const model = new Model(NSFWJSModel, logger, modelSettings)
+      const pQueue = new PredictionQueue(model, logger, store)
 
+      // Event when content sends request to filter image
       chrome.runtime.onMessage.addListener((request: PredictionRequest, sender, callback: (value: PredictionResponse) => void) => {
         if (request.type === 'SIGN_CONNECT') return
 
@@ -46,13 +48,16 @@ const load = ({ logger, store, settings }: loadType): void => {
         return true // https://stackoverflow.com/a/56483156
       })
 
+      // Close tab window event
       chrome.tabs.onRemoved.addListener(tabId => pQueue.clearByTabId(tabId))
 
+      // Close popup window event
       chrome.runtime.onConnect.addListener(port => port.onDisconnect.addListener(() => {
-        const { logging, filteringGif, filterStrictness, concurrency } = store.getState().settings
+        const { logging, filterStrictness, concurrency } = store.getState().settings
 
         logging ? logger.enable() : logger.disable()
-        pQueue.setSettings({ filteringGif, filterStrictness, concurrency: Number(concurrency) })
+        pQueue.setSettings({ concurrency: Number(concurrency) })
+        model.setSettings({ filterStrictness })
       }))
     })
     .catch(error => {
@@ -66,13 +71,13 @@ const load = ({ logger, store, settings }: loadType): void => {
 const init = async (): Promise<void> => {
   attempts++
   const store = await createChromeStore({ createStore })(rootReducer)
-  const { logging, filteringGif, filterStrictness, concurrency } = store.getState().settings
+  const { logging, filterStrictness } = store.getState().settings
 
   const logger = new Logger()
   if (logging === true) logger.enable()
 
   new Memory(logger).start()
-  load({ logger, store, settings: { filteringGif, filterStrictness, concurrency: Number(concurrency) } })
+  load({ logger, store, modelSettings: { filterStrictness } })
 }
 
 init()
