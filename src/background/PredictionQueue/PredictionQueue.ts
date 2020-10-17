@@ -128,7 +128,7 @@ export class PredictionQueue implements IPredictionQueue {
         reject(errMessage)
       }
     } else {
-      this.logger.log(`Stange stuff for ${url}`)
+      this.logger.log(`Cannot find image in requestMap where url is ${url}`)
     }
   }
 
@@ -137,9 +137,6 @@ export class PredictionQueue implements IPredictionQueue {
   }
 
   public onDrain (): void {
-    this.activeTabs.clear()
-    this.activeTabs.add(this.DEFAULT_TAB_ID)
-
     // @DOCS Async operations
     const tmpTotalBlocked = this.totalBlocked
     this.store.dispatch(setTotalBlocked(tmpTotalBlocked))

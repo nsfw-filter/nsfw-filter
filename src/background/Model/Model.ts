@@ -22,6 +22,7 @@ export class Model implements IModel {
   private readonly IMAGE_SIZE: number
   private readonly LRUCache: LRUCache<string, boolean>
   private readonly FILTER_LIST: Set<string>
+  private readonly LOADING_TIMEOUT: number
 
   constructor (model: NSFWJS, logger: ILogger, settings: ModelSettings) {
     this.model = model
@@ -33,6 +34,7 @@ export class Model implements IModel {
     this.IMAGE_SIZE = 224
     this.LRUCache = new LRUCache(200)
     this.FILTER_LIST = new Set(['Hentai', 'Porn', 'Sexy'])
+    this.LOADING_TIMEOUT = 1000
   }
 
   public setSettings (settings: ModelSettings): void {
@@ -60,6 +62,7 @@ export class Model implements IModel {
     const image: HTMLImageElement = new Image(this.IMAGE_SIZE, this.IMAGE_SIZE)
 
     return await new Promise((resolve, reject) => {
+      setTimeout(reject, this.LOADING_TIMEOUT, new Error(`Image load timeout ${url}`))
       image.crossOrigin = 'anonymous'
       image.onload = () => resolve(image)
       image.onerror = (err) => reject(err)
