@@ -1,4 +1,5 @@
-const nsfwCriteria_shouldBeHiddenRate_list = [['Hentai', 0.1], ['Sexy', 0.2], ['Porn', 0.2]]
+// const nsfwCriteria_shouldBeHiddenRate_list = [['Hentai', 0.1], ['Sexy', 0.2], ['Porn', 0.2]]
+const nsfwCriteria_shouldBeHiddenRate_list = [['Sexy', 0.2], ['Porn', 0.2]]
 const sfwCriteria_shoulbBeVisibleRate_list = [['Nature', 0.9]]
 
 describe('Should filter NSFW lazy loaded images', () => {
