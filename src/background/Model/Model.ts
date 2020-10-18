@@ -23,6 +23,8 @@ export class Model implements IModel {
   private readonly LRUCache: LRUCache<string, boolean>
   private readonly FILTER_LIST: Set<string>
   private readonly LOADING_TIMEOUT: number
+  private readonly firstFilterPercentages: Map<string, number>
+  private readonly secondFilterPercentages: Map<string, number>
 
   constructor (model: NSFWJS, logger: ILogger, settings: ModelSettings) {
     this.model = model
@@ -35,10 +37,39 @@ export class Model implements IModel {
     this.LRUCache = new LRUCache(200)
     this.FILTER_LIST = new Set(['Hentai', 'Porn', 'Sexy'])
     this.LOADING_TIMEOUT = 1000
+
+    this.firstFilterPercentages = new Map()
+    this.secondFilterPercentages = new Map()
+
+    this.setSettings(settings)
   }
 
   public setSettings (settings: ModelSettings): void {
     this.settings = settings
+    this.firstFilterPercentages.clear()
+    this.secondFilterPercentages.clear()
+
+    for (const className of this.FILTER_LIST.values()) {
+      this.firstFilterPercentages.set(
+        className,
+        Model.handleFilterStrictness({
+          value: this.settings.filterStrictness,
+          maxValue: 98,
+          minValue: className === 'Porn' ? 33 : 45
+        })
+      )
+    }
+
+    for (const className of this.FILTER_LIST.values()) {
+      this.secondFilterPercentages.set(
+        className,
+        Model.handleFilterStrictness({
+          value: this.settings.filterStrictness,
+          maxValue: 50,
+          minValue: className === 'Porn' ? 12 : 20
+        })
+      )
+    }
   }
 
   public getCache (): LRUCache<string, boolean> {
@@ -50,8 +81,8 @@ export class Model implements IModel {
 
     const image: HTMLImageElement = await this.loadImage(url)
 
-    const prediction = await this.model.classify(image, 1)
-    const { result, className, probability } = this.handlePredictions([prediction])
+    const prediction = await this.model.classify(image, 2)
+    const { result, className, probability } = this.handlePrediction(prediction)
 
     this.logger.log(`IMG prediction is ${className} ${probability} for ${url}`)
     this.LRUCache.set(url, result)
@@ -70,13 +101,31 @@ export class Model implements IModel {
     })
   }
 
-  private handlePredictions (predictions: predictionType[][]): { result: boolean, className: string, probability: number } {
-    const flattenArr = predictions.flat()
+  private handlePrediction (prediction: predictionType[]): { result: boolean, className: string, probability: number } {
+    const [{ className: cn1, probability: pb1 }, { className: cn2, probability: pb2 }] = prediction
 
-    const prediction = flattenArr.find(({ className, probability }) => this.FILTER_LIST.has(className) && probability > 0.5)
+    const result1 = this.FILTER_LIST.has(cn1) && pb1 > (this.firstFilterPercentages.get(cn1) as number)
+    if (result1) return ({ result: result1, className: cn1, probability: pb1 })
 
-    if (prediction !== undefined) return ({ result: true, ...prediction })
+    const result2 = this.FILTER_LIST.has(cn2) && pb2 > (this.secondFilterPercentages.get(cn2) as number)
+    if (result2) return ({ result: result2, className: cn2, probability: pb2 })
 
-    return ({ result: false, className: flattenArr[0].className, probability: flattenArr[0].probability })
+    return ({ result: result1, className: cn1, probability: pb1 })
+  }
+
+  public static handleFilterStrictness ({ value, minValue, maxValue }: {value: number, minValue: number, maxValue: number}): number {
+    const MIN = minValue
+    const MAX = maxValue
+
+    const calc = (value: number): number => {
+      if (value === 1) return MAX
+      else if (value === 100) return MIN
+      else {
+        const coefficient = 1 - (value / 100)
+        return (coefficient * (MAX - MIN)) + MIN
+      }
+    }
+
+    return Math.round((calc(value) / 100) * 10000) / 10000
   }
 }

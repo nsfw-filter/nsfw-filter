@@ -1,7 +1,7 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-    "target": "ES3",
+    "target": "ES5",
     "module": "CommonJS",
     "lib": ["DOM", "ESNext"],
     "sourceMap": false,
@@ -21,7 +21,8 @@
     "allowJs": true,
     "checkJs": false,
     "jsx": "react",
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "downlevelIteration": true
   },
   "include": ["src/"],
   "exclude": ["node_modules/", "dist/", "test/"]
