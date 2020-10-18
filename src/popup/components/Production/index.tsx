@@ -22,7 +22,7 @@ export const Production: React.FC = () => {
 
       <div>Filter Strictness</div>
       <Slider
-        min={20}
+        min={1}
         max={100}
         onChange={(value: number) => dispatch(setFilterStrictness(value))}
         value={filterStrictness}
