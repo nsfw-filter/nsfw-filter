@@ -1,11 +1,10 @@
 module.exports = {
-    testMatch: [
-      "**/test/**/*.test.js"
-    ],
+    testMatch: [ "**/test/e2e/**/*.[jt]s?(x)" ],
     verbose: true,
+    rootDir: ".",
     testTimeout: 100000,
     maxConcurrency: 1,
     maxWorkers: 1,
     preset: 'jest-puppeteer',
-    setupFilesAfterEnv: ['./jest.setup.js'],
+    setupFilesAfterEnv: ['./jest.e2e.setup.js'],
 }
