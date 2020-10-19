@@ -1,6 +1,7 @@
 module.exports = {
     testMatch: [ "**/test/e2e/**/*.[jt]s?(x)" ],
     verbose: true,
+    rootDir: ".",
     testTimeout: 100000,
     maxConcurrency: 1,
     maxWorkers: 1,
