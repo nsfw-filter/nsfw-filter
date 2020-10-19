@@ -5,7 +5,7 @@
   "scripts": {
     "lint": "eslint .",
     "clean": "rimraf dist/src",
-    "test": "npm run test:unit && test:e2e",
+    "test": "npm run test:unit && npm run test:e2e",
     "test:e2e": "cross-env HEADLESS=false jest --no-cache -c ./test/jest.e2e.config.js",
     "test:unit": "jest --no-cache -c ./test/jest.unit.config.js",
     "build": "npm run clean && webpack --config webpack/webpack.prod.js",
