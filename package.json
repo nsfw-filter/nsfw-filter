@@ -5,7 +5,9 @@
   "scripts": {
     "lint": "eslint .",
     "clean": "rimraf dist/src",
-    "test": "cross-env HEADLESS=false jest --no-cache",
+    "test": "npm run test:unit && test:e2e",
+    "test:e2e": "cross-env HEADLESS=false jest --no-cache -c ./test/jest.e2e.config.js",
+    "test:unit": "jest --no-cache -c ./test/jest.unit.config.js",
     "build": "npm run clean && webpack --config webpack/webpack.prod.js",
     "dev": "webpack --config webpack/webpack.dev.js",
     "dev:firefox": "npm-run-all --parallel dev start:firefox",
@@ -76,6 +78,7 @@
     "rimraf": "3.0.2",
     "sass-loader": "9.0.3",
     "style-loader": "1.2.1",
+    "ts-jest": "26.4.1",
     "ts-loader": "6.2.1",
     "typescript": "3.9.7",
     "web-ext": "5.2.0",

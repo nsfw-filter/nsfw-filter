@@ -5,7 +5,4 @@ docs
 node_modules
 webpack
 test
-jest.config.js
 src/popup/popup.html
-jest.setup.js
-jest-puppeteer.config.js
