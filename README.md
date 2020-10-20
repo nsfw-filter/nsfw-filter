@@ -162,7 +162,7 @@ That's it! The extension is now ready to be used in Firefox!
 -->
 # Contribute
 
-Please check the [**Contributing Guidelines**](https://github.com/navendu-pottekkat/nsfw-filter/blob/master/CONTRIBUTING.md) before contributing.
+Please check the [**Contributing Guidelines**](https://github.com/navendu-pottekkat/nsfw-filter/blob/master/.github/markdown/CONTRIBUTING.md) before contributing.
 
 You can also sponsor on [**Open Collective**](https://opencollective.com/nsfwfilter/donate) or [**become a Patron**](https://www.patreon.com/bePatron?u=41162696).
 
