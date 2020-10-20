@@ -3,14 +3,12 @@ import { createStore } from 'redux'
 import { createChromeStore } from '../popup/redux/chrome-storage'
 import { rootReducer } from '../popup/redux/reducers'
 import { Logger } from '../utils/Logger'
-import { Memory } from '../utils/Memory'
 
 import { DOMWatcher } from './DOMWatcher/DOMWatcher'
 import { ImageFilter } from './Filter/ImageFilter'
 
 const init = (): void => {
   const logger = new Logger()
-  new Memory(logger).start()
 
   const imageFilter = new ImageFilter(logger)
   const domWatcher = new DOMWatcher(imageFilter)
