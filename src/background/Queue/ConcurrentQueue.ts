@@ -2,38 +2,33 @@ import { OnSuccessParam, OnFailureParam } from './PredictionQueue'
 
 type ConcurrentQueueParams = {
   concurrency: number
+  timeout: number
   onProcess: Function
   onSuccess: Function
   onFailure: Function
-  onDone: Function
-  onDrain: Function
+  onDone?: Function
+  onDrain?: Function
 }
 
-type IConcurrentQueue = {
-  add: (task: ConcurrentQueueTask) => void
-  setConcurrency: (concurrency: number) => void
+type IConcurrentQueue<Task> = {
+  add: (task: Task) => void
 }
 
-type ConcurrentQueueTask = {
-  resolve: (value: boolean) => void
-  reject: (error: string) => void
-  url: string
-  tabId?: number
-}
-
-export class ConcurrentQueue implements IConcurrentQueue {
-  private concurrency: number
+export class ConcurrentQueue<Task> implements IConcurrentQueue<Task> {
+  private readonly concurrency: number
+  private readonly TIMEOUT: number
   private count: number
-  private readonly waiting: ConcurrentQueueTask[]
+  private readonly waiting: Task[]
 
   private readonly onProcess: Function
   private readonly onSuccess: Function
   private readonly onFailure: Function
-  private readonly onDone: Function
-  private readonly onDrain: Function
+  private readonly onDone?: Function
+  private readonly onDrain?: Function
 
   constructor ({
     concurrency,
+    timeout,
     onProcess,
     onSuccess,
     onFailure,
@@ -41,6 +36,7 @@ export class ConcurrentQueue implements IConcurrentQueue {
     onDrain
   }: ConcurrentQueueParams) {
     this.concurrency = concurrency
+    this.TIMEOUT = timeout
     this.count = 0
     this.waiting = []
 
@@ -48,14 +44,10 @@ export class ConcurrentQueue implements IConcurrentQueue {
     this.onSuccess = onSuccess
     this.onFailure = onFailure
     this.onDone = onDone
-    this.onDrain = onDrain
+    if (onDrain !== undefined) this.onDrain = onDrain
   }
 
-  public setConcurrency (concurrency: number): void {
-    this.concurrency = concurrency
-  }
-
-  public add (task: ConcurrentQueueTask): void {
+  public add (task: Task): void {
     const hasChannel = this.count < this.concurrency
 
     if (hasChannel) {
@@ -66,7 +58,7 @@ export class ConcurrentQueue implements IConcurrentQueue {
     this.waiting.push(task)
   }
 
-  private next (task: ConcurrentQueueTask): void {
+  private next (task: Task): void {
     this.count++
 
     this.onProcess(task, (err: OnFailureParam | undefined, result: OnSuccessParam | undefined) => {
@@ -76,18 +68,18 @@ export class ConcurrentQueue implements IConcurrentQueue {
         this.onSuccess(result)
       }
 
-      this.onDone(err !== undefined ? err : result)
+      if (this.onDone !== undefined) this.onDone(err !== undefined ? err : result)
 
       this.count--
 
       if (this.waiting.length > 0) {
-        const task = this.waiting.shift() as ConcurrentQueueTask
-        setTimeout(() => this.next(task), 0)
+        const task = this.waiting.shift() as Task
+        setTimeout(() => this.next(task), this.TIMEOUT)
         return
       }
 
       if (this.count === 0 && this.waiting.length === 0) {
-        this.onDrain()
+        if (this.onDrain !== undefined) this.onDrain()
       }
     })
   }

@@ -9,12 +9,12 @@ import { rootReducer, RootState } from '../popup/redux/reducers'
 import { ILogger, Logger } from '../utils/Logger'
 import { PredictionRequest, PredictionResponse } from '../utils/messages'
 
-import { Model, ModelSettings } from './Model/Model'
-import { PredictionQueue } from './PredictionQueue/PredictionQueue'
+import { Model, ModelSettings } from './Model'
+import { QueueWrapper as Queue } from './Queue/QueueWrapper'
 
 export type IReduxedStorage = {
   getState: () => RootState
-  dispatch: (action: SettingsActionTypes | StatisticsActionTypes) => void // returns dispatchedAction
+  dispatch: (action: SettingsActionTypes | StatisticsActionTypes) => Promise<void> // returns dispatchedAction
 }
 
 export type loadType = {
@@ -33,14 +33,14 @@ const load = ({ logger, store, modelSettings }: loadType): void => {
   loadModel(MODEL_PATH, { type: 'graph' })
     .then(NSFWJSModel => {
       const model = new Model(NSFWJSModel, logger, modelSettings)
-      const pQueue = new PredictionQueue(model, logger, store)
+      const queue = new Queue(model, logger, store)
 
       // Event when content sends request to filter image
       chrome.runtime.onMessage.addListener((request: PredictionRequest, sender, callback: (value: PredictionResponse) => void) => {
         if (request.type === 'SIGN_CONNECT') return
 
         const { url } = request
-        pQueue.predict(url, sender.tab?.id)
+        queue.predict(url, sender.tab?.id)
           .then(result => callback(new PredictionResponse(result, url)))
           .catch(err => callback(new PredictionResponse(false, url, err.message)))
 
@@ -48,19 +48,19 @@ const load = ({ logger, store, modelSettings }: loadType): void => {
       })
 
       // Close tab window event
-      chrome.tabs.onRemoved.addListener(tabId => pQueue.clearByTabId(tabId))
+      chrome.tabs.onRemoved.addListener(tabId => queue.clearByTabId(tabId))
 
       // Close popup window event
       chrome.runtime.onConnect.addListener(port => port.onDisconnect.addListener(() => {
-        const { logging, filterStrictness, concurrency } = store.getState().settings
+        const { logging, filterStrictness } = store.getState().settings
 
         logging ? logger.enable() : logger.disable()
-        pQueue.setSettings({ concurrency: Number(concurrency) })
         model.setSettings({ filterStrictness })
       }))
     })
     .catch(error => {
       logger.error(error)
+      attempts++
       if (attempts < 5) setTimeout(load, 200)
 
       logger.log(`Reload model, attempt: ${attempts}`)
@@ -68,7 +68,6 @@ const load = ({ logger, store, modelSettings }: loadType): void => {
 }
 
 const init = async (): Promise<void> => {
-  attempts++
   const store = await createChromeStore({ createStore })(rootReducer)
   const { logging, filterStrictness } = store.getState().settings
 
