@@ -7,7 +7,6 @@ import { StatisticsActionTypes } from '../popup/redux/actions/statistics'
 import { createChromeStore } from '../popup/redux/chrome-storage'
 import { rootReducer, RootState } from '../popup/redux/reducers'
 import { ILogger, Logger } from '../utils/Logger'
-import { Memory } from '../utils/Memory'
 import { PredictionRequest, PredictionResponse } from '../utils/messages'
 
 import { Model, ModelSettings } from './Model/Model'
@@ -76,7 +75,6 @@ const init = async (): Promise<void> => {
   const logger = new Logger()
   if (logging === true) logger.enable()
 
-  new Memory(logger).start()
   load({ logger, store, modelSettings: { filterStrictness } })
 }
 
