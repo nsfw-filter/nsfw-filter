@@ -5,9 +5,12 @@ const SFWUrls = [
 
 describe('Should not filter SFW images', () => {
     test.each(SFWUrls)(`Check single SFW image %s`, async (url, done) => {
-        await page.goto(url, {waituntil: "domcontentloaded"})
+        let page = await global.__BROWSER__.newPage();
 
-        const data = await global.getDocumentImageAttributes()
+        await page.goto(url, {waituntil: "domcontentloaded"})
+        await page.waitForTimeout(5000)
+
+        const data = await global.getDocumentImageAttributes(page)
         data.forEach(element => expect(element === "sfw").toBeTruthy())
         done()
     })
