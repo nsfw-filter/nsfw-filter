@@ -1,6 +1,6 @@
-import { LRUCache } from '../../src/background/Model/LRUCache'
+import { LRUCache } from '../../src/background/LRUCache'
 
-describe('background => Model => LRUCache', () => {
+describe('background => LRUCache', () => {
     const [key1, value1] = ['key1', 'value1']
     const [key2, value2] = ['key2', 'value2']
     const [key3, value3] = ['key3', 'value3']

@@ -1,4 +1,4 @@
-import { Model } from '../../src/background/Model/Model'
+import { Model } from '../../src/background/Model'
 
 describe.only('background => Model => handleFilterStrictness', () => {
     const data = [
