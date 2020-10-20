@@ -27,7 +27,7 @@
     }
   ],
   "homepage": "https://github.com/nsfw-filter/nsfw-filter",
-  "license": "GNU General Public License v3.0",
+  "license": "GPL-3.0-only",
   "dependencies": {
     "@nsfw-filter/nsfwjs": "2.2.0",
     "@tensorflow/tfjs": "1.7.4",
