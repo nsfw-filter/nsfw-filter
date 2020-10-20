@@ -1,3 +1,5 @@
+process.env.JEST_PUPPETEER_CONFIG = require.resolve('./jest-puppeteer.config.js');
+
 module.exports = {
     testMatch: [ "**/test/e2e/**/*.[jt]s?(x)" ],
     verbose: true,
