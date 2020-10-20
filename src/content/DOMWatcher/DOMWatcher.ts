@@ -7,7 +7,6 @@
 // @TODO video
 
 import { IImageFilter } from '../Filter/ImageFilter'
-import { _Image } from '../Filter/types'
 
 type domWatcherSettingsType = {
   filteringDiv: boolean
@@ -53,20 +52,20 @@ export class DOMWatcher implements IDOMWatcher {
     if (mutation.target.nodeName === 'TITLE') {
       const images = document.getElementsByTagName('img')
       for (let i = 0; i < images.length; i++) {
-        this.imageFilter.analyzeImage(images[i] as _Image, false)
+        this.imageFilter.analyzeImage(images[i], false)
       }
     }
 
     for (let i = 0; i < mutation.addedNodes.length; i++) {
       if (mutation.addedNodes[i].nodeName === 'IMG') {
-        this.imageFilter.analyzeImage(mutation.addedNodes[i] as _Image, false)
+        this.imageFilter.analyzeImage(mutation.addedNodes[i] as HTMLImageElement, false)
       }
     }
   }
 
   private checkAttributeMutation (mutation: MutationRecord): void {
-    if ((mutation.target as _Image).nodeName === 'IMG') {
-      this.imageFilter.analyzeImage(mutation.target as _Image, mutation.attributeName === 'src')
+    if ((mutation.target as HTMLImageElement).nodeName === 'IMG') {
+      this.imageFilter.analyzeImage(mutation.target as HTMLImageElement, mutation.attributeName === 'src')
     }
   }
 

@@ -3,16 +3,14 @@ import { ILogger } from 'utils/Logger'
 import { PredictionRequest } from '../../utils/messages'
 
 import { Filter } from './Filter'
-import { _Image } from './types'
 
 type imageFilterSettingsType = {
   filterEffect: 'blur' | 'hide'
 }
 
 export type IImageFilter = {
-  analyzeImage: (image: _Image, srcAttribute: boolean) => void
+  analyzeImage: (image: HTMLImageElement, srcAttribute: boolean) => void
   setSettings: (settings: imageFilterSettingsType) => void
-  // analyzeDiv: (div: _Image) => void
 }
 
 export class ImageFilter extends Filter implements IImageFilter {
@@ -30,21 +28,20 @@ export class ImageFilter extends Filter implements IImageFilter {
     this.settings = settings
   }
 
-  public analyzeImage (image: _Image, srcAttribute: boolean = false): void {
+  public analyzeImage (image: HTMLImageElement, srcAttribute: boolean = false): void {
     if (
       image.src.length > 0 &&
       ((image.width > this.MIN_IMAGE_SIZE && image.height > this.MIN_IMAGE_SIZE) || image.height === 0 || image.width === 0)
     ) {
       if (srcAttribute) {
         this._analyzeImage(image)
-      } else if (image._isChecked === undefined) {
+      } else if (image.dataset.nsfwFilterStatus === undefined) {
         this._analyzeImage(image)
       }
     }
   }
 
-  private _analyzeImage (image: _Image): void {
-    image._isChecked = true
+  private _analyzeImage (image: HTMLImageElement): void {
     this.hideImage(image)
     this.logger.log(`Analyze image ${image.src}`)
 
@@ -67,14 +64,14 @@ export class ImageFilter extends Filter implements IImageFilter {
       })
   }
 
-  private hideImage (image: _Image): void {
+  private hideImage (image: HTMLImageElement): void {
     if (image.parentNode?.nodeName === 'BODY') image.hidden = true
 
     image.dataset.nsfwFilterStatus = 'processing'
     image.style.visibility = 'hidden'
   }
 
-  private showImage (image: _Image, url: string): void {
+  private showImage (image: HTMLImageElement, url: string): void {
     if (image.src === url) {
       if (image.parentNode?.nodeName === 'BODY') image.hidden = false
 
