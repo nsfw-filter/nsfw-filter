@@ -26,6 +26,10 @@
       "url": "https://github.com/yegorzaremba"
     }
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nsfw-filter/nsfw-filter"
+  },
   "homepage": "https://github.com/nsfw-filter/nsfw-filter",
   "license": "GPL-3.0-only",
   "dependencies": {
