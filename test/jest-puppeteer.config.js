@@ -1,5 +1,5 @@
 const { join } = require('path');
-const extensionPath = join(__dirname, './dist')
+const extensionPath = join(__dirname, '../dist')
 const options = {width: 900, height: 900}
 
 module.exports = {
