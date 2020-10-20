@@ -8,8 +8,7 @@ import {
   toggleLogging,
   toggleDivFiltering,
   setTrainedModel,
-  setFilterEffect,
-  setConcurrency
+  setFilterEffect
 } from '../../redux/actions/settings/index'
 import { RootState } from '../../redux/reducers'
 
@@ -25,8 +24,7 @@ export const Testing: React.FC = () => {
     logging,
     filteringDiv,
     trainedModel,
-    filterEffect,
-    concurrency
+    filterEffect
   } = useSelector<RootState>((state) => state.settings) as SettingsState
 
   useEffect(() => {
@@ -62,19 +60,6 @@ export const Testing: React.FC = () => {
         </Select>
       </DropdownRow>
 
-      <DropdownRow>
-        <span>Concurrency</span>
-        <Select
-          defaultValue={concurrency}
-          style={{ width: 120 }}
-          onChange={value => dispatch(setConcurrency(value))}
-        >
-          <Option value="1">1</Option>
-          <Option value="2">2</Option>
-          <Option value="3">3</Option>
-        </Select>
-      </DropdownRow>
-
       <CheckboxArea>
         <StyledCheckbox
           checked={logging}
@@ -86,12 +71,6 @@ export const Testing: React.FC = () => {
           style={{ marginLeft: 0, paddingTop: '7px' }}
           onChange={() => dispatch(toggleDivFiltering())}
         >{'Filter backgroundImage of <div> tag'}</StyledCheckbox>
-
-        {/* <StyledCheckbox
-          checked={filteringGif}
-          style={{ marginLeft: 0, paddingTop: '7px' }}
-          onChange={() => dispatch(toggleGifFiltering())}
-        >{'Filter GIF images'}</StyledCheckbox> */}
       </CheckboxArea>
 
       <BugReport>
