@@ -12,6 +12,9 @@ type ConcurrentQueueParams = {
 
 type IConcurrentQueue<Task> = {
   add: (task: Task) => void
+  pause: () => void
+  resume: () => void
+  getTaskAmount: () => number
 }
 
 export class ConcurrentQueue<Task> implements IConcurrentQueue<Task> {
@@ -19,6 +22,7 @@ export class ConcurrentQueue<Task> implements IConcurrentQueue<Task> {
   private readonly TIMEOUT: number
   private count: number
   private readonly waiting: Task[]
+  private paused: boolean
 
   private readonly onProcess: Function
   private readonly onSuccess: Function
@@ -39,6 +43,7 @@ export class ConcurrentQueue<Task> implements IConcurrentQueue<Task> {
     this.TIMEOUT = timeout
     this.count = 0
     this.waiting = []
+    this.paused = false
 
     this.onProcess = onProcess
     this.onSuccess = onSuccess
@@ -72,7 +77,7 @@ export class ConcurrentQueue<Task> implements IConcurrentQueue<Task> {
 
       this.count--
 
-      if (this.waiting.length > 0) {
+      if (!this.paused && this.waiting.length > 0) {
         const task = this.waiting.shift() as Task
         setTimeout(() => this.next(task), this.TIMEOUT)
         return
@@ -82,5 +87,25 @@ export class ConcurrentQueue<Task> implements IConcurrentQueue<Task> {
         if (this.onDrain !== undefined) this.onDrain()
       }
     })
+  }
+
+  public pause (): void {
+    this.paused = true
+  }
+
+  public resume (): void {
+    if (this.waiting.length > 0) {
+      const channels = this.concurrency - this.count
+
+      for (let i = 0; i < channels; i++) {
+        const task = this.waiting.shift() as Task
+        this.next(task)
+      }
+    }
+    this.paused = false
+  }
+
+  public getTaskAmount (): number {
+    return this.waiting.length
   }
 }
