@@ -79,26 +79,4 @@ export class ImageFilter extends Filter implements IImageFilter {
       image.style.visibility = 'visible'
     }
   }
-
-  // public async analyzeDiv(div: _Image): Promise<void> {
-  //   if (div._isChecked === undefined && typeof div.style.backgroundImage === 'string' && div.style.backgroundImage.length > 0) {
-  //     div._isChecked = true
-  //     this.hideImage(div)
-
-  //     const url: string | undefined = ImageFilter.prepareUrl(div.style.backgroundImage.slice(5, -2))
-  //     if (url === undefined) return
-
-  //     const request = new PredictionRequest(url)
-  //     this.requestToAnalyzeImage(request)
-  //       .then(result => {
-  //         if (result) {
-  //           this.blockedItems++
-  //         } else {
-  //           this.showImage(div)
-  //         }
-  //       }).catch(_error => {
-  //         this.showImage(div)
-  //       })
-  //   }
-  // }
 }
