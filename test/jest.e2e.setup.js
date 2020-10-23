@@ -9,6 +9,7 @@ global.getDocumentImageAttributes = async (page) =>  {
             .map(element => new Promise((resolve) => {
                 let attempt = 0
                 const waitForImageProcessing = () => {
+                    attempt++
                     const status = element.getAttribute("data-nsfw-filter-status")
                     
                     if (status === "processing" && attempt > 4) {
