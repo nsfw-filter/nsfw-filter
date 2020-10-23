@@ -1,16 +1,8 @@
-require("expect-puppeteer");
-
-beforeAll(async () => {
-    // wait for model to load
-    await page.waitForTimeout(25000)
-});
-
-
 /**
  * Check the images of the page
  * get their data-nsfw-fillter-status attributes and return them from the page
  */
-global.getDocumentImageAttributes = async () =>  {
+global.getDocumentImageAttributes = async (page) =>  {
     const data = await page.evaluate(async () => {
         const result = [...document.images]
             .filter(element => element.getAttribute("data-nsfw-filter-status"))
