@@ -64,8 +64,7 @@ export class LoadingQueue extends PredictionQueue {
   private onLoadingSuccess ({ url, image, tabId }: OnSuccessParam): void {
     if (!this._checkUrlStatus(url)) return
 
-    const qwe = this.predictionQueue.getTaskAmount()
-    if (!this.pauseFlag && qwe >= 15) {
+    if (!this.pauseFlag && this.predictionQueue.getTaskAmount() >= 15) {
       this.pauseFlag = true
       this.loadingQueue.pause()
     }

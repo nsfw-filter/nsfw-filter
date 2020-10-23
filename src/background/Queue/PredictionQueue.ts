@@ -62,8 +62,7 @@ export class PredictionQueue extends QueueBase {
       resolve(result)
     }
 
-    const qwe = this.predictionQueue.getTaskAmount()
-    if (this.pauseFlag && qwe <= 7) {
+    if (this.pauseFlag && this.predictionQueue.getTaskAmount() <= 7) {
       this.pauseFlag = false
       // @ts-expect-error
       this.loadingQueue.resume()
