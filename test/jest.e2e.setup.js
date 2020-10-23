@@ -23,9 +23,9 @@ global.getDocumentImageAttributes = async (page) =>  {
 
                 waitForImageProcessing()
             }))
-            .filter(Boolean)
         
-        return await Promise.all(result)
+        const _result = await Promise.all(result)
+        return _result.filter(Boolean)
     })
     return data
 }
