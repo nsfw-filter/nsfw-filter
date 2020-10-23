@@ -12,9 +12,9 @@ global.getDocumentImageAttributes = async (page) =>  {
                     attempt++
                     const status = element.getAttribute("data-nsfw-filter-status")
                     
-                    if (status === "processing" && attempt > 4) {
+                    if (status === "processing" && attempt > 40) {
                         resolve(undefined)
-                    } else if (status === "processing" && attempt <= 4) {
+                    } else if (status === "processing" && attempt <= 40) {
                         setTimeout(waitForImageProcessing, 500)
                     } else {
                         resolve(status)
