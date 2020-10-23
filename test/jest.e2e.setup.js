@@ -6,17 +6,24 @@ global.getDocumentImageAttributes = async (page) =>  {
     const data = await page.evaluate(async () => {
         const result = [...document.images]
             .filter(element => element.getAttribute("data-nsfw-filter-status"))
-            .map(element => new Promise((resolve, _reject) => {
-                waitForImageProcessing()
-
-                function waitForImageProcessing() {
+            .map(element => new Promise((resolve) => {
+                let attempt = 0
+                const waitForImageProcessing = () => {
                     const status = element.getAttribute("data-nsfw-filter-status")
-                    if (status === "processing") setTimeout(waitForImageProcessing, 500)
-                    else {
+                    
+                    if (status === "processing" && attempt > 4) {
+                        resolve(undefined)
+                    } else if (status === "processing" && attempt <= 4) {
+                        setTimeout(waitForImageProcessing, 500)
+                    } else {
                         resolve(status)
                     }
                 }
+
+                waitForImageProcessing()
             }))
+            .filter(Boolean)
+        
         return await Promise.all(result)
     })
     return data
