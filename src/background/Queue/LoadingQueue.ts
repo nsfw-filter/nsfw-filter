@@ -19,15 +19,10 @@ type OnFailureParam = Pick<HandlerParams, 'url' | 'errMessage'>
 
 export type CallbackFunction = (err: unknown | undefined, result: unknown | undefined) => undefined
 
-type LoadingQueueTask = {
-  url: string
-  tabId: number
-}
-
 export class LoadingQueue extends PredictionQueue {
   private readonly IMAGE_SIZE: number
   private readonly LOADING_TIMEOUT: number
-  protected readonly loadingQueue: ConcurrentQueue<LoadingQueueTask>
+  protected readonly loadingQueue: ConcurrentQueue<OnProcessParam>
 
   constructor (model: Model, logger: ILogger, store: IReduxedStorage) {
     super(model, logger, store)
@@ -36,7 +31,7 @@ export class LoadingQueue extends PredictionQueue {
     this.LOADING_TIMEOUT = 1000
     this.loadingQueue = new ConcurrentQueue({
       concurrency: 2, // We need another concurrent IO job if image stuck for 1 sec with loading timeout
-      timeout: 30, // We don't need to load all images ASAP, because we leave time for PreductionQueue CPU-bound tasks
+      timeout: 0,
       onProcess: this.onLoadingProcess.bind(this),
       onSuccess: this.onLoadingSuccess.bind(this),
       onFailure: this.onLoadingFailure.bind(this)
@@ -68,6 +63,11 @@ export class LoadingQueue extends PredictionQueue {
 
   private onLoadingSuccess ({ url, image, tabId }: OnSuccessParam): void {
     if (!this._checkUrlStatus(url)) return
+
+    if (!this.pauseFlag && this.predictionQueue.getTaskAmount() >= 15) {
+      this.pauseFlag = true
+      this.loadingQueue.pause()
+    }
 
     this.predictionQueue.add({ url, image, tabId })
   }

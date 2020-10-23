@@ -21,27 +21,24 @@ type OnDoneParam = Pick<HandlerParams, 'url'>
 
 export type CallbackFunction = (err: unknown | undefined, result: unknown | undefined) => undefined
 
-type PredictionQueueTask = {
-  image: HTMLImageElement
-  url: string
-  tabId: number
-}
-
 export class PredictionQueue extends QueueBase {
-  protected readonly predictionQueue: ConcurrentQueue<PredictionQueueTask>
+  protected readonly predictionQueue: ConcurrentQueue<OnProcessParam>
+  protected pauseFlag: boolean
 
   constructor (model: Model, logger: ILogger, store: IReduxedStorage) {
     super(model, logger, store)
 
     this.predictionQueue = new ConcurrentQueue({
       concurrency: 1, // We dont need more concurrent jobs here because this queue does CPU-bound task, it means that it blocks event loop anyway
-      timeout: 0, // We need to predict images ASAP
+      timeout: 0,
       onProcess: this.onProcess.bind(this),
       onSuccess: this.onSuccess.bind(this),
       onFailure: this.onFailure.bind(this),
       onDone: this.onDone.bind(this),
       onDrain: this.onDrain.bind(this)
     })
+
+    this.pauseFlag = false
   }
 
   private onProcess ({ url, image, tabId }: OnProcessParam, callback: CallbackFunction): void {
@@ -64,6 +61,12 @@ export class PredictionQueue extends QueueBase {
     for (const [{ resolve }] of this.requestMap.get(url) as requestQueueValue) {
       resolve(result)
     }
+
+    if (this.pauseFlag && this.predictionQueue.getTaskAmount() <= 7) {
+      this.pauseFlag = false
+      // @ts-expect-error
+      this.loadingQueue.resume()
+    }
   }
 
   private onFailure ({ url, errMessage }: OnFailureParam): void {
@@ -81,6 +84,10 @@ export class PredictionQueue extends QueueBase {
   }
 
   private onDrain (): void {
+    this.pauseFlag = false
+    // @ts-expect-error
+    this.loadingQueue.resume()
+
     // @DOCS Async operations
     const tmpTotalBlocked = this.totalBlocked
     this.store.dispatch(setTotalBlocked(tmpTotalBlocked))
