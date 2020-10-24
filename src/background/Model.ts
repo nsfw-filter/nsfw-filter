@@ -43,8 +43,8 @@ export class Model implements IModel {
         className,
         Model.handleFilterStrictness({
           value: filterStrictness,
-          maxValue: 98,
-          minValue: className === 'Porn' ? 33 : 45
+          maxValue: 100,
+          minValue: className === 'Porn' ? 40 : 60
         })
       )
     }
@@ -55,17 +55,21 @@ export class Model implements IModel {
         Model.handleFilterStrictness({
           value: filterStrictness,
           maxValue: 50,
-          minValue: className === 'Porn' ? 12 : 20
+          minValue: className === 'Porn' ? 15 : 25
         })
       )
     }
   }
 
   public async predictImage (image: HTMLImageElement, url: string): Promise<boolean> {
+    const start = new Date().getTime()
+
     const prediction = await this.model.classify(image, 2)
     const { result, className, probability } = this.handlePrediction(prediction)
 
-    this.logger.log(`IMG prediction is ${className} ${probability} for ${url}`)
+    const end = new Date().getTime()
+    this.logger.log(`IMG prediction (${end - start} ms) is ${className} ${probability} for ${url}`)
+
     return result
   }
 
