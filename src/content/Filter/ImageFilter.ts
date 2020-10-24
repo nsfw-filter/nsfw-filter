@@ -1,5 +1,3 @@
-import { ILogger } from 'utils/Logger'
-
 import { PredictionRequest } from '../../utils/messages'
 
 import { Filter } from './Filter'
@@ -17,8 +15,8 @@ export class ImageFilter extends Filter implements IImageFilter {
   private readonly MIN_IMAGE_SIZE: number
   private settings: imageFilterSettingsType
 
-  constructor (_logger: ILogger) {
-    super(_logger)
+  constructor () {
+    super()
     this.MIN_IMAGE_SIZE = 41
 
     this.settings = { filterEffect: 'hide' }
@@ -43,7 +41,6 @@ export class ImageFilter extends Filter implements IImageFilter {
 
   private _analyzeImage (image: HTMLImageElement): void {
     this.hideImage(image)
-    this.logger.log(`Analyze image ${image.src}`)
 
     const request = new PredictionRequest(image.src)
     this.requestToAnalyzeImage(request)
