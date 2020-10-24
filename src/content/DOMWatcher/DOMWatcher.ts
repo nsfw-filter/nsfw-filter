@@ -29,27 +29,9 @@ export class DOMWatcher implements IDOMWatcher {
     for (let i = 0; i < mutationsList.length; i++) {
       const mutation = mutationsList[i]
       if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-        this.checkChildMutation(mutation)
+        this.findAndCheckAllImages(mutation.target as Element)
       } else if (mutation.type === 'attributes') {
         this.checkAttributeMutation(mutation)
-      }
-    }
-  }
-
-  /**
-   * Check the mutation and if title changed analyze every image of document
-   * otherwise search for images in changed nodes and analyze them
-   * @param mutation MutationRecord
-   */
-  private checkChildMutation (mutation: MutationRecord): void {
-    // @ts-expect-error
-    if (mutation.target.nodeName === 'TITLE') this.findAndCheckAllImages(document)
-
-    for (let i = 0; i < mutation.addedNodes.length; i++) {
-      if (mutation.addedNodes[i].nodeName === 'IMG') {
-        this.imageFilter.analyzeImage(mutation.addedNodes[i] as HTMLImageElement, false)
-      } else if (mutation.addedNodes[i].nodeName === 'DIV') {
-        this.findAndCheckAllImages(mutation.addedNodes[i] as Element)
       }
     }
   }
