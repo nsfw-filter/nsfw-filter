@@ -6,7 +6,6 @@ import { Model } from '../Model'
 export type requestQueueValue = Array<Array<{
   resolve: (value: boolean) => void
   reject: (error: Error) => void
-  tabId?: number
 }>>
 
 export type CallbackFunction = (err: unknown | undefined, result: unknown | undefined) => undefined
