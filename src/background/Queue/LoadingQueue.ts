@@ -79,6 +79,7 @@ export class LoadingQueue extends PredictionQueue {
       reject(error)
     }
 
+    this.cache.set(url, false)
     this.requestMap.delete(url)
   }
 }

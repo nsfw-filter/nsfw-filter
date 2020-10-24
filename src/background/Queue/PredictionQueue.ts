@@ -49,7 +49,7 @@ export class PredictionQueue extends QueueBase {
 
     this.model.predictImage(image, url)
       .then(result => callback(undefined, { url, result }))
-      .catch((error: Error) => callback({ url, errMessage: error.message }, undefined))
+      .catch((error: Error) => callback({ url, error }, undefined))
   }
 
   private onSuccess ({ url, result }: OnSuccessParam): void {

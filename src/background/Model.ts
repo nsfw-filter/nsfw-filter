@@ -43,8 +43,8 @@ export class Model implements IModel {
         className,
         Model.handleFilterStrictness({
           value: filterStrictness,
-          maxValue: 98,
-          minValue: className === 'Porn' ? 50 : 65
+          maxValue: 100,
+          minValue: className === 'Porn' ? 40 : 60
         })
       )
     }
