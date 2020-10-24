@@ -8,29 +8,17 @@
 
 import { IImageFilter } from '../Filter/ImageFilter'
 
-type domWatcherSettingsType = {
-  filteringDiv: boolean
-}
-
 export type IDOMWatcher = {
   watch: () => void
-  setSettings: (settings: domWatcherSettingsType) => void
 }
 
 export class DOMWatcher implements IDOMWatcher {
   private readonly observer: MutationObserver
   private readonly imageFilter: IImageFilter
-  private settings: domWatcherSettingsType
 
   constructor (imageFilter: IImageFilter) {
     this.imageFilter = imageFilter
-    this.settings = { filteringDiv: false }
-
     this.observer = new MutationObserver(this.callback.bind(this))
-  }
-
-  public setSettings (settings: domWatcherSettingsType): void {
-    this.settings = settings
   }
 
   public watch (): void {
@@ -38,28 +26,43 @@ export class DOMWatcher implements IDOMWatcher {
   }
 
   private callback (mutationsList: MutationRecord[]): void {
+    let childMutationAllImagesCheck = false
+
     for (let i = 0; i < mutationsList.length; i++) {
       const mutation = mutationsList[i]
       if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
         this.checkChildMutation(mutation)
+
+        // Sometimes mutated div nodes have images to analyze https://github.com/nsfw-filter/nsfw-filter/pull/109
+        if (!childMutationAllImagesCheck) {
+          childMutationAllImagesCheck = true
+          this.findAndCheckAllImages()
+        }
       } else if (mutation.type === 'attributes') {
         this.checkAttributeMutation(mutation)
       }
     }
   }
 
+  /**
+   * Check the mutation and if title changed analyze every image of document
+   * otherwise search for images in changed nodes and analyze them
+   * @param mutation MutationRecord
+   */
   private checkChildMutation (mutation: MutationRecord): void {
-    if (mutation.target.nodeName === 'TITLE') {
-      const images = document.getElementsByTagName('img')
-      for (let i = 0; i < images.length; i++) {
-        this.imageFilter.analyzeImage(images[i], false)
-      }
-    }
+    if (mutation.target.nodeName === 'TITLE') this.findAndCheckAllImages()
 
     for (let i = 0; i < mutation.addedNodes.length; i++) {
       if (mutation.addedNodes[i].nodeName === 'IMG') {
         this.imageFilter.analyzeImage(mutation.addedNodes[i] as HTMLImageElement, false)
       }
+    }
+  }
+
+  private findAndCheckAllImages (): void {
+    const images = document.getElementsByTagName('img')
+    for (let i = 0; i < images.length; i++) {
+      this.imageFilter.analyzeImage(images[i], false)
     }
   }
 
