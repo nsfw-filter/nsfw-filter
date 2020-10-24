@@ -2,7 +2,7 @@ const nsfwCriteria = ['Hentai', 'Sexy', 'Porn']
 const sfwCriteria = ['Nature']
 
 // @TODO stable
-describe.skp('Should filter NSFW lazy loaded images', () => {
+describe.skip('Should filter NSFW lazy loaded images', () => {
 
     beforeAll(async (done) => {
         let page = await global.__BROWSER__.newPage();
