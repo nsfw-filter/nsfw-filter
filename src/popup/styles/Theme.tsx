@@ -6,8 +6,7 @@ import { RootState } from '../redux/reducers'
 
 const light = {
   bg: {
-    primary: '#F5F6F9',
-    secondary: '#EFF0F5'
+    primary: '#CFD6BF'
   },
   text: {
     primary: '#050505'
@@ -16,8 +15,7 @@ const light = {
 
 const dark = {
   bg: {
-    primary: '#322D41',
-    secondary: '#282434'
+    primary: '#282434'
   },
   text: {
     primary: '#E1E1E6'

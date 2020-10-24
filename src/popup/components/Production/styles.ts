@@ -21,5 +21,6 @@ export const Row = styled.div`
 `
 
 export const DropdownRow = styled(Row)`
+  align-items: center;
   justify-content: space-between;
 `
