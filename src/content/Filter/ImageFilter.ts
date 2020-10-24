@@ -1,5 +1,3 @@
-import { ILogger } from 'utils/Logger'
-
 import { PredictionRequest } from '../../utils/messages'
 
 import { Filter } from './Filter'
@@ -17,8 +15,8 @@ export class ImageFilter extends Filter implements IImageFilter {
   private readonly MIN_IMAGE_SIZE: number
   private settings: imageFilterSettingsType
 
-  constructor (_logger: ILogger) {
-    super(_logger)
+  constructor () {
+    super()
     this.MIN_IMAGE_SIZE = 41
 
     this.settings = { filterEffect: 'hide' }
@@ -43,7 +41,6 @@ export class ImageFilter extends Filter implements IImageFilter {
 
   private _analyzeImage (image: HTMLImageElement): void {
     this.hideImage(image)
-    this.logger.log(`Analyze image ${image.src}`)
 
     const request = new PredictionRequest(image.src)
     this.requestToAnalyzeImage(request)
@@ -79,26 +76,4 @@ export class ImageFilter extends Filter implements IImageFilter {
       image.style.visibility = 'visible'
     }
   }
-
-  // public async analyzeDiv(div: _Image): Promise<void> {
-  //   if (div._isChecked === undefined && typeof div.style.backgroundImage === 'string' && div.style.backgroundImage.length > 0) {
-  //     div._isChecked = true
-  //     this.hideImage(div)
-
-  //     const url: string | undefined = ImageFilter.prepareUrl(div.style.backgroundImage.slice(5, -2))
-  //     if (url === undefined) return
-
-  //     const request = new PredictionRequest(url)
-  //     this.requestToAnalyzeImage(request)
-  //       .then(result => {
-  //         if (result) {
-  //           this.blockedItems++
-  //         } else {
-  //           this.showImage(div)
-  //         }
-  //       }).catch(_error => {
-  //         this.showImage(div)
-  //       })
-  //   }
-  // }
 }

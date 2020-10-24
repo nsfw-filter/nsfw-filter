@@ -1,4 +1,3 @@
-import { ILogger } from '../../utils/Logger'
 import { PredictionRequest, PredictionResponse } from '../../utils/messages'
 
 type IFilter = {
@@ -11,12 +10,10 @@ type FilterRequestQueueValue = Array<Array<{
 }>>
 
 export class Filter implements IFilter {
-  protected readonly logger: ILogger
   protected blockedItems: number
   private readonly requestQueue: Map<string, FilterRequestQueueValue>
 
-  constructor (_logger: ILogger) {
-    this.logger = _logger
+  constructor () {
     this.blockedItems = 0
     this.requestQueue = new Map()
   }
@@ -45,6 +42,8 @@ export class Filter implements IFilter {
         } else {
           reject(request)
         }
+
+        this.requestQueue.delete(queueName)
       }
     })
   }
@@ -56,32 +55,24 @@ export class Filter implements IFilter {
         return
       }
 
-      this.logger.log(response.message)
       for (const [{ resolve }] of this.requestQueue.get(request.url) as FilterRequestQueueValue) {
         resolve(response)
       }
+
+      this.requestQueue.delete(request.url)
     })
   }
 
   private _handleBackgroundErrors (request: PredictionRequest, resolve: (value: PredictionResponse) => void, message: string | undefined): void {
     const reconnectCount = request.clearTimer()
-    this.logger.log(`Cannot connect to background worker for ${request.url} image, attempt ${reconnectCount}, error: ${message}`)
+    console.log(`[NSFW-Filter] Cannot connect to background worker for ${request.url} image, attempt ${reconnectCount}, error: ${message}`)
 
-    if (reconnectCount > 15) {
+    if (reconnectCount > 5) {
       resolve(new PredictionResponse(false, request.url, 'Background worker doesn\'t working'))
-      this.logger.log(`Background worker is down, marked as visible ${request.url}`)
+      console.warn(`[NSFW-Filter] Background worker is down, marked as visible ${request.url}`)
+      this.requestQueue.delete(request.url)
     } else {
-      request.reconectTimer = window.setTimeout(() => this._requestToAnalyzeImage(request, resolve), 100)
-    }
-  }
-
-  static prepareUrl = (string: string): string | undefined => {
-    try {
-      const url: URL = new URL(string)
-      return (url.protocol === 'http:' || url.protocol === 'https:') ? string : undefined
-    } catch {
-      const FIRST_SLASH_REGEX = /^\/.*$/
-      return FIRST_SLASH_REGEX.test(string) ? `${window.location.origin}${string}` : undefined
+      request.reconectTimer = window.setTimeout(() => this._requestToAnalyzeImage(request, resolve), 500)
     }
   }
 }
