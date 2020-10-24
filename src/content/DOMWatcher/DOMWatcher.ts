@@ -8,29 +8,17 @@
 
 import { IImageFilter } from '../Filter/ImageFilter'
 
-type domWatcherSettingsType = {
-  filteringDiv: boolean
-}
-
 export type IDOMWatcher = {
   watch: () => void
-  setSettings: (settings: domWatcherSettingsType) => void
 }
 
 export class DOMWatcher implements IDOMWatcher {
   private readonly observer: MutationObserver
   private readonly imageFilter: IImageFilter
-  private settings: domWatcherSettingsType
 
   constructor (imageFilter: IImageFilter) {
     this.imageFilter = imageFilter
-    this.settings = { filteringDiv: false }
-
     this.observer = new MutationObserver(this.callback.bind(this))
-  }
-
-  public setSettings (settings: domWatcherSettingsType): void {
-    this.settings = settings
   }
 
   public watch (): void {
@@ -48,18 +36,28 @@ export class DOMWatcher implements IDOMWatcher {
     }
   }
 
+  /**
+   * Check the mutation and if title changed analyze every image of document
+   * otherwise search for images in changed nodes and analyze them
+   * @param mutation MutationRecord
+   */
   private checkChildMutation (mutation: MutationRecord): void {
-    if (mutation.target.nodeName === 'TITLE') {
-      const images = document.getElementsByTagName('img')
-      for (let i = 0; i < images.length; i++) {
-        this.imageFilter.analyzeImage(images[i], false)
-      }
-    }
+    // @ts-expect-error
+    if (mutation.target.nodeName === 'TITLE') this.findAndCheckAllImages(document)
 
     for (let i = 0; i < mutation.addedNodes.length; i++) {
       if (mutation.addedNodes[i].nodeName === 'IMG') {
         this.imageFilter.analyzeImage(mutation.addedNodes[i] as HTMLImageElement, false)
+      } else if (mutation.addedNodes[i].nodeName === 'DIV') {
+        this.findAndCheckAllImages(mutation.addedNodes[i] as Element)
       }
+    }
+  }
+
+  private findAndCheckAllImages (element: Element): void {
+    const images = element.getElementsByTagName('img')
+    for (let i = 0; i < images.length; i++) {
+      this.imageFilter.analyzeImage(images[i], false)
     }
   }
 

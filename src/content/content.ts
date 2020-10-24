@@ -16,11 +16,10 @@ const init = (): void => {
 
   createChromeStore({ createStore })(rootReducer)
     .then(store => {
-      const { logging, filterEffect, filteringDiv } = store.getState().settings
+      const { logging, filterEffect } = store.getState().settings
       if (logging === true) logger.enable()
 
       imageFilter.setSettings({ filterEffect })
-      domWatcher.setSettings({ filteringDiv })
     })
 }
 
