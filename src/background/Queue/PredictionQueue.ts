@@ -11,12 +11,12 @@ type HandlerParams = {
   tabId: number
   image: HTMLImageElement
   result: boolean
-  errMessage: string
+  error: Error
 }
 
 type OnProcessParam = Pick<HandlerParams, 'url' | 'image' | 'tabId'>
 export type OnSuccessParam = Pick<HandlerParams, 'url' | 'result'>
-export type OnFailureParam = Pick<HandlerParams, 'url' | 'errMessage'>
+export type OnFailureParam = Pick<HandlerParams, 'url' | 'error'>
 type OnDoneParam = Pick<HandlerParams, 'url'>
 
 export type CallbackFunction = (err: unknown | undefined, result: unknown | undefined) => undefined
@@ -43,13 +43,13 @@ export class PredictionQueue extends QueueBase {
 
   private onProcess ({ url, image, tabId }: OnProcessParam, callback: CallbackFunction): void {
     if (!this.activeTabs.has(tabId)) {
-      callback({ url, errMessage: 'User closed tab which contains this image url' }, undefined)
+      callback({ url, error: new Error(`User closed ${tabId} tab which contains this image url ${url}`) }, undefined)
       return
     }
 
     this.model.predictImage(image, url)
       .then(result => callback(undefined, { url, result }))
-      .catch((error: Error) => callback({ url, errMessage: error.message }, undefined))
+      .catch((error: Error) => callback({ url, error }, undefined))
   }
 
   private onSuccess ({ url, result }: OnSuccessParam): void {
@@ -69,13 +69,13 @@ export class PredictionQueue extends QueueBase {
     }
   }
 
-  private onFailure ({ url, errMessage }: OnFailureParam): void {
+  private onFailure ({ url, error }: OnFailureParam): void {
     if (!this._checkUrlStatus(url)) return
 
     this.cache.set(url, false)
 
     for (const [{ reject }] of this.requestMap.get(url) as requestQueueValue) {
-      reject(errMessage)
+      reject(error)
     }
   }
 
