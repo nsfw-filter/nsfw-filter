@@ -18,7 +18,7 @@ const initialState: SettingsState = {
   logging: false,
   filterEffect: 'blur',
   trainedModel: 'mobile_v1.1',
-  filterStrictness: 80
+  filterStrictness: 55
 }
 
 export function settings (state = initialState, action: SettingsActionTypes): SettingsState {
