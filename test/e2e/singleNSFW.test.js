@@ -8,9 +8,10 @@ describe('Should filter NSFW images', () => {
         let page = await global.__BROWSER__.newPage();
 
         await page.goto(url, { waituntil: "domcontentloaded" })
-        await page.waitForTimeout(10000)
+        await page.waitForTimeout(5000)
 
         const data = await global.getDocumentImageAttributes(page)
+        console.log(data)
         data.forEach(element => expect(element === "nsfw").toBeTruthy())
         done()
     })
