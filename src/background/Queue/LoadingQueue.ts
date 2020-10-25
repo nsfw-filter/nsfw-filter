@@ -4,17 +4,17 @@ import { Model } from '../Model'
 
 import { ConcurrentQueue } from './ConcurrentQueue'
 import { PredictionQueue } from './PredictionQueue'
-import { requestQueueValue } from './QueueBase'
+import { requestQueueValue, TabIdUrl } from './QueueBase'
 
 type HandlerParams = {
   url: string
   image: HTMLImageElement
-  tabId: number
+  tabIdUrl: TabIdUrl
   error: Error
 }
 
-type OnProcessParam = Pick<HandlerParams, 'url' | 'tabId'>
-type OnSuccessParam = Pick<HandlerParams, 'url' | 'tabId' | 'image'>
+type OnProcessParam = Pick<HandlerParams, 'url' | 'tabIdUrl'>
+type OnSuccessParam = Pick<HandlerParams, 'url' | 'tabIdUrl' | 'image'>
 type OnFailureParam = Pick<HandlerParams, 'url' | 'error'>
 
 export type CallbackFunction = (err: OnFailureParam | undefined, result: OnSuccessParam | undefined) => void
@@ -50,26 +50,26 @@ export class LoadingQueue extends PredictionQueue {
     })
   }
 
-  private onLoadingProcess ({ url, tabId }: OnProcessParam, callback: CallbackFunction): void {
-    if (!this.activeTabs.has(tabId)) {
-      callback({ url, error: new Error(`User closed ${tabId} tab which contains this image url ${url}`) }, undefined)
+  private onLoadingProcess ({ url, tabIdUrl }: OnProcessParam, callback: CallbackFunction): void {
+    if (!this._checkCurrentTabIdUrlStatus(tabIdUrl)) {
+      callback({ url, error: new Error('User closed tab or page where this url located') }, undefined)
       return
     }
 
     this.loadImage(url)
-      .then(image => callback(undefined, { url, image, tabId }))
+      .then(image => callback(undefined, { url, image, tabIdUrl }))
       .catch((error: Error) => callback({ url, error }, undefined))
   }
 
-  private onLoadingSuccess ({ url, image, tabId }: OnSuccessParam): void {
+  private onLoadingSuccess ({ url, image, tabIdUrl }: OnSuccessParam): void {
     if (!this._checkUrlStatus(url)) return
 
-    if (!this.pauseFlag && this.predictionQueue.getTaskAmount() >= 15) {
+    if (!this.pauseFlag && this.predictionQueue.getTaskAmount() > 15) {
       this.pauseFlag = true
       this.loadingQueue.pause()
     }
 
-    this.predictionQueue.add({ url, image, tabId })
+    this.predictionQueue.add({ url, image, tabIdUrl })
   }
 
   private onLoadingFailure ({ url, error }: OnFailureParam): void {

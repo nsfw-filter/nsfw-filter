@@ -9,7 +9,7 @@ describe('Should not filter SFW images', () => {
 
         await page.goto(url, {waituntil: "domcontentloaded"})
         await page.waitForTimeout(5000)
-
+        
         const data = await global.getDocumentImageAttributes(page)
         data.forEach(element => expect(element === "sfw").toBeTruthy())
         done()
