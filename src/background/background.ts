@@ -83,7 +83,6 @@ const load = ({ logger, store, modelSettings }: loadType): void => {
 
       // When user selected tab as active
       chrome.tabs.onActivated.addListener(function (activeInfo) {
-        console.log(activeInfo)
         queue.setActiveTabId(activeInfo.tabId)
       })
 
