@@ -14,7 +14,7 @@ export const setFilterEffect = (filterEffect: 'hide' | 'blur') => ({
   payload: { filterEffect }
 } as const)
 
-export const setTrainedModel = (trainedModel: 'mobile_v1.1') => ({
+export const setTrainedModel = (trainedModel: 'MobileNet_v1.1') => ({
   type: SET_TRAINED_MODEL,
   payload: { trainedModel }
 } as const)
