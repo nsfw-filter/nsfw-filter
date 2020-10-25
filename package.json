@@ -1,6 +1,6 @@
 {
   "name": "nsfw-filter",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Hide NSFW content from websites using this extension powered by AI! This extension replaces images that are NSFW with random images from Unsplash.",
   "scripts": {
     "lint": "eslint .",
