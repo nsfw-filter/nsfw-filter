@@ -79,7 +79,7 @@ Reach out to us! Join the [**Slack channel**](https://join.slack.com/t/nsfwfilte
 # Table of contents
 
 - [Usage](#usage)
-- [Installation](#installation)
+- [Development](#development)
     - [Adding to Chrome](#adding-to-chrome)
     - [Adding to Firefox](#adding-to-firefox)
 - [Contribute](#contribute)
@@ -92,9 +92,13 @@ When a page is loaded, the extension would hide all the images in the page and o
 
 You can toggle(off/on) the extension from the ```chrome://extensions``` page in Chrome and ```about:debugging#/runtime/this-firefox``` in Firefox.
 
-# Installation
+Open popup window to change NSFW Filter settings
 
-*For **development only**.*
+<p align="center">
+  <img src="./demo/images/popup.png" alt="Popup window">
+<p/>
+
+# Development
 
 Clone this repository and navigate inside the project folder and install the dependencies by running:
 
