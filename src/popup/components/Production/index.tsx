@@ -43,7 +43,7 @@ export const Production: React.FC = () => {
         <span>Filter effect</span>
         <Select
           defaultValue={filterEffect}
-          style={{ width: 120 }}
+          style={{ width: 140 }}
           onChange={value => dispatch(setFilterEffect(value))}
         >
           <Option value="hide">Hide</Option>
@@ -55,7 +55,7 @@ export const Production: React.FC = () => {
         <span>Trained model</span>
         <Select
           defaultValue={trainedModel}
-          style={{ width: 120 }}
+          style={{ width: 140 }}
           onChange={value => dispatch(setTrainedModel(value))}
         >
           <Option value={trainedModel}>{trainedModel}</Option>
