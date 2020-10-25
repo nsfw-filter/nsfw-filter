@@ -4,17 +4,17 @@ import { IReduxedStorage } from '../background'
 import { Model } from '../Model'
 
 import { ConcurrentQueue } from './ConcurrentQueue'
-import { QueueBase, requestQueueValue } from './QueueBase'
+import { QueueBase, requestQueueValue, TabIdUrl } from './QueueBase'
 
 type HandlerParams = {
   url: string
-  tabId: number
+  tabIdUrl: TabIdUrl
   image: HTMLImageElement
   result: boolean
   error: Error
 }
 
-type OnProcessParam = Pick<HandlerParams, 'url' | 'image' | 'tabId'>
+type OnProcessParam = Pick<HandlerParams, 'url' | 'image' | 'tabIdUrl'>
 export type OnSuccessParam = Pick<HandlerParams, 'url' | 'result'>
 export type OnFailureParam = Pick<HandlerParams, 'url' | 'error'>
 type OnDoneParam = Pick<HandlerParams, 'url'>
@@ -41,9 +41,9 @@ export class PredictionQueue extends QueueBase {
     this.pauseFlag = false
   }
 
-  private onProcess ({ url, image, tabId }: OnProcessParam, callback: CallbackFunction): void {
-    if (!this.activeTabs.has(tabId)) {
-      callback({ url, error: new Error(`User closed ${tabId} tab which contains this image url ${url}`) }, undefined)
+  private onProcess ({ url, image, tabIdUrl }: OnProcessParam, callback: CallbackFunction): void {
+    if (!this._checkCurrentTabIdUrlStatus(tabIdUrl)) {
+      callback({ url, error: new Error('User closed tab or page where this url located') }, undefined)
       return
     }
 
@@ -62,7 +62,7 @@ export class PredictionQueue extends QueueBase {
       resolve(result)
     }
 
-    if (this.pauseFlag && this.predictionQueue.getTaskAmount() <= 7) {
+    if (this.pauseFlag && this.predictionQueue.getTaskAmount() <= 5) {
       this.pauseFlag = false
       // @ts-expect-error
       this.loadingQueue.resume()

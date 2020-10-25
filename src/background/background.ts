@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/strict-boolean-expressions */
+
 import { load as loadModel } from '@nsfw-filter/nsfwjs'
 import { enableProdMode } from '@tensorflow/tfjs'
 import { createStore } from 'redux'
@@ -10,7 +12,10 @@ import { ILogger, Logger } from '../utils/Logger'
 import { PredictionRequest, PredictionResponse } from '../utils/messages'
 
 import { Model, ModelSettings } from './Model'
+import { DEFAULT_TAB_ID, TabIdUrl } from './Queue/QueueBase'
 import { QueueWrapper as Queue } from './Queue/QueueWrapper'
+
+// @TODO refactor
 
 export type IReduxedStorage = {
   getState: () => RootState
@@ -26,6 +31,15 @@ export type loadType = {
 enableProdMode()
 let attempts = 0
 
+const _buildTabIdUrl = (tab: chrome.tabs.Tab): TabIdUrl => {
+  const tabIdUrl = {
+    tabId: tab?.id ? tab.id : DEFAULT_TAB_ID,
+    tabUrl: tab?.url ? tab?.url : `${DEFAULT_TAB_ID}`
+  }
+
+  return tabIdUrl
+}
+
 const load = ({ logger, store, modelSettings }: loadType): void => {
   const MODEL_PATH = '../models/'
 
@@ -40,17 +54,40 @@ const load = ({ logger, store, modelSettings }: loadType): void => {
         if (request.type === 'SIGN_CONNECT') return
 
         const { url } = request
-        queue.predict(url, sender.tab?.id)
+        const tabIdUrl = _buildTabIdUrl(sender.tab as chrome.tabs.Tab)
+        queue.predict(url, tabIdUrl)
           .then(result => callback(new PredictionResponse(result, url)))
           .catch(err => callback(new PredictionResponse(false, url, err.message)))
 
         return true // https://stackoverflow.com/a/56483156
       })
 
-      // Close tab window event
-      chrome.tabs.onRemoved.addListener(tabId => queue.clearByTabId(tabId))
+      // When user opend new tab
+      chrome.tabs.onCreated.addListener(function (tab) {
+        const tabIdUrl = _buildTabIdUrl(tab)
+        queue.addTabIdUrl(tabIdUrl)
+      })
 
-      // Close popup window event
+      // When user closed tab
+      chrome.tabs.onRemoved.addListener(function (tabId) {
+        queue.clearByTabId(tabId)
+      })
+
+      // When user went to new url in same domain
+      chrome.tabs.onUpdated.addListener(function (_tabId, changeInfo, tab) {
+        if (changeInfo.status === 'loading') {
+          const tabIdUrl = _buildTabIdUrl(tab)
+          queue.updateTabIdUrl(tabIdUrl)
+        }
+      })
+
+      // When user selected tab as active
+      chrome.tabs.onActivated.addListener(function (activeInfo) {
+        console.log(activeInfo)
+        queue.setActiveTabId(activeInfo.tabId)
+      })
+
+      // When user closed popup window
       chrome.runtime.onConnect.addListener(port => port.onDisconnect.addListener(() => {
         const { logging, filterStrictness } = store.getState().settings
 
