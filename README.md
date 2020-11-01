@@ -94,9 +94,17 @@ You can toggle(off/on) the extension from the ```chrome://extensions``` page in 
 
 Open popup window to change NSFW Filter settings
 
-<p align="center">
-  <img src="./demo/images/popup.png" alt="Popup window">
-<p/>
+<table>
+  <tr>
+    <td vlign="center">
+      <img src="./demo/images/pin_popup.png" alt="Pin popup window">
+    </td>
+    <td vlign="center">
+      <img src="./demo/images/popup.png" alt="Popup window">
+    </td>
+  </tr>
+</table>
+
 
 # Development
 
