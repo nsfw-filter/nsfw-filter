@@ -23,7 +23,6 @@ export type CallbackFunction = (err: unknown | undefined, result: unknown | unde
 
 export class PredictionQueue extends QueueBase {
   protected readonly predictionQueue: ConcurrentQueue<OnProcessParam>
-  protected pauseFlag: boolean
 
   constructor (model: Model, logger: ILogger, store: IReduxedStorage) {
     super(model, logger, store)
@@ -37,8 +36,6 @@ export class PredictionQueue extends QueueBase {
       onDone: this.onDone.bind(this),
       onDrain: this.onDrain.bind(this)
     })
-
-    this.pauseFlag = false
   }
 
   private onProcess ({ url, image, tabIdUrl }: OnProcessParam, callback: CallbackFunction): void {
@@ -61,12 +58,6 @@ export class PredictionQueue extends QueueBase {
     for (const [{ resolve }] of this.requestMap.get(url) as requestQueueValue) {
       resolve(result)
     }
-
-    if (this.pauseFlag && this.predictionQueue.getTaskAmount() <= 5) {
-      this.pauseFlag = false
-      // @ts-expect-error
-      this.loadingQueue.resume()
-    }
   }
 
   private onFailure ({ url, error }: OnFailureParam): void {
@@ -84,10 +75,6 @@ export class PredictionQueue extends QueueBase {
   }
 
   private onDrain (): void {
-    this.pauseFlag = false
-    // @ts-expect-error
-    this.loadingQueue.resume()
-
     // @DOCS Async operations
     const tmpTotalBlocked = this.totalBlocked
     this.store.dispatch(setTotalBlocked(tmpTotalBlocked))

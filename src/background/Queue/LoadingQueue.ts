@@ -64,11 +64,6 @@ export class LoadingQueue extends PredictionQueue {
   private onLoadingSuccess ({ url, image, tabIdUrl }: OnSuccessParam): void {
     if (!this._checkUrlStatus(url)) return
 
-    if (!this.pauseFlag && this.predictionQueue.getTaskAmount() > 15) {
-      this.pauseFlag = true
-      this.loadingQueue.pause()
-    }
-
     this.predictionQueue.add({ url, image, tabIdUrl })
   }
 
