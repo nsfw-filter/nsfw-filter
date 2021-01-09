@@ -30,6 +30,10 @@ export class LRUCache<K, V> {
     this.cache.set(key, val)
   }
 
+  public clear (): void {
+    this.cache.clear()
+  }
+
   private first (): K {
     return this.cache.keys().next().value
   }
