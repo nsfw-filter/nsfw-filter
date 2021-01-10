@@ -42,6 +42,10 @@ export class QueueBase {
     this.totalBlocked = state.statistics.totalBlocked
   }
 
+  public clearCache (): void {
+    this.cache.clear()
+  }
+
   protected _checkUrlStatus (url: string): boolean {
     if (!this.requestMap.has(url)) {
       this.logger.log(`Cannot find image in requestMap where url is ${url}`)

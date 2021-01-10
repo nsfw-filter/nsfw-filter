@@ -92,6 +92,8 @@ const load = ({ logger, store, modelSettings }: loadType): void => {
 
         logging ? logger.enable() : logger.disable()
         model.setSettings({ filterStrictness })
+
+        queue.clearCache()
       }))
     })
     .catch(error => {
