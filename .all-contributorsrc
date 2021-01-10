@@ -176,6 +176,15 @@
         "bug",
         "code"
       ]
+    },
+    {
+      "login": "Gother01",
+      "name": "Aldulkadir Beceri",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/65875436?v=4",
+      "profile": "https://github.com/Gother01",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7,
