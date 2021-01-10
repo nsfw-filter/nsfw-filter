@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/strict-boolean-expressions */
 
-import { load as loadModel } from '@nsfw-filter/nsfwjs'
 import { enableProdMode } from '@tensorflow/tfjs'
+import { load as loadModel } from 'nsfwjs'
 import { createStore } from 'redux'
 
 import { SettingsActionTypes } from '../popup/redux/actions/settings'

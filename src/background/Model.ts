@@ -1,4 +1,4 @@
-import { NSFWJS, predictionType } from '@nsfw-filter/nsfwjs'
+import { NSFWJS, predictionType } from 'nsfwjs'
 
 import { ILogger } from '../utils/Logger'
 
