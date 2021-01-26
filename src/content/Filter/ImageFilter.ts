@@ -77,7 +77,7 @@ export class ImageFilter extends Filter implements IImageFilter {
       image.style.visibility = 'visible'
     }
   }
-          
+
   public analyzeBgImage (image: HTMLElement, url: string): void {
     this.hideBgImage(image)
     const request = new PredictionRequest(url)
@@ -96,8 +96,9 @@ export class ImageFilter extends Filter implements IImageFilter {
         }
       }).catch(({ url }) => {
         this.showBgImage(image, url)
-      })  }
-      
+      })
+  }
+
   private hideBgImage (image: HTMLElement): void {
     if (image.parentNode?.nodeName === 'BODY') image.hidden = true
 
@@ -106,10 +107,9 @@ export class ImageFilter extends Filter implements IImageFilter {
   }
 
   private showBgImage (image: HTMLElement, url: string): void {
-      if (image.parentNode?.nodeName === 'BODY') image.hidden = false
+    if (image.parentNode?.nodeName === 'BODY') image.hidden = false
 
-      image.dataset.nsfwFilterStatus = 'sfw'
-      image.style.visibility = 'visible'
-
+    image.dataset.nsfwFilterStatus = 'sfw'
+    image.style.visibility = 'visible'
   }
 }
