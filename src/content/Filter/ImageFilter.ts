@@ -8,7 +8,7 @@ type imageFilterSettingsType = {
 
 export type IImageFilter = {
   analyzeImage: (image: HTMLImageElement, srcAttribute: boolean) => void
-  analyzeBgImage: (image: HTMLElement) => void
+  analyzeBgImage: (image: HTMLElement, url: string) => void
   setSettings: (settings: imageFilterSettingsType) => void
 }
 
@@ -78,12 +78,9 @@ export class ImageFilter extends Filter implements IImageFilter {
     }
   }
           
-  public analyzeBgImage (image: HTMLElement): void {
+  public analyzeBgImage (image: HTMLElement, url: string): void {
     this.hideBgImage(image)
-    const bgImage = image.style.backgroundImage
-    const bgImageUrl = bgImage.substring(4, bgImage.length-1).replace('url(','').replace(')','').replaceAll('"','').replaceAll("'",'').replace(', none','');
-
-    const request = new PredictionRequest(bgImageUrl)
+    const request = new PredictionRequest(url)
     this.requestToAnalyzeImage(request)
       .then(({ result, url }) => {
         if (result) {
