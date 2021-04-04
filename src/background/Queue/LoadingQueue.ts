@@ -30,7 +30,7 @@ export class LoadingQueue extends PredictionQueue {
     this.IMAGE_SIZE = 224
     this.LOADING_TIMEOUT = 1000
     this.loadingQueue = new ConcurrentQueue({
-      concurrency: 2, // We need another concurrent IO job if image stuck for 1 sec with loading timeout
+      concurrency: 100, // We need another concurrent IO job if image stuck for 1 sec with loading timeout
       timeout: 0,
       onProcess: this.onLoadingProcess.bind(this),
       onSuccess: this.onLoadingSuccess.bind(this),
