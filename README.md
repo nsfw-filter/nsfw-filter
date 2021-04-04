@@ -74,6 +74,8 @@ Read about the release in [**Hacker Noon**](https://hackernoon.com/nsfw-filter-i
 
 Model used - [**nsfwjs**](https://github.com/infinitered/nsfwjs) developed by [**Infinite Red, Inc.**](https://github.com/infinitered)
 
+Storing settings - [**reduxed-chrome-storage**](https://github.com/hindmost/reduxed-chrome-storage)
+
 Reach out to us! Join the [**Slack channel**](https://join.slack.com/t/nsfwfilter/shared_invite/zt-gt1lgdiv-K2VR~UVUxwaTPWCLSmDiug).
 
 # Table of contents
