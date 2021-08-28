@@ -88,7 +88,7 @@ Reach out to us! Join the [**Slack channel**](https://join.slack.com/t/nsfwfilte
 
 # Usage
 
-After adding the extension to Chrome/Firefox, it will light-up everytime you load a compatable website.
+After adding the extension to Chrome/Firefox, it will light-up every time you load a compatible website.
 
 When a page is loaded, the extension would hide all the images in the page and only show images that have been classified as **NOT NSFW**.
 
