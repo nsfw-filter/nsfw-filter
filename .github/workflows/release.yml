@@ -1,0 +1,24 @@
+on:
+  push:
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+
+jobs:
+  build:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Release
+        uses: softprops/action-gh-release@v1
+      - name: build
+        run: |
+          npm ci
+          npm run build
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: dist-folder
+          path: |
+            dist
