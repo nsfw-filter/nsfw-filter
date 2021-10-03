@@ -62,15 +62,20 @@ export class Model implements IModel {
   }
 
   public async predictImage (image: HTMLImageElement, url: string): Promise<boolean> {
-    const start = new Date().getTime()
+    if (this.logger.status) {
+      const start = new Date().getTime()
 
-    const prediction = await this.model.classify(image, 2)
-    const { result, className, probability } = this.handlePrediction(prediction)
+      const prediction = await this.model.classify(image, 2)
+      const { result, className, probability } = this.handlePrediction(prediction)
 
-    const end = new Date().getTime()
-    this.logger.log(`IMG prediction (${end - start} ms) is ${className} ${probability} for ${url}`)
+      const end = new Date().getTime()
+      this.logger.log(`IMG prediction (${end - start} ms) is ${className} ${probability} for ${url}`)
 
-    return result
+      return result
+    } else {
+      const prediction = await this.model.classify(image, 2)
+      return this.handlePrediction(prediction).result
+    }
   }
 
   private handlePrediction (prediction: predictionType[]): { result: boolean, className: string, probability: number } {
