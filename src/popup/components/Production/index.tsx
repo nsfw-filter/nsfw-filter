@@ -1,3 +1,6 @@
+import 'antd/lib/select/style/index.css'
+import 'antd/lib/slider/style/index.css'
+
 import Select from 'antd/lib/select'
 import Slider from 'antd/lib/slider'
 import React from 'react'

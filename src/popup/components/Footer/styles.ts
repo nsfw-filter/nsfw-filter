@@ -1,3 +1,5 @@
+import 'antd/lib/checkbox/style/index.css'
+
 import Checkbox from 'antd/lib/checkbox'
 import styled from 'styled-components'
 
