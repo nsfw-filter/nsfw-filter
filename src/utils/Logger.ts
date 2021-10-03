@@ -1,4 +1,7 @@
+
 export type ILogger = {
+  status: boolean
+
   log: (string: string) => void
   error: (reason: string | Error) => void
   enable: () => void
@@ -7,7 +10,7 @@ export type ILogger = {
 
 export class Logger implements ILogger {
   private readonly logger: Console
-  private status: boolean
+  public status: boolean
 
   constructor () {
     this.logger = console

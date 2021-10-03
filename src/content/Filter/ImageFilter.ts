@@ -28,14 +28,16 @@ export class ImageFilter extends Filter implements IImageFilter {
 
   public analyzeImage (image: HTMLImageElement, srcAttribute: boolean = false): void {
     if (
+      (srcAttribute || image.dataset.nsfwFilterStatus === undefined) &&
       image.src.length > 0 &&
-      ((image.width > this.MIN_IMAGE_SIZE && image.height > this.MIN_IMAGE_SIZE) || image.height === 0 || image.width === 0)
+      (
+        (image.width > this.MIN_IMAGE_SIZE && image.height > this.MIN_IMAGE_SIZE) ||
+        image.height === 0 ||
+        image.width === 0
+      )
     ) {
-      if (srcAttribute) {
-        this._analyzeImage(image)
-      } else if (image.dataset.nsfwFilterStatus === undefined) {
-        this._analyzeImage(image)
-      }
+      image.dataset.nsfwFilterStatus = 'processing'
+      this._analyzeImage(image)
     }
   }
 
@@ -64,7 +66,6 @@ export class ImageFilter extends Filter implements IImageFilter {
   private hideImage (image: HTMLImageElement): void {
     if (image.parentNode?.nodeName === 'BODY') image.hidden = true
 
-    image.dataset.nsfwFilterStatus = 'processing'
     image.style.visibility = 'hidden'
   }
 
