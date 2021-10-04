@@ -10,14 +10,14 @@ import {
 export type SettingsState = {
   logging: boolean
   filterEffect: 'hide' | 'blur'
-  trainedModel: 'MobileNet_v1.0'
+  trainedModel: 'MobileNet_v1.2'
   filterStrictness: number
 }
 
 const initialState: SettingsState = {
   logging: process.env.NODE_ENV === 'development',
   filterEffect: 'blur',
-  trainedModel: 'MobileNet_v1.0',
+  trainedModel: 'MobileNet_v1.2',
   filterStrictness: 55
 }
 

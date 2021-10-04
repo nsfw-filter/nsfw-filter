@@ -8,7 +8,7 @@ describe('Should not filter SFW images', () => {
         let page = await global.__BROWSER__.newPage();
 
         await page.goto(url, {waituntil: "domcontentloaded"})
-        await page.waitForTimeout(5000)
+        await page.waitForTimeout(10000)
         
         const data = await global.getDocumentImageAttributes(page)
         data.forEach(element => expect(element === "sfw").toBeTruthy())
