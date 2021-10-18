@@ -10,9 +10,7 @@
     "test:unit": "jest --no-cache -c ./test/jest.unit.config.js",
     "build": "npm run clean && webpack --config webpack/webpack.prod.js",
     "dev": "webpack --config webpack/webpack.dev.js",
-    "dev:firefox": "npm-run-all --parallel dev start:firefox",
     "dev:chrome": "npm-run-all --parallel dev start:chrome",
-    "start:firefox": "web-ext run --source-dir ./dist/ --target=firefox-desktop",
     "start:chrome": "web-ext run --source-dir ./dist/ --target=chromium"
   },
   "author": {

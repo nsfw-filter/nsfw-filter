@@ -41,7 +41,7 @@
 </p>
 <hr>
 
-A Google Chrome/Firefox extension that blocks NSFW images from the web pages that you load using TensorFlowJS.
+A browser extension that blocks NSFW images from the web pages that you load using TensorFlowJS.
 
 *This extension **does NOT** collect/send any user data. All the operations on the images are done locally on the browser. No user data is being sent to a server for processing.*
 
@@ -55,19 +55,16 @@ A Google Chrome/Firefox extension that blocks NSFW images from the web pages tha
 
 When a web page is loaded, all the images remain hidden until they are found to be NSFW or not. If they are found to be NSFW, they remain hidden. Otherwise, they become visible.
 
-It is free and is currently supported on both Chrome and Firefox. We are working on porting this to Safari also.
+It is free and is currently supported on Google Chrome. We are working on porting this to Safari also.
 </br>
 <p align="center">
   <a href="https://chrome.google.com/webstore/detail/nsfw-filter/kmgagnlkckiamnenbpigfaljmanlbbhh" target="_blank">
     <img src="./demo/images/chrome.gif" alt="Download now" width="160">
   </a>
-  <a href="https://addons.mozilla.org/en-US/firefox/addon/nsfw-filter/" target="_blank">
-    <img src="./demo/images/firefox.gif" alt="Download now" width="160">
-  </a>
 </p>
 
 <p align="center">
-<a href="https://chrome.google.com/webstore/detail/nsfw-filter/kmgagnlkckiamnenbpigfaljmanlbbhh" target="_blank"><strong>Download for Chrome</strong></a> | <a href="https://addons.mozilla.org/en-US/firefox/addon/nsfw-filter/" target="_blank"><strong>Download for Firefox</strong></a>
+<a href="https://chrome.google.com/webstore/detail/nsfw-filter/kmgagnlkckiamnenbpigfaljmanlbbhh" target="_blank"><strong>Download for Chrome</strong></a>
 </p>
 
 Read about the release in [**Hacker Noon**](https://hackernoon.com/nsfw-filter-introduction-building-a-safer-internet-using-ai-jq1e3u2f) or in [**Towards Data Science**](https://towardsdatascience.com/building-a-safer-internet-for-everyone-using-ai-175df5e02cee).
@@ -80,19 +77,19 @@ Reach out to us! Join the [**Slack channel**](https://join.slack.com/t/nsfwfilte
 
 # Table of contents
 
+- [Table of contents](#table-of-contents)
 - [Usage](#usage)
 - [Development](#development)
     - [Adding to Chrome](#adding-to-chrome)
-    - [Adding to Firefox](#adding-to-firefox)
 - [Contribute](#contribute)
 
 # Usage
 
-After adding the extension to Chrome/Firefox, it will light-up every time you load a compatible website.
+After adding the extension to your browser, it will light-up every time you load a compatible website.
 
 When a page is loaded, the extension would hide all the images in the page and only show images that have been classified as **NOT NSFW**.
 
-You can toggle(off/on) the extension from the ```chrome://extensions``` page in Chrome and ```about:debugging#/runtime/this-firefox``` in Firefox.
+You can toggle(off/on) the extension from the ```chrome://extensions``` page in Chrome.
 
 Open popup window to change NSFW Filter settings
 
@@ -150,25 +147,6 @@ Click the "Load Unpacked" button and select the extension directory(```.../dist`
 
 Voila! The extension is now installed and ready to be used!
 
-### Adding to Firefox
-
-To install the developer version follow the steps below. To just use the extension download from [**addons.mozilla/nsfw-filter**](https://addons.mozilla.org/en-US/firefox/addon/nsfw-filter/)
-
-To run development version in clean environment use command:
-
-```sh
-npm run dev:firefox
-```
-
-Or open Firefox and open the Debug Add-ons page by navigating to ```about:debugging#/runtime/this-firefox``` or by selecting it from Settings dropdown in the add-ons page.
-
-Click Load Temporary Add-on and select the ```manifest.json``` file from the ```.../dist``` directory.
-
-<p align="center">
-  <img src="./demo/images/install_instructions_firefox.png" width="470px" alt="Install Instructions">
-<p/>
-
-That's it! The extension is now ready to be used in Firefox!
 <!--
 ### Activity Diagram
 
