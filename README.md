@@ -46,10 +46,6 @@ A browser extension that blocks NSFW images from the web pages that you load usi
 *This extension **does NOT** collect/send any user data. All the operations on the images are done locally on the browser. No user data is being sent to a server for processing.*
 
 <p align="center">
-  <img alt='logo name' src='./demo/images/logo_name.png'>
-</p>
-
-<p align="center">
   <img alt="GitHub release" src="https://raw.githubusercontent.com/nsfw-filter/nsfw-filter/master/demo/images/demo_v3.gif">
 </p>
 
