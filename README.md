@@ -51,7 +51,7 @@ A browser extension that blocks NSFW images from the web pages that you load usi
 
 When a web page is loaded, all the images remain hidden until they are found to be NSFW or not. If they are found to be NSFW, they remain hidden. Otherwise, they become visible.
 
-It is free and is currently supported on Google Chrome. We are working on porting this to Safari also.
+It is free and is currently supported on Google Chrome and is featured on the Chrome Webstore. We are working on porting this to Safari also (we need help!).
 </br>
 <p align="center">
   <a href="https://chrome.google.com/webstore/detail/nsfw-filter/kmgagnlkckiamnenbpigfaljmanlbbhh" target="_blank">
@@ -87,7 +87,7 @@ When a page is loaded, the extension would hide all the images in the page and o
 
 You can toggle(off/on) the extension from the ```chrome://extensions``` page in Chrome.
 
-Open popup window to change NSFW Filter settings
+Open the popup window to change NSFW Filter settings.
 
 <table>
   <tr>
@@ -123,7 +123,7 @@ npm run test
 
 ### Adding to Chrome
 
-To install the developer version follow the steps below. To just use the extension download from [**chrome.google.com/webstore/nsfw-filter**](https://chrome.google.com/webstore/detail/nsfw-filter/kmgagnlkckiamnenbpigfaljmanlbbhh)
+To install the developer version follow the steps below. To just use the extension download from [**chrome.google.com/webstore/nsfw-filter**](https://chrome.google.com/webstore/detail/nsfw-filter/kmgagnlkckiamnenbpigfaljmanlbbhh).
 
 To run development version in clean environment use command:
 
@@ -143,11 +143,6 @@ Click the "Load Unpacked" button and select the extension directory(```.../dist`
 
 Voila! The extension is now installed and ready to be used!
 
-<!--
-### Activity Diagram
-
-![](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/nsfw-filter/nsfw-filter/master/demo/UML/activity-diagram.plantuml)
--->
 # Contribute
 
 Please check the [**Contributing Guidelines**](https://github.com/navendu-pottekkat/nsfw-filter/blob/master/.github/markdown/CONTRIBUTING.md) before contributing.
