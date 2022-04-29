@@ -1,6 +1,15 @@
 ![](./demo/images/preview.png)
 
 <p align="center">
+  <sub>
+    Built with ❤︎ by
+    <a href="https://github.com/navendu-pottekkat">Navendu</a>, 
+    <a href="https://github.com/YegorZaremba">Yegor</a>
+    and the community!
+  </sub>
+</p>
+
+<p align="center">
   <a href="https://github.com/nsfw-filter/nsfw-filter/releases/" target="_blank">
     <img alt="GitHub release" src="https://img.shields.io/github/v/release/navendu-pottekkat/nsfw-filter?include_prereleases&style=flat-square">
   </a>
