@@ -8,7 +8,6 @@
     and the community!
   </sub>
 </p>
-<br />
 
 <p align="center">
   <a href="https://github.com/nsfw-filter/nsfw-filter/releases/" target="_blank">
