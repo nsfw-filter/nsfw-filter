@@ -31,7 +31,7 @@
   "homepage": "https://github.com/nsfw-filter/nsfw-filter",
   "license": "GPL-3.0-only",
   "dependencies": {
-    "@tensorflow/tfjs": "3.9.0",
+    "@tensorflow/tfjs": "3.16.0",
     "antd": "4.6.6",
     "nsfwjs": "2.4.1",
     "react": "16.13.1",
