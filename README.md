@@ -156,8 +156,6 @@ Voila! The extension is now installed and ready to be used!
 
 Please check the [**Contributing Guidelines**](https://github.com/navendu-pottekkat/nsfw-filter/blob/master/.github/markdown/CONTRIBUTING.md) before contributing.
 
-You can also sponsor on [**Open Collective**](https://opencollective.com/nsfwfilter/donate) or [**become a Patron**](https://www.patreon.com/bePatron?u=41162696).
-
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
