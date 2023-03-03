@@ -51,6 +51,7 @@ export const Production: React.FC = () => {
         >
           <Option value="hide">Hide</Option>
           <Option value="blur">Blur</Option>
+          <Option value="grayscale">Grayscale</Option>
         </Select>
       </DropdownRow>
 
