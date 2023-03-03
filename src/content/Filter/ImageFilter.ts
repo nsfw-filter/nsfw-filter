@@ -3,7 +3,7 @@ import { PredictionRequest } from '../../utils/messages'
 import { Filter } from './Filter'
 
 type imageFilterSettingsType = {
-  filterEffect: 'blur' | 'hide'
+  filterEffect: 'blur' | 'hide' | 'grayscale'
 }
 
 export type IImageFilter = {
@@ -50,6 +50,9 @@ export class ImageFilter extends Filter implements IImageFilter {
         if (result) {
           if (this.settings.filterEffect === 'blur') {
             image.style.filter = 'blur(25px)'
+            this.showImage(image, url)
+          } else if (this.settings.filterEffect === 'grayscale') {
+            image.style.filter = 'grayscale(1)'
             this.showImage(image, url)
           }
 
