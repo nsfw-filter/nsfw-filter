@@ -9,7 +9,7 @@ import {
 export const toggleLogging = () => ({ type: TOGGLE_LOGGING } as const)
 export const toggleDivFiltering = () => ({ type: TOGGLE_DIV_FILTERING } as const)
 
-export const setFilterEffect = (filterEffect: 'hide' | 'blur') => ({
+export const setFilterEffect = (filterEffect: 'hide' | 'blur' | 'grayscale') => ({
   type: SET_FILTER_EFFECT,
   payload: { filterEffect }
 } as const)
