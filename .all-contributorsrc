@@ -185,6 +185,17 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "silloi",
+      "name": "silloi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/38321101?v=4",
+      "profile": "https://portfolio.silloi.com/",
+      "contributions": [
+        "ideas",
+        "bug",
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
@@ -192,5 +203,6 @@
   "projectOwner": "nsfw-filter",
   "repoType": "github",
   "repoHost": "https://github.com",
-  "skipCi": true
+  "skipCi": true,
+  "commitConvention": "angular"
 }
