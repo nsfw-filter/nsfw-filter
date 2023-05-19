@@ -21,7 +21,7 @@ const initialState: SettingsState = {
   filterEffect: 'blur',
   trainedModel: 'MobileNet_v1.2',
   filterStrictness: 55,
-  isFeatureActive: true,
+  isFeatureActive: true
 }
 
 export function settings (state = initialState, action: SettingsActionTypes): SettingsState {

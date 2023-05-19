@@ -15,8 +15,7 @@ import { RootState } from '../../redux/reducers'
 import { SettingsState } from '../../redux/reducers/settings'
 import { StatisticsState } from '../../redux/reducers/statistics'
 
-import { Container, Stats, DropdownRow, Row, StyledSwitch, SwitchContainer, Label } from './styles'
-
+import { Container, Stats, DropdownRow, StyledSwitch, SwitchContainer, Label } from './styles'
 
 const { Option } = Select
 
