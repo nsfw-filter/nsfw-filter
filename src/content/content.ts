@@ -14,7 +14,6 @@ const init = (): void => {
   createChromeStore({ createStore })(rootReducer)
     .then(store => {
       store.subscribe(() => {
-        console.log('testing content.js subscription', store.getState().settings)
         const { filterEffect, isFeatureActive } = store.getState().settings
         imageFilter.setSettings({ filterEffect, isFeatureActive })
       })

@@ -28,10 +28,6 @@ export const Production: React.FC = () => {
     filterEffect,
     isFeatureActive
   } = useSelector<RootState>((state) => state.settings) as SettingsState
-  console.log({    filterStrictness,
-    trainedModel,
-    filterEffect,
-    isFeatureActive})
   const { totalBlocked } = useSelector<RootState>((state) => state.statistics) as StatisticsState
 
   return (

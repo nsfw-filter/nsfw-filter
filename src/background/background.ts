@@ -44,8 +44,6 @@ const load = ({ logger, store, modelSettings }: loadType): void => {
   const MODEL_PATH = '../models/'
 
   chrome.commands.onCommand.addListener((command) => {
-    console.log({ command })
-
     if (command === 'toggle_feature') {
       store.dispatch(toggleFeatureStatus())
     }
@@ -117,7 +115,6 @@ const init = async (): Promise<void> => {
   let { logging, filterStrictness } = store.getState().settings
 
   store.subscribe(() => {
-    console.log('state changes background.ts', store.getState())
     logging = store.getState().settings.logging
     filterStrictness = store.getState().settings.filterStrictness
   })
