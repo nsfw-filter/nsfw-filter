@@ -42,6 +42,15 @@
   "web_accessible_resources": [
     "models/*, images/*"
   ],
+  "commands": {
+    "toggle_feature": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+O",
+        "mac": "Command+Shift+O"
+      },
+      "description": "Toggle Feature ON/OFF"
+    }
+  },
   "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
   "manifest_version": 2
 }

@@ -14,7 +14,7 @@ module.exports = async function () {
   const browser = await puppeteer.launch({
     headless: false,
     product: "chrome",
-    executablePath: process.env.PUPPETEER_EXEC_PATH, // set by docker container
+    executablePath: "/opt/homebrew/bin/chromium", // set by docker container
     defaultViewport: null,
     args: [
     `--disable-extensions-except=${extensionPath}`,

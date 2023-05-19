@@ -4,7 +4,7 @@ import { enableProdMode } from '@tensorflow/tfjs'
 import { load as loadModel } from 'nsfwjs'
 import { createStore } from 'redux'
 
-import { SettingsActionTypes } from '../popup/redux/actions/settings'
+import { SettingsActionTypes, toggleFeatureStatus } from '../popup/redux/actions/settings'
 import { StatisticsActionTypes } from '../popup/redux/actions/statistics'
 import { createChromeStore } from '../popup/redux/chrome-storage'
 import { rootReducer, RootState } from '../popup/redux/reducers'
@@ -43,6 +43,13 @@ const _buildTabIdUrl = (tab: chrome.tabs.Tab): TabIdUrl => {
 const load = ({ logger, store, modelSettings }: loadType): void => {
   const MODEL_PATH = '../models/'
 
+  chrome.commands.onCommand.addListener((command) => {
+    console.log({ command })
+
+    if (command === 'toggle_feature') {
+      store.dispatch(toggleFeatureStatus())
+    }
+  })
   // @ts-expect-error
   loadModel(MODEL_PATH, { type: 'graph' })
     .then(NSFWJSModel => {
@@ -107,7 +114,13 @@ const load = ({ logger, store, modelSettings }: loadType): void => {
 
 const init = async (): Promise<void> => {
   const store = await createChromeStore({ createStore })(rootReducer)
-  const { logging, filterStrictness } = store.getState().settings
+  let { logging, filterStrictness } = store.getState().settings
+
+  store.subscribe(() => {
+    console.log('state changes background.ts', store.getState())
+    logging = store.getState().settings.logging
+    filterStrictness = store.getState().settings.filterStrictness
+  })
 
   const logger = new Logger()
   if (logging === true) logger.enable()

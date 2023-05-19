@@ -6,7 +6,7 @@ import Slider from 'antd/lib/slider'
 import React from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 
-import { setFilterStrictness } from '../../redux/actions/settings'
+import { setFilterStrictness, toggleFeatureStatus } from '../../redux/actions/settings'
 import {
   setTrainedModel,
   setFilterEffect
@@ -15,7 +15,8 @@ import { RootState } from '../../redux/reducers'
 import { SettingsState } from '../../redux/reducers/settings'
 import { StatisticsState } from '../../redux/reducers/statistics'
 
-import { Container, Stats, DropdownRow } from './styles'
+import { Container, Stats, DropdownRow, Row, StyledSwitch, SwitchContainer, Label } from './styles'
+
 
 const { Option } = Select
 
@@ -24,8 +25,13 @@ export const Production: React.FC = () => {
   const {
     filterStrictness,
     trainedModel,
-    filterEffect
+    filterEffect,
+    isFeatureActive
   } = useSelector<RootState>((state) => state.settings) as SettingsState
+  console.log({    filterStrictness,
+    trainedModel,
+    filterEffect,
+    isFeatureActive})
   const { totalBlocked } = useSelector<RootState>((state) => state.statistics) as StatisticsState
 
   return (
@@ -33,6 +39,14 @@ export const Production: React.FC = () => {
       <Stats>
         <span>Total blocked: {totalBlocked}</span>
       </Stats>
+
+      <SwitchContainer>
+        <Label> Toggle Feature Status </Label>
+        <StyledSwitch
+          checked={isFeatureActive}
+          onChange={() => dispatch(toggleFeatureStatus())}
+        />
+      </SwitchContainer>
 
       <div>Filter Strictness</div>
       <Slider

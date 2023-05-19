@@ -13,12 +13,15 @@ const init = (): void => {
 
   createChromeStore({ createStore })(rootReducer)
     .then(store => {
-      const { filterEffect } = store.getState().settings
-      imageFilter.setSettings({ filterEffect })
+      store.subscribe(() => {
+        console.log('testing content.js subscription', store.getState().settings)
+        const { filterEffect, isFeatureActive } = store.getState().settings
+        imageFilter.setSettings({ filterEffect, isFeatureActive })
+      })
     })
     .catch(error => {
       console.warn(error)
-      imageFilter.setSettings({ filterEffect: 'blur' })
+      imageFilter.setSettings({ filterEffect: 'blur', isFeatureActive: true })
     })
 }
 
