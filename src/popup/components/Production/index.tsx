@@ -15,7 +15,7 @@ import { RootState } from '../../redux/reducers'
 import { SettingsState } from '../../redux/reducers/settings'
 import { StatisticsState } from '../../redux/reducers/statistics'
 
-import { Container, Stats, DropdownRow, StyledSwitch, SwitchContainer, Label } from './styles'
+import { Container, Stats, DropdownRow, StyledSwitch, SwitchContainer, Label, TooltipCard, TooltipText, TooltipBox } from './styles'
 
 const { Option } = Select
 
@@ -36,7 +36,14 @@ export const Production: React.FC = () => {
       </Stats>
 
       <SwitchContainer>
-        <Label> Toggle Feature Status </Label>
+        <TooltipCard>
+          <TooltipText>
+            <Label>Toggle Feature Status</Label>
+          </TooltipText>
+          <TooltipBox>
+            <p>Use CMD+SHIFT+O in Mac to Toggle ON/OFF</p>
+          </TooltipBox>
+        </TooltipCard>
         <StyledSwitch
           checked={isFeatureActive}
           onChange={() => dispatch(toggleFeatureStatus())}
