@@ -10,6 +10,7 @@ type imageFilterSettingsType = {
 export type IImageFilter = {
   analyzeImage: (image: HTMLImageElement, srcAttribute: boolean) => void
   setSettings: (settings: imageFilterSettingsType) => void
+  evaluateFilteredImages: () => void
 }
 
 export class ImageFilter extends Filter implements IImageFilter {
@@ -26,9 +27,13 @@ export class ImageFilter extends Filter implements IImageFilter {
 
   public setSettings (settings: imageFilterSettingsType): void {
     this.settings = settings
+    this.evaluateFilteredImages()
+  }
+
+  public evaluateFilteredImages (): void{
     if (this.imageSet.size !== 0) {
       this.imageSet.forEach(image => {
-        if (settings.isFeatureActive) {
+        if (this.settings.isFeatureActive) {
           this.filterNsfwImage(image, image.src)
         } else {
           this.toggleVisibilityOfNsfwImage(image)
@@ -87,12 +92,15 @@ export class ImageFilter extends Filter implements IImageFilter {
   private filterNsfwImage (image: HTMLImageElement, url: string): void {
     if (image.src === url) {
       if (this.settings.filterEffect === 'blur') {
+        image.style.visibility = 'visible'
         image.style.filter = 'blur(25px)'
       } else if (this.settings.filterEffect === 'grayscale') {
+        image.style.visibility = 'visible'
         image.style.filter = 'grayscale(1)'
+      } else if (this.settings.filterEffect === 'hide') {
+        if (image.parentNode?.nodeName === 'BODY') image.hidden = false
+        image.style.visibility = 'hidden'
       }
-      if (image.parentNode?.nodeName === 'BODY') image.hidden = false
-      image.style.visibility = 'visible'
     }
   }
 

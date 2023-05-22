@@ -13,6 +13,8 @@ const init = (): void => {
 
   createChromeStore({ createStore })(rootReducer)
     .then(store => {
+      const { filterEffect, isFeatureActive } = store.getState().settings
+      imageFilter.setSettings({ filterEffect, isFeatureActive })
       store.subscribe(() => {
         const { filterEffect, isFeatureActive } = store.getState().settings
         imageFilter.setSettings({ filterEffect, isFeatureActive })

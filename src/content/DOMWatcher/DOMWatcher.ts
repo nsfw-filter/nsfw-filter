@@ -34,6 +34,7 @@ export class DOMWatcher implements IDOMWatcher {
         this.checkAttributeMutation(mutation)
       }
     }
+    this.imageFilter.evaluateFilteredImages()
   }
 
   private findAndCheckAllImages (element: Element): void {
