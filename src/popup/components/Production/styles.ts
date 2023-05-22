@@ -54,7 +54,7 @@ export const TooltipBox = styled.div`
   left: 30px;
   padding: 5px 5px;
   position: absolute;
-  top: calc(100% + 10px);
+  top: calc(100% + 15px);
   transition: visibility 0.5s, color 0.5s, background-color 0.5s, width 0.5s,
     padding 0.5s ease-in-out;
   visibility: hidden;
