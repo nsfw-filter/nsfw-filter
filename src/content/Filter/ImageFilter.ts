@@ -25,6 +25,7 @@ export class ImageFilter extends Filter implements IImageFilter {
   }
 
   public setSettings (settings: imageFilterSettingsType): void {
+    this.settings = settings
     if (this.imageSet.size !== 0) {
       this.imageSet.forEach(image => {
         if (settings.isFeatureActive) {
@@ -34,7 +35,6 @@ export class ImageFilter extends Filter implements IImageFilter {
         }
       })
     }
-    this.settings = settings
   }
 
   public getFeatureStatus (): boolean {
