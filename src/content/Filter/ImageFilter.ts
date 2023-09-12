@@ -4,26 +4,46 @@ import { Filter } from './Filter'
 
 type imageFilterSettingsType = {
   filterEffect: 'blur' | 'hide' | 'grayscale'
+  isFeatureActive: true | false
 }
 
 export type IImageFilter = {
   analyzeImage: (image: HTMLImageElement, srcAttribute: boolean) => void
   setSettings: (settings: imageFilterSettingsType) => void
+  evaluateFilteredImages: () => void
 }
 
 export class ImageFilter extends Filter implements IImageFilter {
   private readonly MIN_IMAGE_SIZE: number
+  private readonly imageSet: Set<HTMLImageElement>
   private settings: imageFilterSettingsType
 
   constructor () {
     super()
     this.MIN_IMAGE_SIZE = 41
-
-    this.settings = { filterEffect: 'hide' }
+    this.imageSet = new Set<HTMLImageElement>()
+    this.settings = { filterEffect: 'hide', isFeatureActive: true }
   }
 
   public setSettings (settings: imageFilterSettingsType): void {
     this.settings = settings
+    this.evaluateFilteredImages()
+  }
+
+  public evaluateFilteredImages (): void{
+    if (this.imageSet.size !== 0) {
+      this.imageSet.forEach(image => {
+        if (this.settings.isFeatureActive) {
+          this.filterNsfwImage(image, image.src)
+        } else {
+          this.toggleVisibilityOfNsfwImage(image)
+        }
+      })
+    }
+  }
+
+  public getFeatureStatus (): boolean {
+    return this.settings.isFeatureActive
   }
 
   public analyzeImage (image: HTMLImageElement, srcAttribute: boolean = false): void {
@@ -48,21 +68,13 @@ export class ImageFilter extends Filter implements IImageFilter {
     this.requestToAnalyzeImage(request)
       .then(({ result, url }) => {
         if (result) {
-          if (this.settings.filterEffect === 'blur') {
-            image.style.filter = 'blur(25px)'
-            this.showImage(image, url)
-          } else if (this.settings.filterEffect === 'grayscale') {
-            image.style.filter = 'grayscale(1)'
-            this.showImage(image, url)
-          }
-
           this.blockedItems++
-          image.dataset.nsfwFilterStatus = 'nsfw'
+          this.imageSet.add(image)
         } else {
-          this.showImage(image, url)
+          this.showSFWImage(image, url)
         }
       }).catch(({ url }) => {
-        this.showImage(image, url)
+        this.showSFWImage(image, url)
       })
   }
 
@@ -72,12 +84,33 @@ export class ImageFilter extends Filter implements IImageFilter {
     image.style.visibility = 'hidden'
   }
 
-  private showImage (image: HTMLImageElement, url: string): void {
+  private toggleVisibilityOfNsfwImage (image: HTMLImageElement): void {
+    image.style.visibility = 'visible'
+    image.style.filter = 'none'
+  }
+
+  private filterNsfwImage (image: HTMLImageElement, url: string): void {
+    if (image.src === url) {
+      if (this.settings.filterEffect === 'blur') {
+        image.style.visibility = 'visible'
+        image.style.filter = 'blur(25px)'
+      } else if (this.settings.filterEffect === 'grayscale') {
+        image.style.visibility = 'visible'
+        image.style.filter = 'grayscale(1)'
+      } else if (this.settings.filterEffect === 'hide') {
+        if (image.parentNode?.nodeName === 'BODY') image.hidden = false
+        image.style.visibility = 'hidden'
+      }
+    }
+  }
+
+  private showSFWImage (image: HTMLImageElement, url: string): void {
     if (image.src === url) {
       if (image.parentNode?.nodeName === 'BODY') image.hidden = false
 
-      image.dataset.nsfwFilterStatus = 'sfw'
       image.style.visibility = 'visible'
+      image.dataset.nsfwFilterStatus = 'sfw'
+      image.style.filter = 'none'
     }
   }
 }

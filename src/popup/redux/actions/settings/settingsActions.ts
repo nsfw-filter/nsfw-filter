@@ -3,11 +3,13 @@ import {
   TOGGLE_DIV_FILTERING,
   SET_FILTER_EFFECT,
   SET_TRAINED_MODEL,
-  SET_FILTER_STRICTNESS
+  SET_FILTER_STRICTNESS,
+  TOGGLE_FEATURE_STATUS
 } from './settingsTypes'
 
 export const toggleLogging = () => ({ type: TOGGLE_LOGGING } as const)
 export const toggleDivFiltering = () => ({ type: TOGGLE_DIV_FILTERING } as const)
+export const toggleFeatureStatus = () => ({ type: TOGGLE_FEATURE_STATUS } as const)
 
 export const setFilterEffect = (filterEffect: 'hide' | 'blur' | 'grayscale') => ({
   type: SET_FILTER_EFFECT,
