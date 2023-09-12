@@ -38,10 +38,10 @@ export const Production: React.FC = () => {
       <SwitchContainer>
         <TooltipCard>
           <TooltipText>
-            <Label>Toggle Feature Status</Label>
+            <Label>Turn off/on</Label>
           </TooltipText>
           <TooltipBox>
-            <p>Use CMD+SHIFT+O in Mac to Toggle ON/OFF</p>
+            <p>Use Cmd + Shift + O in Mac to turn off/on</p>
           </TooltipBox>
         </TooltipCard>
         <StyledSwitch
@@ -50,7 +50,7 @@ export const Production: React.FC = () => {
         />
       </SwitchContainer>
 
-      <div>Filter Strictness</div>
+      <div>Filter strictness</div>
       <Slider
         min={1}
         max={100}

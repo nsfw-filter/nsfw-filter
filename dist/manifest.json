@@ -48,7 +48,7 @@
         "default": "Ctrl+Shift+O",
         "mac": "Command+Shift+O"
       },
-      "description": "Toggle Feature ON/OFF"
+      "description": "Turn off/on the filter"
     }
   },
   "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
