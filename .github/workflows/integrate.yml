@@ -20,6 +20,6 @@ jobs:
       - run: npm run lint
       - run: npm run build
       - name: Run headful puppeteer tests
-        uses: djp3/puppeteer-headful@master
+        uses: mujo-code/puppeteer-headful@18.9.0
         with:
           args: npm test
