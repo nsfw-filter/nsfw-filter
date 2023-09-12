@@ -1,5 +1,5 @@
 const NSFWUrls = [
-    'https://i.imgur.com/0avXzJF.jpg',
+    'https://i.imgur.com/bY536ZM.jpeg',
     'https://i.imgur.com/y9aPMnm.jpg'
 ]
 
