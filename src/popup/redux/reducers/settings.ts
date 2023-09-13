@@ -4,7 +4,8 @@ import {
   TOGGLE_LOGGING,
   SET_FILTER_EFFECT,
   SET_TRAINED_MODEL,
-  SET_FILTER_STRICTNESS
+  SET_FILTER_STRICTNESS,
+  SET_WEBSITE_LIST
 } from '../actions/settings/settingsTypes'
 
 export type SettingsState = {
@@ -12,13 +13,15 @@ export type SettingsState = {
   filterEffect: 'hide' | 'blur' | 'grayscale'
   trainedModel: 'MobileNet_v1.2'
   filterStrictness: number
+  websites: string[]
 }
 
 const initialState: SettingsState = {
   logging: process.env.NODE_ENV === 'development',
   filterEffect: 'blur',
   trainedModel: 'MobileNet_v1.2',
-  filterStrictness: 55
+  filterStrictness: 55,
+  websites: []
 }
 
 export function settings (state = initialState, action: SettingsActionTypes): SettingsState {
@@ -31,6 +34,8 @@ export function settings (state = initialState, action: SettingsActionTypes): Se
       return { ...state, trainedModel: action.payload.trainedModel }
     case SET_FILTER_STRICTNESS:
       return { ...state, filterStrictness: action.payload.filterStrictness }
+    case SET_WEBSITE_LIST:
+      return { ...state, websites: action.payload.websites }
     default:
       return state
   }

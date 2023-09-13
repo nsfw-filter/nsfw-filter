@@ -24,3 +24,10 @@ export const DropdownRow = styled(Row)`
   align-items: center;
   justify-content: space-between;
 `
+
+export const TextBox = styled.div`
+  align-content: center;
+  display: flex;
+  flex-direction: row;
+  padding: 7px 0;
+`

@@ -1,21 +1,24 @@
 import 'antd/lib/select/style/index.css'
 import 'antd/lib/slider/style/index.css'
+import 'antd/lib/input/style/index.css'
 
 import Select from 'antd/lib/select'
 import Slider from 'antd/lib/slider'
+import Input from 'antd/lib/input'
 import React from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 
 import { setFilterStrictness } from '../../redux/actions/settings'
 import {
   setTrainedModel,
-  setFilterEffect
+  setFilterEffect,
+  setWebsiteList
 } from '../../redux/actions/settings/index'
 import { RootState } from '../../redux/reducers'
 import { SettingsState } from '../../redux/reducers/settings'
 import { StatisticsState } from '../../redux/reducers/statistics'
 
-import { Container, Stats, DropdownRow } from './styles'
+import { Container, Stats, DropdownRow, TextBox } from './styles'
 
 const { Option } = Select
 
@@ -24,7 +27,8 @@ export const Production: React.FC = () => {
   const {
     filterStrictness,
     trainedModel,
-    filterEffect
+    filterEffect,
+    websites
   } = useSelector<RootState>((state) => state.settings) as SettingsState
   const { totalBlocked } = useSelector<RootState>((state) => state.statistics) as StatisticsState
 
@@ -65,6 +69,20 @@ export const Production: React.FC = () => {
           <Option value={trainedModel}>{trainedModel}</Option>
         </Select>
       </DropdownRow>
+
+      <div>Whitelisted websites</div>
+      <TextBox>
+        <Input
+          placeholder="www.twitter.com, www.facebook.com"
+          defaultValue={websites.join(', ')}
+          onChange={event => {
+            // Handle the change event and update the whitelist
+            const websites = event.target.value.split(/\s*,\s*/);
+            dispatch(setWebsiteList(websites));
+            // Update the whitelist/blacklist using the websites array
+          }}
+        />
+      </TextBox>
 
     </Container>
   )
