@@ -29,4 +29,3 @@ export const setWebsiteList = (websites: string[]) => ({
   type: SET_WEBSITE_LIST,
   payload: { websites }
 } as const)
-

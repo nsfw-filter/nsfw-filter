@@ -2,9 +2,9 @@ import 'antd/lib/select/style/index.css'
 import 'antd/lib/slider/style/index.css'
 import 'antd/lib/input/style/index.css'
 
+import Input from 'antd/lib/input'
 import Select from 'antd/lib/select'
 import Slider from 'antd/lib/slider'
-import Input from 'antd/lib/input'
 import React from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 
@@ -77,8 +77,8 @@ export const Production: React.FC = () => {
           defaultValue={websites.join(', ')}
           onChange={event => {
             // Handle the change event and update the whitelist
-            const websites = event.target.value.split(/\s*,\s*/);
-            dispatch(setWebsiteList(websites));
+            const websites = event.target.value.split(/\s*,\s*/)
+            dispatch(setWebsiteList(websites))
             // Update the whitelist/blacklist using the websites array
           }}
         />

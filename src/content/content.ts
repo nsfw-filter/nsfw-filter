@@ -14,7 +14,7 @@ const init = (): void => {
     .then(store => {
       const { filterEffect, websites } = store.getState().settings
       imageFilter.setSettings({ filterEffect })
-      if (!websites.includes(window.location.hostname)){
+      if (websites.includes(window.location.hostname) === false) {
         domWatcher.watch()
       }
     })
