@@ -1,3 +1,5 @@
+name: Build and release
+
 on:
   push:
     tags:
@@ -5,17 +7,18 @@ on:
 
 jobs:
   build:
-    name: Create Release
+    name: Create release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - name: Setup Node
+        uses: actions/setup-node@v1
         with:
           node-version: 16
-      - name: Release
+      - name: Setup release
         uses: softprops/action-gh-release@v1
-      - name: build
+      - name: Build
         run: |
           npm ci
           npm run build
