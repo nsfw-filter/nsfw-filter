@@ -38,7 +38,7 @@ export const Footer: React.FC = () => {
         <span><a rel="noreferrer" target="_blank" href="https://github.com/nsfw-filter/nsfw-filter/issues">Report a bug</a></span>
         <BugOutlined />
       </BugReport>
-      
+
       <Sponsor>
         <DollarOutlined />
         <span><a rel="noreferrer" target="_blank" href="https://www.patreon.com/nsfwfilter">Sponsor on Patreon</a></span>
