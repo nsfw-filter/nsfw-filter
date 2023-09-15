@@ -25,7 +25,7 @@ jobs:
         run: npm run lint
       - name: Build
         run: npm run build
-      - name: Run headful puppeteer tests
+      - name: Run headful Puppeteer tests
         uses: mujo-code/puppeteer-headful@18.9.0
         with:
           args: npm test

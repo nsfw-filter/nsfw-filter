@@ -9,11 +9,11 @@ export const Title = styled.div`
   cursor: default;
   font-family: 'Roboto', sans-serif;
   font-size: 26px;
-  font-weight: 700;
+  font-weight: 400;
   text-align: center;
 
   #logo-first-letters {
-    color: #7C82DC;
+    font-weight: 700;
   }
 `
 
