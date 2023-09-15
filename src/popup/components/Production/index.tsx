@@ -21,7 +21,6 @@ import { StatisticsState } from '../../redux/reducers/statistics'
 import { Container, Stats, DropdownRow, TextBox } from './styles'
 
 const { Option } = Select
-
 export const Production: React.FC = () => {
   const dispatch = useDispatch()
   const {
@@ -38,12 +37,13 @@ export const Production: React.FC = () => {
         <span>Total blocked: {totalBlocked}</span>
       </Stats>
 
-      <div>Filter Strictness</div>
+      <div>Filter strictness: {filterStrictness}%</div>
       <Slider
         min={1}
         max={100}
         onChange={(value: number) => dispatch(setFilterStrictness(value))}
         value={filterStrictness}
+        tipFormatter={null}
       />
 
       <DropdownRow>

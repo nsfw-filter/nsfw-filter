@@ -1,9 +1,9 @@
 {
   "name": "NSFW Filter",
-  "version": "2.1.2",
-  "description": "Hide NSFW content from websites using this extension powered by AI! PS: We don't access your data, it runs locally in your browser!",
+  "version": "2.2.0",
+  "description": "Free, open source, and privacy-focused browser extension to block \"not safe for work\" content in your browser.",
   "author": "Navendu Pottekkat",
-  "homepage_url": "https://github.com/nsfw-filter/nsfw-filter/",
+  "homepage_url": "https://nsfw-filter.com",
   "permissions": [
     "<all_urls>",
     "storage"

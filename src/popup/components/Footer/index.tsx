@@ -1,4 +1,5 @@
 import BugOutlined from '@ant-design/icons/lib/icons/BugOutlined'
+import DollarOutlined from '@ant-design/icons/lib/icons/DollarOutlined'
 import { SettingsState } from 'popup/redux/reducers/settings'
 import React, { useEffect, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
@@ -8,7 +9,7 @@ import {
 } from '../../redux/actions/settings/index'
 import { RootState } from '../../redux/reducers'
 
-import { Container, CheckboxArea, BugReport, StyledCheckbox, Version } from './styles'
+import { Container, CheckboxArea, BugReport, Sponsor, StyledCheckbox, Version } from './styles'
 
 export const Footer: React.FC = () => {
   const dispatch = useDispatch()
@@ -34,9 +35,15 @@ export const Footer: React.FC = () => {
 
       <BugReport>
         <BugOutlined />
-        <span>Please send a bug report <a rel="noreferrer" target="_blank" href="https://github.com/nsfw-filter/nsfw-filter/issues">here</a></span>
+        <span><a rel="noreferrer" target="_blank" href="https://github.com/nsfw-filter/nsfw-filter/issues">Report a bug</a></span>
         <BugOutlined />
       </BugReport>
+      
+      <Sponsor>
+        <DollarOutlined />
+        <span><a rel="noreferrer" target="_blank" href="https://www.patreon.com/nsfwfilter">Sponsor on Patreon</a></span>
+        <DollarOutlined />
+      </Sponsor>
 
       <Version>v{version}</Version>
     </Container>
