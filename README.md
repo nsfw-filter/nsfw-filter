@@ -24,7 +24,7 @@ When you load web pages, NSFW Filter will first hide all images and only show th
 
 To customize the extension, click the icon in your extensions tab.
 
-![NSFW Filter popup](demo/images/popup.png)
+![NSFW Filter popup](demo/images/popup-window.png)
 
 # Development
 
