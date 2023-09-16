@@ -1,6 +1,6 @@
 {
   "name": "nsfw-filter",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Free, open source, and privacy-focused browser extension to block \"not safe for work\" content.",
   "scripts": {
     "lint": "eslint .",
