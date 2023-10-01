@@ -8,6 +8,7 @@ type imageFilterSettingsType = {
 
 export type IImageFilter = {
   analyzeImage: (image: HTMLImageElement, srcAttribute: boolean) => void
+  analyzeBgImage: (image: HTMLElement, url: string) => void
   setSettings: (settings: imageFilterSettingsType) => void
 }
 
@@ -79,5 +80,40 @@ export class ImageFilter extends Filter implements IImageFilter {
       image.dataset.nsfwFilterStatus = 'sfw'
       image.style.visibility = 'visible'
     }
+  }
+
+  public analyzeBgImage (image: HTMLElement, url: string): void {
+    this.hideBgImage(image)
+    const request = new PredictionRequest(url)
+    this.requestToAnalyzeImage(request)
+      .then(({ result, url }) => {
+        if (result) {
+          if (this.settings.filterEffect === 'blur') {
+            image.style.filter = 'blur(25px)'
+            this.showBgImage(image, url)
+          }
+
+          this.blockedItems++
+          image.dataset.nsfwFilterStatus = 'nsfw'
+        } else {
+          this.showBgImage(image, url)
+        }
+      }).catch(({ url }) => {
+        this.showBgImage(image, url)
+      })
+  }
+
+  private hideBgImage (image: HTMLElement): void {
+    if (image.parentNode?.nodeName === 'BODY') image.hidden = true
+
+    image.dataset.nsfwFilterStatus = 'processing'
+    image.style.visibility = 'hidden'
+  }
+
+  private showBgImage (image: HTMLElement, url: string): void {
+    if (image.parentNode?.nodeName === 'BODY') image.hidden = false
+
+    image.dataset.nsfwFilterStatus = 'sfw'
+    image.style.visibility = 'visible'
   }
 }

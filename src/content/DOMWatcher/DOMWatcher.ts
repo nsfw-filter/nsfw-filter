@@ -41,6 +41,17 @@ export class DOMWatcher implements IDOMWatcher {
     for (let i = 0; i < images.length; i++) {
       this.imageFilter.analyzeImage(images[i], false)
     }
+
+    const elements = element.querySelectorAll<HTMLElement>('[style]')
+    for (let i = 0; i < elements.length; i++) {
+      const bgImage = elements[i].style.backgroundImage
+      if (bgImage !== undefined) {
+        const bgImageUrl = bgImage.split('"')[1]
+        if (bgImageUrl !== undefined && bgImageUrl !== 'ia' && elements[i].dataset.nsfwFilterStatus === undefined) {
+          this.imageFilter.analyzeBgImage(elements[i], bgImageUrl)
+        }
+      }
+    }
   }
 
   private checkAttributeMutation (mutation: MutationRecord): void {
