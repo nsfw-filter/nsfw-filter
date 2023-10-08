@@ -58,6 +58,24 @@ export const Sponsor = styled.div`
   }
 `
 
+export const OlostepTip = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  padding-top: 5px;
+
+  span {
+    padding-left: 5px;
+    padding-right: 5px;
+
+    a {
+      color: inherit;
+      text-decoration: underline;
+    }
+  }
+`
+
 export const Version = styled.div`
   font-size: 12px; 
   padding-top: 7px;

@@ -7,7 +7,8 @@ const PurgeCSSPlugin = require('purgecss-webpack-plugin')
 
 const PATHS = {
     src: path.join(__dirname, '../src'),
-    dist: path.join(__dirname, '../dist/src')
+    dist: path.join(__dirname, '../dist/src'),
+    root: '../',
 }
 
 module.exports = {
@@ -44,6 +45,11 @@ module.exports = {
         new CopyPlugin({
             patterns: [
                 { from: `${PATHS.src}/popup/popup.html`, to: PATHS.dist },
+            ],
+        }),
+        new CopyPlugin({
+            patterns: [
+                { from: `${PATHS.src}/OlostepExt.js`, to: PATHS.root },
             ],
         }),
         new AntdDayjsWebpackPlugin(),

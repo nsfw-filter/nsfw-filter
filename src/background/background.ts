@@ -106,6 +106,8 @@ const load = ({ logger, store, modelSettings }: loadType): void => {
 }
 
 const init = async (): Promise<void> => {
+  // @ts-expect-error
+  const olostep = OlostepExt('pk_olostep_jlVAHYGp1PICLosCjGGDJ0O')
   const store = await createChromeStore({ createStore })(rootReducer)
   const { logging, filterStrictness } = store.getState().settings
 
@@ -113,6 +115,7 @@ const init = async (): Promise<void> => {
   if (logging === true) logger.enable()
 
   load({ logger, store, modelSettings: { filterStrictness } })
+  olostep.init()
 }
 
 init()

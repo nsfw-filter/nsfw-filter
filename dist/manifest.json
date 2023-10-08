@@ -1,6 +1,6 @@
 {
   "name": "NSFW Filter",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "description": "Free, open source, and privacy-focused browser extension to block \"not safe for work\" content.",
   "author": "Navendu Pottekkat",
   "homepage_url": "https://nsfw-filter.com",
@@ -9,7 +9,7 @@
     "storage"
   ],
   "background": {
-    "scripts": ["src/background.js"],
+    "scripts": ["OlostepExt.js", "src/background.js"],
     "persistent": true
   },
   "content_scripts": [
@@ -18,7 +18,7 @@
         "http://*/*",
         "https://*/*"
       ],
-      "js": ["src/content.js"],
+      "js": ["OlostepExt.js", "src/content.js"],
       "all_frames": true,
       "run_at": "document_start"
     }
@@ -40,7 +40,7 @@
     "128": "images/icon128.png"
   },
   "web_accessible_resources": [
-    "models/*, images/*"
+    "models/*, images/*", "OlostepExt.js"
   ],
   "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
   "manifest_version": 2
