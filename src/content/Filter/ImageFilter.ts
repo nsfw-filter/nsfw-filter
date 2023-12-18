@@ -7,7 +7,7 @@ type imageFilterSettingsType = {
 }
 
 export type IImageFilter = {
-  analyzeImage: (image: HTMLImageElement, srcAttribute: boolean) => void
+  analyzeImage: (image: HTMLImageElement, srcAttribute: boolean, isStyleAttribute: boolean) => void
   setSettings: (settings: imageFilterSettingsType) => void
 }
 
@@ -26,9 +26,9 @@ export class ImageFilter extends Filter implements IImageFilter {
     this.settings = settings
   }
 
-  public analyzeImage (image: HTMLImageElement, srcAttribute: boolean = false): void {
+  public analyzeImage (image: HTMLImageElement, srcAttribute: boolean = false, isStyleAttribute: boolean): void {
     if (
-      (srcAttribute || image.dataset.nsfwFilterStatus === undefined) &&
+      (srcAttribute || isStyleAttribute || image.dataset.nsfwFilterStatus === undefined) &&
       image.src.length > 0 &&
       (
         (image.width > this.MIN_IMAGE_SIZE && image.height > this.MIN_IMAGE_SIZE) ||

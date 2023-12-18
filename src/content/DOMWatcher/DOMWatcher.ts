@@ -39,13 +39,14 @@ export class DOMWatcher implements IDOMWatcher {
   private findAndCheckAllImages (element: Element): void {
     const images = element.getElementsByTagName('img')
     for (let i = 0; i < images.length; i++) {
-      this.imageFilter.analyzeImage(images[i], false)
+      this.imageFilter.analyzeImage(images[i], false, false)
     }
   }
 
   private checkAttributeMutation (mutation: MutationRecord): void {
     if ((mutation.target as HTMLImageElement).nodeName === 'IMG') {
-      this.imageFilter.analyzeImage(mutation.target as HTMLImageElement, mutation.attributeName === 'src')
+      const isStyleAttribute = mutation.attributeName === 'style'
+      this.imageFilter.analyzeImage(mutation.target as HTMLImageElement, mutation.attributeName === 'src', isStyleAttribute)
     }
   }
 
@@ -55,7 +56,7 @@ export class DOMWatcher implements IDOMWatcher {
       subtree: true,
       childList: true,
       attributes: true,
-      attributeFilter: ['src']
+      attributeFilter: ['src', 'style']
     }
   }
 }
