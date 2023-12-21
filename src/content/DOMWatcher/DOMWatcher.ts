@@ -39,14 +39,21 @@ export class DOMWatcher implements IDOMWatcher {
   private findAndCheckAllImages (element: Element): void {
     const images = element.getElementsByTagName('img')
     for (let i = 0; i < images.length; i++) {
-      this.imageFilter.analyzeImage(images[i], false, false)
+      this.imageFilter.analyzeImage(images[i], false)
     }
   }
 
   private checkAttributeMutation (mutation: MutationRecord): void {
     if ((mutation.target as HTMLImageElement).nodeName === 'IMG') {
+      const isSrcAttribute = mutation.attributeName === 'src'
       const isStyleAttribute = mutation.attributeName === 'style'
-      this.imageFilter.analyzeImage(mutation.target as HTMLImageElement, mutation.attributeName === 'src', isStyleAttribute)
+
+      if (isStyleAttribute) {
+        this.imageFilter.checkStyleMutation(mutation.target as HTMLImageElement)
+        return
+      }
+
+      this.imageFilter.analyzeImage(mutation.target as HTMLImageElement, isSrcAttribute)
     }
   }
 
