@@ -43,7 +43,6 @@ const _buildTabIdUrl = (tab: chrome.tabs.Tab): TabIdUrl => {
 const load = ({ logger, store, modelSettings }: loadType): void => {
   const MODEL_PATH = '../models/'
 
-  // @ts-expect-error
   loadModel(MODEL_PATH, { type: 'graph' })
     .then(NSFWJSModel => {
       const model = new Model(NSFWJSModel, logger, modelSettings)

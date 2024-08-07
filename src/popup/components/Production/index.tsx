@@ -1,10 +1,4 @@
-import 'antd/lib/select/style/index.css'
-import 'antd/lib/slider/style/index.css'
-import 'antd/lib/input/style/index.css'
-
-import Input from 'antd/lib/input'
-import Select from 'antd/lib/select'
-import Slider from 'antd/lib/slider'
+import { Input, Select, Slider } from 'antd'
 import React from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 
@@ -32,20 +26,20 @@ export const Production: React.FC = () => {
   const { totalBlocked } = useSelector<RootState>((state) => state.statistics) as StatisticsState
 
   return (
-    <Container>
+    (<Container>
       <Stats>
         <span>Total blocked: {totalBlocked}</span>
       </Stats>
-
       <div>Filter strictness: {filterStrictness}%</div>
       <Slider
         min={1}
         max={100}
         onChange={(value: number) => dispatch(setFilterStrictness(value))}
         value={filterStrictness}
-        tipFormatter={null}
+        tooltip={{
+          formatter: null
+        }}
       />
-
       <DropdownRow>
         <span>Filter effect</span>
         <Select
@@ -58,7 +52,6 @@ export const Production: React.FC = () => {
           <Option value="grayscale">Grayscale</Option>
         </Select>
       </DropdownRow>
-
       <DropdownRow>
         <span>Trained model</span>
         <Select
@@ -69,7 +62,6 @@ export const Production: React.FC = () => {
           <Option value={trainedModel}>{trainedModel}</Option>
         </Select>
       </DropdownRow>
-
       <div>Whitelisted websites</div>
       <TextBox>
         <Input
@@ -83,7 +75,6 @@ export const Production: React.FC = () => {
           }}
         />
       </TextBox>
-
-    </Container>
-  )
+    </Container>)
+  );
 }

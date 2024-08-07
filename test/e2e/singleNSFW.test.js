@@ -1,6 +1,6 @@
 const NSFWUrls = [
-    'https://i.imgur.com/bY536ZM.jpeg',
-    'https://i.imgur.com/y9aPMnm.jpg'
+    'https://i.imghippo.com/files/5C44l1716344862.jpg',
+    'https://i.imghippo.com/files/3KtEY1716344936.jpg'
 ]
 
 describe('Should filter NSFW images', () => {
@@ -8,7 +8,6 @@ describe('Should filter NSFW images', () => {
         let page = await global.__BROWSER__.newPage();
 
         await page.goto(url, { waituntil: "domcontentloaded" })
-        await page.waitForTimeout(5000)
 
         const data = await global.getDocumentImageAttributes(page)
         data.forEach(element => expect(element === "nsfw").toBeTruthy())

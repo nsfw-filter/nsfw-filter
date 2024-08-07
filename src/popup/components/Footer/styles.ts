@@ -1,6 +1,4 @@
-import 'antd/lib/checkbox/style/index.css'
-
-import Checkbox from 'antd/lib/checkbox'
+import { Checkbox}  from 'antd'
 import styled from 'styled-components'
 
 export const Container = styled.div`

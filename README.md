@@ -37,6 +37,7 @@ npm install
 Then build the project:
 
 ```sh
+export NODE_OPTIONS=--openssl-legacy-provider
 npm run build
 ```
 

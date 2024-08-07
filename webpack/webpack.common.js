@@ -3,7 +3,7 @@ const glob = require('glob')
 const CopyPlugin = require('copy-webpack-plugin')
 const AntdDayjsWebpackPlugin = require('antd-dayjs-webpack-plugin')
 const MiniCSSExtractPlugin = require('mini-css-extract-plugin')
-const PurgeCSSPlugin = require('purgecss-webpack-plugin')
+const { PurgeCSSPlugin } = require('purgecss-webpack-plugin')
 
 const PATHS = {
     src: path.join(__dirname, '../src'),
@@ -18,7 +18,8 @@ module.exports = {
     },
     output: {
         path: PATHS.dist,
-        filename: '[name].js'
+        filename: '[name].js',
+        clean: true
     },
     module: {
         rules: [
@@ -29,12 +30,12 @@ module.exports = {
             },
             {
                 test: /\.(eot|png|svg|[ot]tf|woff2?)(\?v=\d+\.\d+\.\d+)?$/,
-                loaders: ['file-loader']
+                type: 'asset/resource'
             },
             {
                 test: /\.css$/,
                 use: [
-                    "style-loader",
+                    MiniCSSExtractPlugin.loader,
                     "css-loader"
                 ]
             }
@@ -56,5 +57,5 @@ module.exports = {
     ],
     resolve: {
         extensions: [".js", ".ts", ".tsx"]
-    },
+    }
 }

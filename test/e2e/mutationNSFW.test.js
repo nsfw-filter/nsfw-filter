@@ -66,7 +66,6 @@ async function searchDuckDuckGo(criteria, page) {
     await page.evaluate(() => {
         document.head.insertAdjacentHTML("beforeend", `<style>.tile { filter: blur(15px) }</style>`)
     })
-    await page.waitForTimeout(2000)
 
     return await global.getDocumentImageAttributes(page)
 }

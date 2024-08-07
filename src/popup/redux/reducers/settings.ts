@@ -11,7 +11,7 @@ import {
 export type SettingsState = {
   logging: boolean
   filterEffect: 'hide' | 'blur' | 'grayscale'
-  trainedModel: 'MobileNet_v1.2'
+  trainedModel: 'MobileNet_v2'
   filterStrictness: number
   websites: string[]
 }
@@ -19,8 +19,8 @@ export type SettingsState = {
 const initialState: SettingsState = {
   logging: process.env.NODE_ENV === 'development',
   filterEffect: 'blur',
-  trainedModel: 'MobileNet_v1.2',
-  filterStrictness: 55,
+  trainedModel: 'MobileNet_v2',
+  filterStrictness: 85,
   websites: []
 }
 
