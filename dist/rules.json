@@ -1,0 +1,21 @@
+[
+    {
+      "id": 1,
+      "priority": 1,
+      "action": {
+        "type": "modifyHeaders",
+        "responseHeaders": [
+          {
+            "header": "Access-Control-Allow-Origin",
+            "operation": "append",
+            "value": "*"
+          }
+        ]
+      },
+      "condition": {
+        "urlFilter": "*",
+        "resourceTypes": ["media"]
+      }
+    }
+  ]
+  

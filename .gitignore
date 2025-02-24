@@ -2,3 +2,4 @@
 dist/src
 node_modules
 dev
+/dist/_metadata
