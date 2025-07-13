@@ -65,11 +65,16 @@ const load = ({ logger, store, modelSettings }: loadType): void => {
       break
   }
 
+  logger.log(`============================================`)
   logger.log(`Loading model: ${trainedModel} from ${modelPath}`)
+  logger.log(`Model options: ${JSON.stringify(modelOptions)}`)
+  logger.log(`Settings: topK=${modelSettings.topKPredictions}, overlay=${modelSettings.showProbabilityOverlay}`)
+  logger.log(`============================================`)
 
   loadModel(modelPath, modelOptions)
     .then(NSFWJSModel => {
-      logger.log(`Model ${trainedModel} loaded successfully`)
+      logger.log(`✅ Model ${trainedModel} loaded successfully!`)
+      logger.log(`Model info: ${NSFWJSModel.model ? 'TensorFlow model loaded' : 'Model object created'}`)
       const model = new Model(NSFWJSModel, logger, modelSettings)
       const queue = new Queue(model, logger, store)
 
@@ -139,8 +144,9 @@ const load = ({ logger, store, modelSettings }: loadType): void => {
 
         // Check if model type has changed
         if (currentModelType !== trainedModel) {
+          logger.log(`🔄 MODEL CHANGE DETECTED: ${currentModelType} → ${trainedModel}`)
           currentModelType = trainedModel
-          logger.log(`Model type changed to: ${trainedModel}. Reloading model...`)
+          logger.log(`🔄 Reloading model in 100ms...`)
           // Reload the model with new type
           setTimeout(() => {
             load({ logger, store, modelSettings: { filterStrictness, trainedModel, topKPredictions, showProbabilityOverlay, classThresholds } })

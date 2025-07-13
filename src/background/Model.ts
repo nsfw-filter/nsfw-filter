@@ -31,7 +31,9 @@ export class Model implements IModel {
     this.model = model
     this.logger = logger
 
-    this.logger.log('Model is loaded')
+    this.logger.log(`🤖 Model instance created`)
+    this.logger.log(`📊 Model object type: ${typeof model}`)
+    this.logger.log(`🎯 Initial settings: topK=${settings.topKPredictions}, overlay=${settings.showProbabilityOverlay}`)
 
     this.FILTER_LIST = new Set(['Hentai', 'Porn', 'Sexy'])
 
@@ -48,6 +50,7 @@ export class Model implements IModel {
     }
 
     this.setSettings(settings)
+    this.logger.log(`✅ Model is loaded and ready`)
   }
 
   public setSettings (settings: ModelSettings): void {
@@ -55,14 +58,26 @@ export class Model implements IModel {
     this.firstFilterPercentages.clear()
     this.secondFilterPercentages.clear()
 
+    // Log all settings changes
+    this.logger.log(`=== MODEL SETTINGS UPDATE ===`)
+    
     // Update additional settings
-    if (topKPredictions !== undefined) {
+    if (topKPredictions !== undefined && topKPredictions !== this.topKPredictions) {
+      this.logger.log(`Top K predictions changed: ${this.topKPredictions} → ${topKPredictions}`)
       this.topKPredictions = topKPredictions
     }
-    if (showProbabilityOverlay !== undefined) {
+    if (showProbabilityOverlay !== undefined && showProbabilityOverlay !== this.showProbabilityOverlay) {
+      this.logger.log(`Probability overlay changed: ${this.showProbabilityOverlay} → ${showProbabilityOverlay}`)
       this.showProbabilityOverlay = showProbabilityOverlay
     }
     if (classThresholds !== undefined) {
+      // Compare and log threshold changes
+      for (const [className, newThreshold] of Object.entries(classThresholds)) {
+        const oldThreshold = this.classThresholds[className]
+        if (oldThreshold !== newThreshold) {
+          this.logger.log(`${className} threshold changed: ${(oldThreshold * 100).toFixed(1)}% → ${(newThreshold * 100).toFixed(1)}%`)
+        }
+      }
       this.classThresholds = classThresholds
     }
 
@@ -77,6 +92,10 @@ export class Model implements IModel {
       this.firstFilterPercentages.set(className, threshold)
       this.secondFilterPercentages.set(className, threshold * 0.5) // Secondary threshold is half
     }
+    
+    // Log final threshold configuration
+    this.logger.log(`Active thresholds: ${Array.from(this.firstFilterPercentages.entries()).map(([k, v]) => `${k}=${(v * 100).toFixed(1)}%`).join(', ')}`)
+    this.logger.log(`=== SETTINGS UPDATE COMPLETE ===`)
   }
 
   public async predictImage (image: HTMLImageElement, url: string): Promise<boolean> {
