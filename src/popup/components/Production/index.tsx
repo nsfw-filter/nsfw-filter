@@ -16,7 +16,8 @@ import {
   setFilterEffect,
   setWebsiteList,
   setTopKPredictions,
-  toggleShowProbability
+  toggleShowProbabilityOverlay,
+  setClassThreshold
 } from '../../redux/actions/settings/index'
 import { RootState } from '../../redux/reducers'
 import { SettingsState } from '../../redux/reducers/settings'
@@ -33,7 +34,8 @@ export const Production: React.FC = () => {
     filterEffect,
     websites,
     topKPredictions,
-    showProbability
+    showProbabilityOverlay,
+    classThresholds
   } = useSelector<RootState>((state) => state.settings) as SettingsState
   const { totalBlocked } = useSelector<RootState>((state) => state.statistics) as StatisticsState
 
@@ -43,14 +45,26 @@ export const Production: React.FC = () => {
         <span>Total blocked: {totalBlocked}</span>
       </Stats>
 
-      <div>Filter strictness: {filterStrictness}%</div>
-      <Slider
-        min={1}
-        max={100}
-        onChange={(value: number) => dispatch(setFilterStrictness(value))}
-        value={filterStrictness}
-        tipFormatter={null}
-      />
+      <div>Filter thresholds (higher = more strict)</div>
+      
+      {Object.entries(classThresholds).map(([className, threshold]) => (
+        <div key={className} style={{ marginBottom: '8px' }}>
+          <div style={{ fontSize: '14px', marginBottom: '4px' }}>
+            {className}: {Math.round(threshold * 100)}%
+          </div>
+          <Slider
+            min={0}
+            max={100}
+            onChange={(value: number) => dispatch(setClassThreshold(className, value / 100))}
+            value={Math.round(threshold * 100)}
+            tipFormatter={(value) => `${value}%`}
+          />
+        </div>
+      ))}
+
+      <div style={{ fontSize: '12px', color: '#666', marginBottom: '16px' }}>
+        💡 Tip: Lower thresholds = more blocking, Higher thresholds = less blocking
+      </div>
 
       <DropdownRow>
         <span>Filter effect</span>
@@ -98,10 +112,10 @@ export const Production: React.FC = () => {
       </DropdownRow>
 
       <DropdownRow>
-        <span>Show probability scores</span>
+        <span>Show prediction overlay</span>
         <Switch
-          checked={showProbability}
-          onChange={() => dispatch(toggleShowProbability())}
+          checked={showProbabilityOverlay}
+          onChange={() => dispatch(toggleShowProbabilityOverlay())}
           size="small"
         />
       </DropdownRow>

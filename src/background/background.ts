@@ -112,7 +112,7 @@ const load = ({ logger, store, modelSettings }: loadType): void => {
 
       // When user closed popup window
       chrome.runtime.onConnect.addListener(port => port.onDisconnect.addListener(() => {
-        const { logging, filterStrictness, trainedModel } = store.getState().settings
+        const { logging, filterStrictness, trainedModel, topKPredictions, showProbabilityOverlay, classThresholds } = store.getState().settings
 
         // Check if model type has changed
         if (currentModelType !== trainedModel) {
@@ -120,13 +120,13 @@ const load = ({ logger, store, modelSettings }: loadType): void => {
           logger.log(`Model type changed to: ${trainedModel}. Reloading model...`)
           // Reload the model with new type
           setTimeout(() => {
-            load({ logger, store, modelSettings: { filterStrictness, trainedModel } })
+            load({ logger, store, modelSettings: { filterStrictness, trainedModel, topKPredictions, showProbabilityOverlay, classThresholds } })
           }, 100)
           return
         }
 
         logging ? logger.enable() : logger.disable()
-        model.setSettings({ filterStrictness, modelType: trainedModel })
+        model.setSettings({ filterStrictness, modelType: trainedModel, topKPredictions, showProbabilityOverlay, classThresholds })
 
         queue.clearCache()
       }))
@@ -142,7 +142,7 @@ const load = ({ logger, store, modelSettings }: loadType): void => {
 
 const init = async (): Promise<void> => {
   const store = await createChromeStore({ createStore })(rootReducer)
-  const { logging, filterStrictness, trainedModel } = store.getState().settings
+  const { logging, filterStrictness, trainedModel, topKPredictions, showProbabilityOverlay, classThresholds } = store.getState().settings
 
   const logger = new Logger()
   if (logging === true) logger.enable()
@@ -150,7 +150,7 @@ const init = async (): Promise<void> => {
   // Set the current model type
   currentModelType = trainedModel
 
-  load({ logger, store, modelSettings: { filterStrictness, trainedModel } })
+  load({ logger, store, modelSettings: { filterStrictness, trainedModel, topKPredictions, showProbabilityOverlay, classThresholds } })
 }
 
 init()

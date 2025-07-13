@@ -5,9 +5,9 @@ import {
   SET_TRAINED_MODEL,
   SET_FILTER_STRICTNESS,
   SET_WEBSITE_LIST,
-  SET_MODEL_SIZE,
   SET_TOP_K_PREDICTIONS,
-  TOGGLE_SHOW_PROBABILITY
+  TOGGLE_SHOW_PROBABILITY_OVERLAY,
+  SET_CLASS_THRESHOLD
 } from './settingsTypes'
 
 export const toggleLogging = () => ({ type: TOGGLE_LOGGING } as const)
@@ -33,14 +33,14 @@ export const setWebsiteList = (websites: string[]) => ({
   payload: { websites }
 } as const)
 
-export const setModelSize = (modelSize: number) => ({
-  type: SET_MODEL_SIZE,
-  payload: { modelSize }
-} as const)
-
 export const setTopKPredictions = (topK: number) => ({
   type: SET_TOP_K_PREDICTIONS,
   payload: { topK }
 } as const)
 
-export const toggleShowProbability = () => ({ type: TOGGLE_SHOW_PROBABILITY } as const)
+export const toggleShowProbabilityOverlay = () => ({ type: TOGGLE_SHOW_PROBABILITY_OVERLAY } as const)
+
+export const setClassThreshold = (className: string, threshold: number) => ({
+  type: SET_CLASS_THRESHOLD,
+  payload: { className, threshold }
+} as const)

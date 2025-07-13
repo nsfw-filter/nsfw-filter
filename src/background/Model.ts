@@ -3,10 +3,11 @@ import { NSFWJS, predictionType } from 'nsfwjs'
 import { ILogger } from '../utils/Logger'
 
 export type ModelSettings = {
-  filterStrictness: number
+  filterStrictness: number  // Keep for backward compatibility
   modelType?: 'MobileNetV2' | 'MobileNetV2Mid' | 'InceptionV3'
   topKPredictions?: number
-  showProbability?: boolean
+  showProbabilityOverlay?: boolean
+  classThresholds?: { [className: string]: number }
 }
 
 type IModel = {
@@ -22,7 +23,8 @@ export class Model implements IModel {
   private readonly firstFilterPercentages: Map<string, number>
   private readonly secondFilterPercentages: Map<string, number>
   private topKPredictions: number
-  private showProbability: boolean
+  private showProbabilityOverlay: boolean
+  private classThresholds: { [className: string]: number }
 
   constructor (model: NSFWJS, logger: ILogger, settings: ModelSettings) {
     this.model = model
@@ -35,13 +37,20 @@ export class Model implements IModel {
     this.firstFilterPercentages = new Map()
     this.secondFilterPercentages = new Map()
     this.topKPredictions = settings.topKPredictions || 5
-    this.showProbability = settings.showProbability || false
+    this.showProbabilityOverlay = settings.showProbabilityOverlay || false
+    this.classThresholds = settings.classThresholds || {
+      'Hentai': 0.6,
+      'Porn': 0.4,
+      'Sexy': 0.6,
+      'Drawing': 0.8,
+      'Neutral': 0.9
+    }
 
     this.setSettings(settings)
   }
 
   public setSettings (settings: ModelSettings): void {
-    const { filterStrictness, modelType, topKPredictions, showProbability } = settings
+    const { filterStrictness, modelType, topKPredictions, showProbabilityOverlay, classThresholds } = settings
     this.firstFilterPercentages.clear()
     this.secondFilterPercentages.clear()
 
@@ -49,8 +58,11 @@ export class Model implements IModel {
     if (topKPredictions !== undefined) {
       this.topKPredictions = topKPredictions
     }
-    if (showProbability !== undefined) {
-      this.showProbability = showProbability
+    if (showProbabilityOverlay !== undefined) {
+      this.showProbabilityOverlay = showProbabilityOverlay
+    }
+    if (classThresholds !== undefined) {
+      this.classThresholds = classThresholds
     }
 
     // Log the model type change if provided
@@ -58,26 +70,11 @@ export class Model implements IModel {
       this.logger.log(`Model type is set to: ${modelType}`)
     }
 
+    // Use the new per-class thresholds instead of the old filter strictness logic
     for (const className of this.FILTER_LIST.values()) {
-      this.firstFilterPercentages.set(
-        className,
-        Model.handleFilterStrictness({
-          value: filterStrictness,
-          maxValue: 100,
-          minValue: className === 'Porn' ? 40 : 60
-        })
-      )
-    }
-
-    for (const className of this.FILTER_LIST.values()) {
-      this.secondFilterPercentages.set(
-        className,
-        Model.handleFilterStrictness({
-          value: filterStrictness,
-          maxValue: 50,
-          minValue: className === 'Porn' ? 15 : 25
-        })
-      )
+      const threshold = this.classThresholds[className] || 0.5
+      this.firstFilterPercentages.set(className, threshold)
+      this.secondFilterPercentages.set(className, threshold * 0.5) // Secondary threshold is half
     }
   }
 
