@@ -21,6 +21,7 @@ export class Model implements IModel {
   private readonly logger: ILogger
 
   private readonly FILTER_LIST: Set<string>
+  private readonly ALL_CLASSES: Set<string>
   private readonly firstFilterPercentages: Map<string, number>
   private readonly secondFilterPercentages: Map<string, number>
   private topKPredictions: number
@@ -36,6 +37,9 @@ export class Model implements IModel {
     this.logger.log(`🎯 Initial settings: topK=${settings.topKPredictions}, overlay=${settings.showProbabilityOverlay}`)
 
     this.FILTER_LIST = new Set(['Hentai', 'Porn', 'Sexy'])
+    
+    // All classes that the models can predict (for thresholds and display)
+    this.ALL_CLASSES = new Set(['Hentai', 'Porn', 'Sexy', 'Drawing', 'Neutral'])
 
     this.firstFilterPercentages = new Map()
     this.secondFilterPercentages = new Map()
@@ -44,9 +48,8 @@ export class Model implements IModel {
     this.classThresholds = settings.classThresholds || {
       'Hentai': 0.6,
       'Porn': 0.4,
-      'Sexy': 0.6,
-      'Drawing': 0.8,
-      'Neutral': 0.9
+      'Sexy': 0.6
+      // Note: Only NSFW classes need thresholds for blocking decisions
     }
 
     this.setSettings(settings)
@@ -94,7 +97,8 @@ export class Model implements IModel {
     }
     
     // Log final threshold configuration
-    this.logger.log(`Active thresholds: ${Array.from(this.firstFilterPercentages.entries()).map(([k, v]) => `${k}=${(v * 100).toFixed(1)}%`).join(', ')}`)
+    this.logger.log(`Active NSFW blocking thresholds: ${Array.from(this.firstFilterPercentages.entries()).map(([k, v]) => `${k}=${(v * 100).toFixed(1)}%`).join(', ')}`)
+    this.logger.log(`Secondary thresholds: ${Array.from(this.secondFilterPercentages.entries()).map(([k, v]) => `${k}=${(v * 100).toFixed(1)}%`).join(', ')}`)
     this.logger.log(`=== SETTINGS UPDATE COMPLETE ===`)
   }
 

@@ -35,9 +35,8 @@ const initialState: SettingsState = {
   classThresholds: {
     'Hentai': 0.6,
     'Porn': 0.4,
-    'Sexy': 0.6,
-    'Drawing': 0.8,  // Higher threshold since drawings are often false positives
-    'Neutral': 0.9   // Very high threshold since this is the "safe" class
+    'Sexy': 0.6
+    // Note: Drawing and Neutral are safe classes and don't need thresholds
   }
 }
 

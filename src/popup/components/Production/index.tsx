@@ -47,23 +47,28 @@ export const Production: React.FC = () => {
 
       <div>Filter thresholds (higher = more strict)</div>
       
-      {Object.entries(classThresholds).map(([className, threshold]) => (
-        <div key={className} style={{ marginBottom: '8px' }}>
-          <div style={{ fontSize: '14px', marginBottom: '4px' }}>
-            {className}: {Math.round(threshold * 100)}%
+      {/* Only show sliders for NSFW classes that can trigger blocking */}
+      {['Hentai', 'Porn', 'Sexy'].map((className) => {
+        const threshold = classThresholds[className] || 0.5
+        return (
+          <div key={className} style={{ marginBottom: '8px' }}>
+            <div style={{ fontSize: '14px', marginBottom: '4px' }}>
+              {className}: {Math.round(threshold * 100)}%
+            </div>
+            <Slider
+              min={0}
+              max={100}
+              onChange={(value: number) => dispatch(setClassThreshold(className, value / 100))}
+              value={Math.round(threshold * 100)}
+              tipFormatter={null}
+            />
           </div>
-          <Slider
-            min={0}
-            max={100}
-            onChange={(value: number) => dispatch(setClassThreshold(className, value / 100))}
-            value={Math.round(threshold * 100)}
-            tipFormatter={(value) => `${value}%`}
-          />
-        </div>
-      ))}
+        )
+      })}
 
       <div style={{ fontSize: '12px', color: '#666', marginBottom: '16px' }}>
-        💡 Tip: Lower thresholds = more blocking, Higher thresholds = less blocking
+        💡 Tip: Lower thresholds = more blocking, Higher thresholds = less blocking<br/>
+        📊 All classes (including Drawing/Neutral) will show in logs and overlays
       </div>
 
       <DropdownRow>

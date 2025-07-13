@@ -78,6 +78,50 @@ const load = ({ logger, store, modelSettings }: loadType): void => {
       const model = new Model(NSFWJSModel, logger, modelSettings)
       const queue = new Queue(model, logger, store)
 
+      // Listen for real-time settings changes from chrome storage
+      chrome.storage.onChanged.addListener((changes, areaName) => {
+        if (areaName === 'local' && changes['nsfw-filter-redux-storage']) {
+          const newState = changes['nsfw-filter-redux-storage'].newValue
+          if (newState && newState.settings) {
+            const { trainedModel, filterStrictness, topKPredictions, showProbabilityOverlay, classThresholds, logging } = newState.settings
+            
+            logger.log('⚡ Real-time settings update detected')
+            
+            // Update logging state
+            logging ? logger.enable() : logger.disable()
+            
+            // Check if model type changed (requires reload)
+            if (trainedModel !== currentModelType) {
+              logger.log(`🔄 MODEL CHANGE: ${currentModelType} → ${trainedModel}`)
+              currentModelType = trainedModel
+              setTimeout(() => {
+                load({ 
+                  logger, 
+                  store, 
+                  modelSettings: { 
+                    filterStrictness,
+                    trainedModel,
+                    topKPredictions,
+                    showProbabilityOverlay,
+                    classThresholds
+                  }
+                })
+              }, 100)
+              return
+            }
+            
+            // Update other settings without reloading model
+            model.setSettings({
+              filterStrictness,
+              modelType: trainedModel,
+              topKPredictions,
+              showProbabilityOverlay,
+              classThresholds
+            })
+          }
+        }
+      })
+
       // Event when content sends request to filter image
       chrome.runtime.onMessage.addListener((request: PredictionRequest, sender, callback: (value: PredictionResponse) => void) => {
         if (request.type === 'SIGN_CONNECT') return
