@@ -4,6 +4,7 @@ import { ILogger } from '../utils/Logger'
 
 export type ModelSettings = {
   filterStrictness: number
+  modelType?: 'MobileNetV2' | 'MobileNetV2Mid' | 'InceptionV3'
 }
 
 type IModel = {
@@ -34,9 +35,14 @@ export class Model implements IModel {
   }
 
   public setSettings (settings: ModelSettings): void {
-    const { filterStrictness } = settings
+    const { filterStrictness, modelType } = settings
     this.firstFilterPercentages.clear()
     this.secondFilterPercentages.clear()
+
+    // Log the model type change if provided
+    if (modelType) {
+      this.logger.log(`Model type is set to: ${modelType}`)
+    }
 
     for (const className of this.FILTER_LIST.values()) {
       this.firstFilterPercentages.set(

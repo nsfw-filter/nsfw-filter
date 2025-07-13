@@ -66,9 +66,15 @@ export const Production: React.FC = () => {
           style={{ width: 140 }}
           onChange={value => dispatch(setTrainedModel(value))}
         >
-          <Option value={trainedModel}>{trainedModel}</Option>
+          <Option value="MobileNetV2">MobileNetV2</Option>
+          <Option value="MobileNetV2Mid">MobileNetV2Mid</Option>
+          <Option value="InceptionV3">InceptionV3</Option>
         </Select>
       </DropdownRow>
+
+      <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>
+        Note: The new model will be loaded automatically when you close this popup.
+      </div>
 
       <div>Whitelisted websites</div>
       <TextBox>

@@ -25,11 +25,12 @@ export type IReduxedStorage = {
 export type loadType = {
   logger: ILogger
   store: IReduxedStorage
-  modelSettings: ModelSettings
+  modelSettings: ModelSettings & { trainedModel: 'MobileNetV2' | 'MobileNetV2Mid' | 'InceptionV3' }
 }
 
 enableProdMode()
 let attempts = 0
+let currentModelType: 'MobileNetV2' | 'MobileNetV2Mid' | 'InceptionV3' = 'MobileNetV2'
 
 const _buildTabIdUrl = (tab: chrome.tabs.Tab): TabIdUrl => {
   const tabIdUrl = {
@@ -41,11 +42,34 @@ const _buildTabIdUrl = (tab: chrome.tabs.Tab): TabIdUrl => {
 }
 
 const load = ({ logger, store, modelSettings }: loadType): void => {
-  const MODEL_PATH = '../models/'
+  const { trainedModel, filterStrictness } = modelSettings
 
-  // @ts-expect-error
-  loadModel(MODEL_PATH, { type: 'graph' })
+  let modelPath: string
+  let modelOptions: any = {}
+
+  // Set the correct model path based on selected model
+  switch (trainedModel) {
+    case 'MobileNetV2':
+      modelPath = '../models/mobilenet_v2/'
+      break
+    case 'MobileNetV2Mid':
+      modelPath = '../models/mobilenet_v2_mid/'
+      modelOptions = { type: 'graph' }  // Graph model type
+      break
+    case 'InceptionV3':
+      modelPath = '../models/inception_v3/'
+      modelOptions = { size: 299 }  // InceptionV3 requires 299x299 input
+      break
+    default:
+      modelPath = '../models/mobilenet_v2/'
+      break
+  }
+
+  logger.log(`Loading model: ${trainedModel} from ${modelPath}`)
+
+  loadModel(modelPath, modelOptions)
     .then(NSFWJSModel => {
+      logger.log(`Model ${trainedModel} loaded successfully`)
       const model = new Model(NSFWJSModel, logger, modelSettings)
       const queue = new Queue(model, logger, store)
 
@@ -88,10 +112,21 @@ const load = ({ logger, store, modelSettings }: loadType): void => {
 
       // When user closed popup window
       chrome.runtime.onConnect.addListener(port => port.onDisconnect.addListener(() => {
-        const { logging, filterStrictness } = store.getState().settings
+        const { logging, filterStrictness, trainedModel } = store.getState().settings
+
+        // Check if model type has changed
+        if (currentModelType !== trainedModel) {
+          currentModelType = trainedModel
+          logger.log(`Model type changed to: ${trainedModel}. Reloading model...`)
+          // Reload the model with new type
+          setTimeout(() => {
+            load({ logger, store, modelSettings: { filterStrictness, trainedModel } })
+          }, 100)
+          return
+        }
 
         logging ? logger.enable() : logger.disable()
-        model.setSettings({ filterStrictness })
+        model.setSettings({ filterStrictness, modelType: trainedModel })
 
         queue.clearCache()
       }))
@@ -107,12 +142,15 @@ const load = ({ logger, store, modelSettings }: loadType): void => {
 
 const init = async (): Promise<void> => {
   const store = await createChromeStore({ createStore })(rootReducer)
-  const { logging, filterStrictness } = store.getState().settings
+  const { logging, filterStrictness, trainedModel } = store.getState().settings
 
   const logger = new Logger()
   if (logging === true) logger.enable()
 
-  load({ logger, store, modelSettings: { filterStrictness } })
+  // Set the current model type
+  currentModelType = trainedModel
+
+  load({ logger, store, modelSettings: { filterStrictness, trainedModel } })
 }
 
 init()
