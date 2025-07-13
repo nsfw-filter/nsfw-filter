@@ -5,6 +5,8 @@ import { ILogger } from '../utils/Logger'
 export type ModelSettings = {
   filterStrictness: number
   modelType?: 'MobileNetV2' | 'MobileNetV2Mid' | 'InceptionV3'
+  topKPredictions?: number
+  showProbability?: boolean
 }
 
 type IModel = {
@@ -19,6 +21,8 @@ export class Model implements IModel {
   private readonly FILTER_LIST: Set<string>
   private readonly firstFilterPercentages: Map<string, number>
   private readonly secondFilterPercentages: Map<string, number>
+  private topKPredictions: number
+  private showProbability: boolean
 
   constructor (model: NSFWJS, logger: ILogger, settings: ModelSettings) {
     this.model = model
@@ -30,14 +34,24 @@ export class Model implements IModel {
 
     this.firstFilterPercentages = new Map()
     this.secondFilterPercentages = new Map()
+    this.topKPredictions = settings.topKPredictions || 5
+    this.showProbability = settings.showProbability || false
 
     this.setSettings(settings)
   }
 
   public setSettings (settings: ModelSettings): void {
-    const { filterStrictness, modelType } = settings
+    const { filterStrictness, modelType, topKPredictions, showProbability } = settings
     this.firstFilterPercentages.clear()
     this.secondFilterPercentages.clear()
+
+    // Update additional settings
+    if (topKPredictions !== undefined) {
+      this.topKPredictions = topKPredictions
+    }
+    if (showProbability !== undefined) {
+      this.showProbability = showProbability
+    }
 
     // Log the model type change if provided
     if (modelType) {
@@ -71,20 +85,25 @@ export class Model implements IModel {
     if (this.logger.status) {
       const start = new Date().getTime()
 
-      const prediction = await this.model.classify(image, 2)
+      // Get predictions based on user setting
+      const prediction = await this.model.classify(image, this.topKPredictions)
       const { result, className, probability } = this.handlePrediction(prediction)
 
       const end = new Date().getTime()
-      this.logger.log(`IMG prediction (${end - start} ms) is ${className} ${probability} for ${url}`)
+      
+      // Enhanced logging with all prediction scores
+      const allScores = prediction.map(p => `${p.className}: ${(p.probability * 100).toFixed(1)}%`).join(', ')
+      this.logger.log(`IMG prediction (${end - start} ms) - Result: ${result ? 'BLOCKED' : 'ALLOWED'} | Top: ${className} ${(probability * 100).toFixed(1)}% | All scores: [${allScores}] | ${url}`)
 
       return result
     } else {
-      const prediction = await this.model.classify(image, 2)
+      const prediction = await this.model.classify(image, this.topKPredictions)
       return this.handlePrediction(prediction).result
     }
   }
 
   private handlePrediction (prediction: predictionType[]): { result: boolean, className: string, probability: number } {
+    // Use all 5 predictions for better analysis
     const [{ className: cn1, probability: pb1 }, { className: cn2, probability: pb2 }] = prediction
 
     const result1 = this.FILTER_LIST.has(cn1) && pb1 > (this.firstFilterPercentages.get(cn1) as number)

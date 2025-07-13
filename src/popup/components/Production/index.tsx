@@ -1,10 +1,12 @@
 import 'antd/lib/select/style/index.css'
 import 'antd/lib/slider/style/index.css'
 import 'antd/lib/input/style/index.css'
+import 'antd/lib/switch/style/index.css'
 
 import Input from 'antd/lib/input'
 import Select from 'antd/lib/select'
 import Slider from 'antd/lib/slider'
+import Switch from 'antd/lib/switch'
 import React from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 
@@ -12,7 +14,9 @@ import { setFilterStrictness } from '../../redux/actions/settings'
 import {
   setTrainedModel,
   setFilterEffect,
-  setWebsiteList
+  setWebsiteList,
+  setTopKPredictions,
+  toggleShowProbability
 } from '../../redux/actions/settings/index'
 import { RootState } from '../../redux/reducers'
 import { SettingsState } from '../../redux/reducers/settings'
@@ -27,7 +31,9 @@ export const Production: React.FC = () => {
     filterStrictness,
     trainedModel,
     filterEffect,
-    websites
+    websites,
+    topKPredictions,
+    showProbability
   } = useSelector<RootState>((state) => state.settings) as SettingsState
   const { totalBlocked } = useSelector<RootState>((state) => state.statistics) as StatisticsState
 
@@ -74,7 +80,31 @@ export const Production: React.FC = () => {
 
       <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>
         Note: The new model will be loaded automatically when you close this popup.
+        <br />
+        To compare models, enable logging in browser and visit extension's background page.
       </div>
+
+      <DropdownRow>
+        <span>Top K predictions</span>
+        <Select
+          defaultValue={topKPredictions}
+          style={{ width: 140 }}
+          onChange={value => dispatch(setTopKPredictions(value))}
+        >
+          <Option value={2}>2</Option>
+          <Option value={3}>3</Option>
+          <Option value={5}>5</Option>
+        </Select>
+      </DropdownRow>
+
+      <DropdownRow>
+        <span>Show probability scores</span>
+        <Switch
+          checked={showProbability}
+          onChange={() => dispatch(toggleShowProbability())}
+          size="small"
+        />
+      </DropdownRow>
 
       <div>Whitelisted websites</div>
       <TextBox>
