@@ -79,9 +79,32 @@ const load = ({ logger, store, modelSettings }: loadType): void => {
 
         const { url } = request
         const tabIdUrl = _buildTabIdUrl(sender.tab as chrome.tabs.Tab)
-        queue.predict(url, tabIdUrl)
-          .then(result => callback(new PredictionResponse(result, url)))
-          .catch(err => callback(new PredictionResponse(false, url, err.message)))
+        
+        // Check if overlay is enabled to decide which prediction method to use
+        const { showProbabilityOverlay } = store.getState().settings
+        
+        if (showProbabilityOverlay) {
+          // Use the direct model prediction for overlay (bypass queue for now)
+          const image = new Image()
+          image.crossOrigin = 'anonymous'
+          image.onload = async () => {
+            try {
+              const { result, predictions } = await model.predictImageWithScores(image, url)
+              callback(new PredictionResponse(result, url, undefined, predictions))
+            } catch (err) {
+              callback(new PredictionResponse(false, url, (err as Error).message))
+            }
+          }
+          image.onerror = () => {
+            callback(new PredictionResponse(false, url, 'Image load error'))
+          }
+          image.src = url
+        } else {
+          // Use the normal queue system
+          queue.predict(url, tabIdUrl)
+            .then(result => callback(new PredictionResponse(result, url)))
+            .catch(err => callback(new PredictionResponse(false, url, err.message)))
+        }
 
         return true // https://stackoverflow.com/a/56483156
       })

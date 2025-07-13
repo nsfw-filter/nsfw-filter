@@ -12,15 +12,15 @@ const init = (): void => {
 
   createChromeStore({ createStore })(rootReducer)
     .then(store => {
-      const { filterEffect, websites } = store.getState().settings
-      imageFilter.setSettings({ filterEffect })
+      const { filterEffect, websites, showProbabilityOverlay } = store.getState().settings
+      imageFilter.setSettings({ filterEffect, showProbabilityOverlay })
       if (websites.includes(window.location.hostname) === false) {
         domWatcher.watch()
       }
     })
     .catch(error => {
       console.warn(error)
-      imageFilter.setSettings({ filterEffect: 'blur' })
+      imageFilter.setSettings({ filterEffect: 'blur', showProbabilityOverlay: false })
     })
 }
 

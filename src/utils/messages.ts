@@ -20,8 +20,9 @@ export class PredictionResponse {
   public readonly result: boolean
   public readonly message: string
   public readonly url: string
+  public readonly predictions?: Array<{ className: string, probability: number }>
 
-  constructor (result: boolean, url: string, error?: string) {
+  constructor (result: boolean, url: string, error?: string, predictions?: Array<{ className: string, probability: number }>) {
     const message = typeof error === 'string' && error.length > 0
       ? `Prediction result is ${result} for image ${url}, error: ${error}`
       : `Prediction result is ${result} for image ${url}`
@@ -29,5 +30,6 @@ export class PredictionResponse {
     this.url = url
     this.result = result
     this.message = message
+    this.predictions = predictions
   }
 }

@@ -12,6 +12,7 @@ export type ModelSettings = {
 
 type IModel = {
   predictImage: (image: HTMLImageElement, url: string) => Promise<boolean>
+  predictImageWithScores: (image: HTMLImageElement, url: string) => Promise<{ result: boolean, predictions: Array<{ className: string, probability: number }> }>
   setSettings: (settings: ModelSettings) => void
 }
 
@@ -96,6 +97,27 @@ export class Model implements IModel {
     } else {
       const prediction = await this.model.classify(image, this.topKPredictions)
       return this.handlePrediction(prediction).result
+    }
+  }
+
+  public async predictImageWithScores (image: HTMLImageElement, url: string): Promise<{ result: boolean, predictions: Array<{ className: string, probability: number }> }> {
+    const start = new Date().getTime()
+
+    // Get predictions based on user setting
+    const prediction = await this.model.classify(image, this.topKPredictions)
+    const { result, className, probability } = this.handlePrediction(prediction)
+
+    const end = new Date().getTime()
+    
+    // Enhanced logging with all prediction scores
+    if (this.logger.status) {
+      const allScores = prediction.map(p => `${p.className}: ${(p.probability * 100).toFixed(1)}%`).join(', ')
+      this.logger.log(`IMG prediction (${end - start} ms) - Result: ${result ? 'BLOCKED' : 'ALLOWED'} | Top: ${className} ${(probability * 100).toFixed(1)}% | All scores: [${allScores}] | ${url}`)
+    }
+
+    return {
+      result,
+      predictions: prediction.map(p => ({ className: p.className, probability: p.probability }))
     }
   }
 
