@@ -188,6 +188,25 @@ chrome.runtime.onConnect.addListener(port => port.onDisconnect.addListener(() =>
 
 // Make sure the offscreen document and runtime exist as soon as the worker
 // starts (install / browser startup / wake-up).
+// Keeping the classifier warm:
+//
+// In Manifest V2 the background page was persistent, so the TensorFlow.js model
+// loaded once and stayed warm — the first image on any page was classified
+// instantly. A Manifest V3 service worker instead spins down after ~30s idle,
+// which previously caused a cold-start "flash" (images briefly visible before
+// being hidden) on the next page load.
+//
+// We do NOT keep the service worker artificially alive (that pattern is
+// discouraged and wastes resources). Instead we rely on the offscreen document:
+// an offscreen document created with the DOM_SCRAPING reason has no idle timeout
+// and is NOT torn down when the service worker stops — only AUDIO_PLAYBACK docs
+// auto-close. So the loaded model stays resident in the offscreen document's
+// heap across worker restarts. When the worker wakes to route a request,
+// ensureOffscreenDocument() finds the existing warm document and skips reload.
+//
+// The two listeners below pre-warm the model eagerly (on browser startup and on
+// install/update) so it is ready before the user ever loads a page, and the
+// top-level getRuntime() call warms it whenever the worker first spins up.
 chrome.runtime.onInstalled.addListener(() => { void getRuntime() })
 chrome.runtime.onStartup.addListener(() => { void getRuntime() })
 void getRuntime()
