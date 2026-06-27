@@ -16,6 +16,29 @@ export class PredictionRequest {
   }
 }
 
+// Messages exchanged between the service worker and the offscreen document.
+// The offscreen document hosts TensorFlow.js + the DOM image loading that a
+// Manifest V3 service worker cannot do itself.
+export type OffscreenClassifyRequest = {
+  target: 'offscreen'
+  type: 'CLASSIFY'
+  url: string
+}
+
+export type OffscreenSettingsRequest = {
+  target: 'offscreen'
+  type: 'SET_SETTINGS'
+  filterStrictness: number
+  logging: boolean
+}
+
+export type OffscreenRequest = OffscreenClassifyRequest | OffscreenSettingsRequest
+
+export type OffscreenClassifyResponse = {
+  result: boolean
+  error?: string
+}
+
 export class PredictionResponse {
   public readonly result: boolean
   public readonly message: string

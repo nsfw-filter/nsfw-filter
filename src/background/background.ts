@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/strict-boolean-expressions */
 
-import { enableProdMode } from '@tensorflow/tfjs'
-import { load as loadModel } from 'nsfwjs'
 import { createStore } from 'redux'
 
 import { SettingsActionTypes } from '../popup/redux/actions/settings'
@@ -11,108 +9,185 @@ import { rootReducer, RootState } from '../popup/redux/reducers'
 import { ILogger, Logger } from '../utils/Logger'
 import { PredictionRequest, PredictionResponse } from '../utils/messages'
 
-import { Model, ModelSettings } from './Model'
+import { OffscreenModel } from './OffscreenModel'
 import { DEFAULT_TAB_ID, TabIdUrl } from './Queue/QueueBase'
 import { QueueWrapper as Queue } from './Queue/QueueWrapper'
 
-// @TODO refactor
+// In Manifest V3 the background page is a non-persistent service worker with no
+// DOM and no access to TensorFlow.js' DOM/eval requirements. This worker keeps
+// all of the orchestration (queue, cache, per-tab tracking, statistics, redux)
+// and delegates the actual image download + classification to an offscreen
+// document. Event listeners are registered synchronously at the top level so
+// the worker can wake up and handle events after being terminated.
 
 export type IReduxedStorage = {
   getState: () => RootState
   dispatch: (action: SettingsActionTypes | StatisticsActionTypes) => Promise<void> // returns dispatchedAction
 }
 
-export type loadType = {
+type Runtime = {
   logger: ILogger
   store: IReduxedStorage
-  modelSettings: ModelSettings
+  model: OffscreenModel
+  queue: Queue
 }
 
-enableProdMode()
-let attempts = 0
+const OFFSCREEN_DOCUMENT_PATH = 'src/offscreen.html'
 
-const _buildTabIdUrl = (tab: chrome.tabs.Tab): TabIdUrl => {
-  const tabIdUrl = {
+const _buildTabIdUrl = (tab?: chrome.tabs.Tab): TabIdUrl => {
+  return {
     tabId: tab?.id ? tab.id : DEFAULT_TAB_ID,
-    tabUrl: tab?.url ? tab?.url : `${DEFAULT_TAB_ID}`
+    tabUrl: tab?.url ? tab.url : `${DEFAULT_TAB_ID}`
+  }
+}
+
+// --- Offscreen document lifecycle -----------------------------------------
+
+let creatingOffscreen: Promise<void> | null = null
+
+const hasOffscreenDocument = async (): Promise<boolean> => {
+  const runtime = chrome.runtime as any
+  if (typeof runtime.getContexts === 'function') {
+    const contexts = await runtime.getContexts({ contextTypes: ['OFFSCREEN_DOCUMENT'] })
+    return contexts.length > 0
   }
 
-  return tabIdUrl
+  const offscreen = (chrome as any).offscreen
+  if (offscreen !== undefined && typeof offscreen.hasDocument === 'function') {
+    return await offscreen.hasDocument()
+  }
+
+  return false
 }
 
-const load = ({ logger, store, modelSettings }: loadType): void => {
-  const MODEL_PATH = '../models/'
+const ensureOffscreenDocument = async (): Promise<void> => {
+  if (await hasOffscreenDocument()) return
 
-  // @ts-expect-error
-  loadModel(MODEL_PATH, { type: 'graph' })
-    .then(NSFWJSModel => {
-      const model = new Model(NSFWJSModel, logger, modelSettings)
-      const queue = new Queue(model, logger, store)
+  if (creatingOffscreen !== null) {
+    await creatingOffscreen
+    return
+  }
 
-      // Event when content sends request to filter image
-      chrome.runtime.onMessage.addListener((request: PredictionRequest, sender, callback: (value: PredictionResponse) => void) => {
-        if (request.type === 'SIGN_CONNECT') return
+  creatingOffscreen = ((chrome as any).offscreen).createDocument({
+    url: OFFSCREEN_DOCUMENT_PATH,
+    reasons: ['DOM_SCRAPING'],
+    justification: 'Load images into an <img> element and run the TensorFlow.js NSFW classification model, which require DOM APIs unavailable in a service worker.'
+  })
 
-        const { url } = request
-        const tabIdUrl = _buildTabIdUrl(sender.tab as chrome.tabs.Tab)
-        queue.predict(url, tabIdUrl)
-          .then(result => callback(new PredictionResponse(result, url)))
-          .catch(err => callback(new PredictionResponse(false, url, err.message)))
-
-        return true // https://stackoverflow.com/a/56483156
-      })
-
-      // When user opend new tab
-      chrome.tabs.onCreated.addListener(function (tab) {
-        const tabIdUrl = _buildTabIdUrl(tab)
-        queue.addTabIdUrl(tabIdUrl)
-      })
-
-      // When user closed tab
-      chrome.tabs.onRemoved.addListener(function (tabId) {
-        queue.clearByTabId(tabId)
-      })
-
-      // When user went to new url in same domain
-      chrome.tabs.onUpdated.addListener(function (_tabId, changeInfo, tab) {
-        if (changeInfo.status === 'loading') {
-          const tabIdUrl = _buildTabIdUrl(tab)
-          queue.updateTabIdUrl(tabIdUrl)
-        }
-      })
-
-      // When user selected tab as active
-      chrome.tabs.onActivated.addListener(function (activeInfo) {
-        queue.setActiveTabId(activeInfo.tabId)
-      })
-
-      // When user closed popup window
-      chrome.runtime.onConnect.addListener(port => port.onDisconnect.addListener(() => {
-        const { logging, filterStrictness } = store.getState().settings
-
-        logging ? logger.enable() : logger.disable()
-        model.setSettings({ filterStrictness })
-
-        queue.clearCache()
-      }))
-    })
-    .catch(error => {
-      logger.error(error)
-      attempts++
-      if (attempts < 5) setTimeout(load, 200)
-
-      logger.log(`Reload model, attempt: ${attempts}`)
-    })
+  try {
+    await creatingOffscreen
+  } finally {
+    creatingOffscreen = null
+  }
 }
 
-const init = async (): Promise<void> => {
+// --- Lazy runtime initialisation ------------------------------------------
+
+let runtimePromise: Promise<Runtime> | null = null
+
+const initRuntime = async (): Promise<Runtime> => {
+  await ensureOffscreenDocument()
+
   const store = await createChromeStore({ createStore })(rootReducer)
   const { logging, filterStrictness } = store.getState().settings
 
   const logger = new Logger()
   if (logging === true) logger.enable()
 
-  load({ logger, store, modelSettings: { filterStrictness } })
+  const model = new OffscreenModel()
+  model.setSettings(filterStrictness, logging)
+
+  const queue = new Queue(model, logger, store)
+
+  // The worker may have been restarted, losing the per-tab map. Reseed it from
+  // the currently open tabs so in-flight prediction guards stay accurate.
+  try {
+    const tabs = await new Promise<chrome.tabs.Tab[]>((resolve) => chrome.tabs.query({}, resolve))
+    for (const tab of tabs) queue.addTabIdUrl(_buildTabIdUrl(tab))
+  } catch (error) {
+    logger.error(error as Error)
+  }
+
+  return { logger, store, model, queue }
 }
 
-init()
+const getRuntime = async (): Promise<Runtime> => {
+  if (runtimePromise === null) runtimePromise = initRuntime()
+
+  try {
+    return await runtimePromise
+  } catch (error) {
+    // Allow a later event to retry from scratch instead of caching a failure.
+    runtimePromise = null
+    throw error
+  }
+}
+
+// --- Event listeners (registered synchronously) ---------------------------
+
+// Image classification requests coming from content scripts.
+chrome.runtime.onMessage.addListener((request: PredictionRequest, sender, sendResponse: (value: PredictionResponse) => void) => {
+  // Messages addressed to the offscreen document are handled there, not here.
+  if ((request as any)?.target === 'offscreen') return
+  if (request?.type === 'SIGN_CONNECT') return
+  if (typeof request?.url !== 'string') return
+
+  const { url } = request
+
+  getRuntime()
+    .then(({ queue }) => {
+      const tabIdUrl = _buildTabIdUrl(sender.tab)
+      // Guarantee the requesting tab is known even after a worker restart.
+      queue.addTabIdUrl(tabIdUrl)
+
+      queue.predict(url, tabIdUrl)
+        .then(result => sendResponse(new PredictionResponse(result, url)))
+        .catch(err => sendResponse(new PredictionResponse(false, url, err.message)))
+    })
+    .catch(err => sendResponse(new PredictionResponse(false, url, err?.message)))
+
+  return true // https://stackoverflow.com/a/56483156
+})
+
+// When user opened a new tab
+chrome.tabs.onCreated.addListener((tab) => {
+  getRuntime().then(({ queue }) => queue.addTabIdUrl(_buildTabIdUrl(tab))).catch(() => undefined)
+})
+
+// When user closed a tab
+chrome.tabs.onRemoved.addListener((tabId) => {
+  getRuntime().then(({ queue }) => queue.clearByTabId(tabId)).catch(() => undefined)
+})
+
+// When user went to a new url in the same tab
+chrome.tabs.onUpdated.addListener((_tabId, changeInfo, tab) => {
+  if (changeInfo.status === 'loading') {
+    getRuntime().then(({ queue }) => queue.updateTabIdUrl(_buildTabIdUrl(tab))).catch(() => undefined)
+  }
+})
+
+// When user selected a tab as active
+chrome.tabs.onActivated.addListener((activeInfo) => {
+  getRuntime().then(({ queue }) => queue.setActiveTabId(activeInfo.tabId)).catch(() => undefined)
+})
+
+// When the popup window is closed, reload settings and clear the cache so new
+// strictness/logging settings take effect immediately.
+chrome.runtime.onConnect.addListener(port => port.onDisconnect.addListener(() => {
+  getRuntime()
+    .then(({ store, logger, model, queue }) => {
+      const { logging, filterStrictness } = store.getState().settings
+
+      logging ? logger.enable() : logger.disable()
+      model.setSettings(filterStrictness, logging)
+
+      queue.clearCache()
+    })
+    .catch(() => undefined)
+}))
+
+// Make sure the offscreen document and runtime exist as soon as the worker
+// starts (install / browser startup / wake-up).
+chrome.runtime.onInstalled.addListener(() => { void getRuntime() })
+chrome.runtime.onStartup.addListener(() => { void getRuntime() })
+void getRuntime()
