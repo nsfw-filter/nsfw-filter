@@ -2,3 +2,5 @@
 dist/src
 node_modules
 dev
+CLAUDE.md
+.DS_Store
