@@ -6,14 +6,12 @@ import { rootReducer } from '../popup/redux/reducers'
 import { DOMWatcher } from './DOMWatcher/DOMWatcher'
 import { ImageFilter } from './Filter/ImageFilter'
 
-// Reading the settings from chrome.storage is asynchronous, so there is a short
-// window between document_start (when this content script runs) and when the
-// store resolves and the observer attaches. Without a guard, images parsed and
-// painted during that window flash on screen before the filter can hide them.
-// Inject a stylesheet *synchronously* at document_start that hides every image
-// the filter hasn't tagged yet, so nothing paints before it is classified. As
-// soon as ImageFilter sets data-nsfw-filter-status (processing/sfw/nsfw) the
-// per-image inline styles take over, so blur/grayscale modes are unaffected.
+// chrome.storage reads are async, so there is a gap between document_start (when
+// this script runs) and the store resolving and the observer attaching. Images
+// parsed during that gap would flash before the filter can hide them. To prevent
+// that, inject a stylesheet at document_start that hides every image the filter
+// hasn't tagged yet. Once ImageFilter sets data-nsfw-filter-status, the per-image
+// inline styles take over, so blur and grayscale modes are unaffected.
 const HIDE_STYLE_ID = 'nsfw-filter-pending-hide'
 // Backstop: if the store somehow never settles, reveal images rather than
 // leaving the page permanently blank (matches the "show images if we can't

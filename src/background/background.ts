@@ -7,18 +7,17 @@ import { StatisticsActionTypes } from '../popup/redux/actions/statistics'
 import { createChromeStore } from '../popup/redux/chrome-storage'
 import { rootReducer, RootState } from '../popup/redux/reducers'
 import { ILogger, Logger } from '../utils/Logger'
-import { PredictionRequest, PredictionResponse } from '../utils/messages'
+import { PredictionResponse } from '../utils/messages'
 
 import { OffscreenModel } from './OffscreenModel'
 import { DEFAULT_TAB_ID, TabIdUrl } from './Queue/QueueBase'
 import { QueueWrapper as Queue } from './Queue/QueueWrapper'
 
-// In Manifest V3 the background page is a non-persistent service worker with no
-// DOM and no access to TensorFlow.js' DOM/eval requirements. This worker keeps
-// all of the orchestration (queue, cache, per-tab tracking, statistics, redux)
-// and delegates the actual image download + classification to an offscreen
-// document. Event listeners are registered synchronously at the top level so
-// the worker can wake up and handle events after being terminated.
+// The Manifest V3 background page is a non-persistent service worker with no DOM
+// and no eval, so it can't run TensorFlow.js itself. It keeps the orchestration
+// (queue, cache, per-tab tracking, statistics, redux) and delegates image
+// download and classification to an offscreen document. Listeners are registered
+// synchronously at the top level so the worker can handle events after a restart.
 
 export type IReduxedStorage = {
   getState: () => RootState
@@ -43,17 +42,30 @@ const _buildTabIdUrl = (tab?: chrome.tabs.Tab): TabIdUrl => {
 
 // --- Offscreen document lifecycle -----------------------------------------
 
+// @types/chrome (0.0.122) predates the MV3 offscreen and getContexts APIs, so
+// the slices we call are declared here.
+type OffscreenApi = {
+  createDocument: (parameters: { url: string, reasons: string[], justification: string }) => Promise<void>
+  hasDocument?: () => Promise<boolean>
+}
+type RuntimeWithContexts = {
+  getContexts?: (filter: { contextTypes: string[] }) => Promise<unknown[]>
+}
+
+const getOffscreenApi = (): OffscreenApi => (chrome as unknown as { offscreen: OffscreenApi }).offscreen
+
 let creatingOffscreen: Promise<void> | null = null
 
 const hasOffscreenDocument = async (): Promise<boolean> => {
-  const runtime = chrome.runtime as any
+  const runtime = chrome.runtime as unknown as RuntimeWithContexts
   if (typeof runtime.getContexts === 'function') {
     const contexts = await runtime.getContexts({ contextTypes: ['OFFSCREEN_DOCUMENT'] })
     return contexts.length > 0
   }
 
-  const offscreen = (chrome as any).offscreen
-  if (offscreen !== undefined && typeof offscreen.hasDocument === 'function') {
+  // Older Chrome builds expose offscreen.hasDocument() instead of getContexts.
+  const offscreen = getOffscreenApi()
+  if (offscreen.hasDocument !== undefined) {
     return await offscreen.hasDocument()
   }
 
@@ -68,7 +80,7 @@ const ensureOffscreenDocument = async (): Promise<void> => {
     return
   }
 
-  creatingOffscreen = ((chrome as any).offscreen).createDocument({
+  creatingOffscreen = getOffscreenApi().createDocument({
     url: OFFSCREEN_DOCUMENT_PATH,
     reasons: ['DOM_SCRAPING'],
     justification: 'Load images into an <img> element and run the TensorFlow.js NSFW classification model, which require DOM APIs unavailable in a service worker.'
@@ -125,10 +137,18 @@ const getRuntime = async (): Promise<Runtime> => {
 
 // --- Event listeners (registered synchronously) ---------------------------
 
+// Any message reaching this listener: a content-script classification request,
+// plus the offscreen and SIGN_CONNECT messages that are handled elsewhere.
+type IncomingMessage = {
+  target?: string
+  type?: string
+  url?: unknown
+}
+
 // Image classification requests coming from content scripts.
-chrome.runtime.onMessage.addListener((request: PredictionRequest, sender, sendResponse: (value: PredictionResponse) => void) => {
+chrome.runtime.onMessage.addListener((request: IncomingMessage, sender, sendResponse: (value: PredictionResponse) => void) => {
   // Messages addressed to the offscreen document are handled there, not here.
-  if ((request as any)?.target === 'offscreen') return
+  if (request?.target === 'offscreen') return
   if (request?.type === 'SIGN_CONNECT') return
   if (typeof request?.url !== 'string') return
 
@@ -186,27 +206,11 @@ chrome.runtime.onConnect.addListener(port => port.onDisconnect.addListener(() =>
     .catch(() => undefined)
 }))
 
-// Make sure the offscreen document and runtime exist as soon as the worker
-// starts (install / browser startup / wake-up).
-// Keeping the classifier warm:
-//
-// In Manifest V2 the background page was persistent, so the TensorFlow.js model
-// loaded once and stayed warm — the first image on any page was classified
-// instantly. A Manifest V3 service worker instead spins down after ~30s idle,
-// which previously caused a cold-start "flash" (images briefly visible before
-// being hidden) on the next page load.
-//
-// We do NOT keep the service worker artificially alive (that pattern is
-// discouraged and wastes resources). Instead we rely on the offscreen document:
-// an offscreen document created with the DOM_SCRAPING reason has no idle timeout
-// and is NOT torn down when the service worker stops — only AUDIO_PLAYBACK docs
-// auto-close. So the loaded model stays resident in the offscreen document's
-// heap across worker restarts. When the worker wakes to route a request,
-// ensureOffscreenDocument() finds the existing warm document and skips reload.
-//
-// The two listeners below pre-warm the model eagerly (on browser startup and on
-// install/update) so it is ready before the user ever loads a page, and the
-// top-level getRuntime() call warms it whenever the worker first spins up.
-chrome.runtime.onInstalled.addListener(() => { void getRuntime() })
-chrome.runtime.onStartup.addListener(() => { void getRuntime() })
-void getRuntime()
+// Warm the model up front so the first image on a page isn't slow. The worker
+// spins down after ~30s idle, but an offscreen document opened with the
+// DOM_SCRAPING reason has no idle timeout and outlives the worker, so the loaded
+// model stays resident across restarts and ensureOffscreenDocument() reuses it.
+// Pre-warm on install and on startup, plus whenever the worker first spins up.
+chrome.runtime.onInstalled.addListener(() => { getRuntime().catch(() => undefined) })
+chrome.runtime.onStartup.addListener(() => { getRuntime().catch(() => undefined) })
+getRuntime().catch(() => undefined)

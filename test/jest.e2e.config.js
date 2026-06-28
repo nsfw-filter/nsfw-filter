@@ -1,5 +1,5 @@
 module.exports = {
-    testMatch: [ "**/test/e2e/**/*.[jt]s?(x)" ],
+    testMatch: [ "**/test/e2e/**/*.test.[jt]s?(x)" ],
     verbose: true,
     rootDir: ".",
     testTimeout: 100000,

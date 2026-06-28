@@ -31,11 +31,10 @@ export class ImageFilter extends Filter implements IImageFilter {
     if (!srcAttribute && image.dataset.nsfwFilterStatus !== undefined) return
     if (image.src.length === 0) return
 
-    // Images that are laid out and smaller than MIN_IMAGE_SIZE in either
-    // dimension are not filtered (icons, spacers, etc.). They still need a status
-    // tag so the content script's pending-hide stylesheet reveals them instead of
-    // leaving them invisible. A zero width/height means "not laid out yet", which
-    // is still a filtering candidate.
+    // Images laid out smaller than MIN_IMAGE_SIZE in either dimension aren't
+    // filtered (icons, spacers, and the like), but they still need a status tag
+    // so the pending-hide stylesheet reveals them. A zero width or height means
+    // "not laid out yet", which is still a candidate.
     const tooSmall =
       image.width !== 0 && image.height !== 0 &&
       (image.width <= this.MIN_IMAGE_SIZE || image.height <= this.MIN_IMAGE_SIZE)

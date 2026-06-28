@@ -3,11 +3,10 @@ import {
   OffscreenRequest
 } from '../utils/messages'
 
-// Service-worker-side proxy for the real model that lives in the offscreen
-// document. It keeps the exact same role the `Model` class used to play for the
-// queues (`predict` + `setSettings`), but every call is an RPC to the offscreen
-// document because a Manifest V3 service worker cannot touch the DOM or run the
-// WebGL/WASM model itself.
+// Service-worker-side proxy for the model that runs in the offscreen document.
+// It plays the same role the `Model` class did for the queues (`predict` and
+// `setSettings`), but every call is an RPC because a Manifest V3 service worker
+// can't touch the DOM or run the WebGL/WASM model itself.
 export type IOffscreenModel = {
   predict: (url: string) => Promise<boolean>
   setSettings: (filterStrictness: number, logging: boolean) => void
@@ -48,9 +47,10 @@ export class OffscreenModel implements IOffscreenModel {
     }
 
     chrome.runtime.sendMessage(request, () => {
-      // Swallow "receiving end does not exist" races; settings are re-sent
-      // whenever the popup closes, so a missed update is self-healing.
-      void chrome.runtime.lastError
+      // Reading lastError marks the "receiving end does not exist" race as
+      // handled so Chrome stays quiet. Settings are re-sent whenever the popup
+      // closes, so a missed update is self-healing.
+      if (chrome.runtime.lastError !== undefined) { /* handled */ }
     })
   }
 }

@@ -23,6 +23,7 @@ class PuppeteerEnvironment extends NodeEnvironment {
     this.global.__BROWSER__ = await puppeteer.connect({
       browserWSEndpoint: wsEndpoint,
     });
+    this.global.__BASE_URL__ = fs.readFileSync(path.join(DIR, 'baseUrl'), 'utf8');
   }
 
   async teardown() {

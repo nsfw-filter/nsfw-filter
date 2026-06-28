@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>NSFW Filter static fixture</title>
+</head>
+<body>
+  <!-- Present in the markup at document_start so the test can prove the content
+       script sweeps images already in the DOM rather than only future ones. -->
+  <img id="target" src="/icon.png" width="128" height="128" alt="sfw fixture">
+  <!-- Below MIN_IMAGE_SIZE: should be tagged sfw and never sent for analysis. -->
+  <img id="tiny" src="/icon.png" width="16" height="16" alt="tiny fixture">
+</body>
+</html>

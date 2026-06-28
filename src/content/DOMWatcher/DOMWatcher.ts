@@ -23,9 +23,9 @@ export class DOMWatcher implements IDOMWatcher {
 
   public watch (): void {
     this.observer.observe(document, DOMWatcher.getConfig())
-    // The observer only reports *future* mutations. Sweep the images already in
-    // the DOM at this point so any image parsed before the (async) store
-    // resolved still gets hidden and classified instead of being missed.
+    // The observer only reports future mutations. Sweep the images already in the
+    // DOM so any image parsed before the (async) store resolved is still hidden
+    // and classified instead of missed.
     this.findAndCheckAllImages(document.documentElement)
   }
 

@@ -20,12 +20,11 @@ type OnDoneParam = Pick<HandlerParams, 'url'>
 
 export type CallbackFunction = (err: unknown | undefined, result: unknown | undefined) => undefined
 
-// In Manifest V2 this was split into a LoadingQueue (download the image into an
-// <img>) and a PredictionQueue (run the model). Under Manifest V3 both the
-// download and the prediction happen inside the offscreen document, so a single
-// queue forwards each URL to the offscreen model. Image loading still runs in
-// parallel (high concurrency here) while the offscreen document serialises the
-// actual predictions, preserving the original behaviour.
+// Manifest V2 split this into a LoadingQueue (download the image into an <img>)
+// and a PredictionQueue (run the model). Under Manifest V3 both happen inside the
+// offscreen document, so one queue forwards each URL to the offscreen model.
+// Image loading still runs in parallel (high concurrency here) while the offscreen
+// document serialises the predictions, matching the original behaviour.
 export class PredictionQueue extends QueueBase {
   protected readonly predictionQueue: ConcurrentQueue<OnProcessParam>
 
