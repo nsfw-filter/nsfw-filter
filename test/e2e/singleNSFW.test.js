@@ -14,11 +14,17 @@ describeNetwork('Should filter NSFW images', () => {
     test.each(NSFWUrls)(`Check single NSFW image %s`, async (url) => {
         const page = await global.__BROWSER__.newPage()
 
-        await page.goto(url, { waitUntil: 'domcontentloaded' })
-        await settle(5000)
+        try {
+            await page.goto(url, { waitUntil: 'domcontentloaded' })
+            await settle(5000)
 
-        const data = await global.getDocumentImageAttributes(page)
-        data.forEach(element => expect(element).toBe('nsfw'))
-        await page.close()
+            const data = await global.getDocumentImageAttributes(page)
+            // Guard against a false green: a failed remote load yields no images,
+            // and forEach over an empty array asserts nothing.
+            expect(data.length).toBeGreaterThan(0)
+            data.forEach(element => expect(element).toBe('nsfw'))
+        } finally {
+            await page.close()
+        }
     })
 })

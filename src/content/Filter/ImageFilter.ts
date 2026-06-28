@@ -29,7 +29,19 @@ export class ImageFilter extends Filter implements IImageFilter {
   public analyzeImage (image: HTMLImageElement, srcAttribute: boolean = false): void {
     // Only (re)process unseen images or images whose `src` just changed.
     if (!srcAttribute && image.dataset.nsfwFilterStatus !== undefined) return
-    if (image.src.length === 0) return
+    if (image.src.length === 0) {
+      // An image whose src is cleared while a prediction is in flight would keep
+      // its `processing` tag and inline visibility:hidden forever: the pending
+      // result is for the old src, so showImage's url guard skips it. Reveal it —
+      // an empty image has nothing to filter, and a later real src re-triggers
+      // analysis via srcAttribute.
+      if (image.dataset.nsfwFilterStatus === 'processing') {
+        image.dataset.nsfwFilterStatus = 'sfw'
+        if (image.parentNode?.nodeName === 'BODY') image.hidden = false
+        image.style.visibility = 'visible'
+      }
+      return
+    }
 
     // Images laid out smaller than MIN_IMAGE_SIZE in either dimension aren't
     // filtered (icons, spacers, and the like), but they still need a status tag
