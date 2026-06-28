@@ -12,20 +12,20 @@ jobs:
       CI: 'true'
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Setup Node
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
         with:
-          node-version: 16
+          node-version: 22
+      # Must not skip puppeteer's browser download: the e2e tests launch the
+      # Chrome it installs here (test/e2e/helpers.js).
       - name: Install dependencies
         run: npm ci
-        env:
-          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'true'
       - name: Run lint checks
         run: npm run lint
       - name: Build
         run: npm run build
-      - name: Run headful Puppeteer tests
-        uses: mujo-code/puppeteer-headful@18.9.0
-        with:
-          args: npm test
+        env:
+          NODE_OPTIONS: --openssl-legacy-provider  # webpack 4 needs it on Node 17+
+      - name: Run unit and e2e tests
+        run: xvfb-run --auto-servernum npm test  # headful Chrome needs a display
