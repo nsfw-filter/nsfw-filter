@@ -39,7 +39,17 @@ export class ImageFilter extends Filter implements IImageFilter {
       image.width !== 0 && image.height !== 0 &&
       (image.width <= this.MIN_IMAGE_SIZE || image.height <= this.MIN_IMAGE_SIZE)
     if (tooSmall) {
-      if (image.dataset.nsfwFilterStatus === undefined) image.dataset.nsfwFilterStatus = 'sfw'
+      // Small images aren't filtered, but they still need a status so the
+      // pending-hide stylesheet reveals them. Reveal when untagged or when the
+      // src changed to a small icon mid-processing: the in-flight result is for
+      // the old src, so showImage's url guard would skip it and leave the image
+      // stuck hidden. A blocked (nsfw) image stays blocked.
+      const status = image.dataset.nsfwFilterStatus
+      if (status === undefined || status === 'processing') {
+        image.dataset.nsfwFilterStatus = 'sfw'
+        if (image.parentNode?.nodeName === 'BODY') image.hidden = false
+        image.style.visibility = 'visible'
+      }
       return
     }
 
