@@ -1,35 +1,25 @@
-const path = require('path');
-const fs = require('fs');
-const os = require('os');
-const mkdirp = require('mkdirp');
-const puppeteer = require('puppeteer');
+const path = require('path')
+const fs = require('fs')
+const os = require('os')
+const mkdirp = require('mkdirp')
+const puppeteer = require('puppeteer')
 
-const DIR = path.join(os.tmpdir(), 'jest_puppeteer_global_setup');
+const { launchOptions, startFixtureServer } = require('./e2e/helpers')
 
-const extensionPath = path.join(__dirname, '../dist')
-const delay = ms => new Promise(res => setTimeout(res, ms));
+const DIR = path.join(os.tmpdir(), 'jest_puppeteer_global_setup')
 
 module.exports = async function () {
-    
-  const browser = await puppeteer.launch({
-    headless: false,
-    product: "chrome",
-    executablePath: process.env.PUPPETEER_EXEC_PATH, // set by docker container
-    defaultViewport: null,
-    args: [
-    `--disable-extensions-except=${extensionPath}`,
-    `--load-extension=${extensionPath}`,
-    `--disable-dev-shm-usage`,
-    `--no-sandbox`,
-    `--disable-setuid-sandbox`
-    ]});
-  // store the browser instance so we can teardown it later
-  // this global is only available in the teardown but not in TestEnvironments
-  // wait one minute for extension to load
-  global.__BROWSER_GLOBAL__ = browser;
+  const { server, baseUrl } = await startFixtureServer()
+  global.__FIXTURE_SERVER__ = server
 
-  // use the file system to expose the wsEndpoint for TestEnvironments
-  mkdirp.sync(DIR);
-  fs.writeFileSync(path.join(DIR, 'wsEndpoint'), browser.wsEndpoint());
-  await delay(5000);
-};
+  const browser = await puppeteer.launch(launchOptions())
+  global.__BROWSER_GLOBAL__ = browser
+
+  // Hand the wsEndpoint and fixture URL to the per-file test environments.
+  mkdirp.sync(DIR)
+  fs.writeFileSync(path.join(DIR, 'wsEndpoint'), browser.wsEndpoint())
+  fs.writeFileSync(path.join(DIR, 'baseUrl'), baseUrl)
+
+  // Give the service worker and offscreen document time to warm up the model.
+  await new Promise(resolve => setTimeout(resolve, 5000))
+}

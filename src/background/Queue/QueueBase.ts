@@ -1,7 +1,7 @@
 import { ILogger } from '../../utils/Logger'
 import { IReduxedStorage } from '../background'
 import { LRUCache } from '../LRUCache'
-import { Model } from '../Model'
+import { OffscreenModel } from '../OffscreenModel'
 
 export type requestQueueValue = Array<Array<{
   resolve: (value: boolean) => void
@@ -15,7 +15,7 @@ export type TabIdUrl = { tabId: number, tabUrl: string }
 export const DEFAULT_TAB_ID = 999999
 
 export class QueueBase {
-  protected readonly model: Model
+  protected readonly model: OffscreenModel
   protected readonly logger: ILogger
 
   protected readonly store: IReduxedStorage
@@ -27,7 +27,7 @@ export class QueueBase {
 
   protected totalBlocked: number
 
-  constructor (model: Model, logger: ILogger, store: IReduxedStorage) {
+  constructor (model: OffscreenModel, logger: ILogger, store: IReduxedStorage) {
     this.store = store
     this.model = model
     this.logger = logger
