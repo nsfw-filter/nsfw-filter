@@ -20,7 +20,7 @@ export const Header: React.FC = () => {
           <span> Filter</span>
         </Title>
       </Brand>
-      <ThemeToggle aria-label="Toggle theme" onClick={() => dispatch({ type: TOGGLE_THEME })}>
+      <ThemeToggle aria-label="Toggle theme" aria-pressed={darkTheme} onClick={() => dispatch({ type: TOGGLE_THEME })}>
         {darkTheme ? <Sun size={16} /> : <Moon size={16} />}
       </ThemeToggle>
     </Container>

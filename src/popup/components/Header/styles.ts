@@ -18,7 +18,7 @@ export const Brand = styled.div`
 
 export const Title = styled.div`
   color: ${props => props.theme.text.primary};
-  font-family: 'Inter', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   font-size: 15px;
   font-weight: 500;
   letter-spacing: -0.01em;

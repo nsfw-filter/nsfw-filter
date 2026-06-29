@@ -94,9 +94,16 @@ async function waitStatus (page, timeoutMs) {
 
   const sw = await browser.waitForTarget(t => t.type() === 'service_worker', { timeout: 25000 }).catch(() => null)
   console.log('service worker:', sw ? 'OK' : 'NOT FOUND')
-  await new Promise(r => setTimeout(r, 9000)) // offscreen spin-up + model warm-up
 
-  const offscreenUp = browser.targets().some(t => /offscreen\.html/.test(t.url()))
+  // Poll for the offscreen doc rather than sampling once after a fixed sleep:
+  // model warm-up and the backend fallback path can push spin-up past any single
+  // guess, and a too-early probe reports a false NOT FOUND on slower machines.
+  let offscreenUp = false
+  for (let waited = 0; waited < 30000; waited += 500) {
+    offscreenUp = browser.targets().some(t => /offscreen\.html/.test(t.url()))
+    if (offscreenUp) break
+    await new Promise(r => setTimeout(r, 500))
+  }
   console.log('offscreen document:', offscreenUp ? 'OK' : 'NOT FOUND')
 
   // Drive the pipeline with a freshly-rendered, instant-loading raster image

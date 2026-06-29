@@ -13,11 +13,12 @@ const extensionId = async () => {
   return new URL(target.url()).host
 }
 
-// Right edge of every element vs the column's right edge. A positive `over`
-// means that element is clipped by the popup window.
+// Right edge of every element vs the popup window's own right edge. Measuring
+// against the viewport (not the inner column) catches the case where the column
+// itself overflows the window, which is exactly the box-sizing bug we guard.
 const measureOverflow = page => page.evaluate(() => {
   const column = document.getElementById('popup').firstElementChild
-  const right = column.getBoundingClientRect().right
+  const right = document.documentElement.clientWidth
   return [...column.querySelectorAll('*')]
     .map(el => ({ el, r: el.getBoundingClientRect() }))
     .filter(({ r }) => r.width > 0 && r.right > right + 1)
@@ -59,6 +60,18 @@ describe('Popup layout', () => {
     // "Grayscale" is shortened to "Gray" so it fits its third of the block
     // control; the full word would ellipsis to "Gra...".
     expect(text).toContain('Gray')
+  })
+
+  test('Advanced panel controls render in full when expanded', async () => {
+    await open()
+    await page.evaluate(() => {
+      document.querySelector('button[aria-controls="advanced-panel"]').click()
+    })
+    await settle(300)
+    const text = await page.evaluate(() => document.getElementById('popup').textContent)
+    expect(text).toContain('Trained model')
+    expect(text).toContain('Show logs in browser console')
+    expect(await measureOverflow(page)).toEqual([])
   })
 
   test('stays within the column after toggling dark mode', async () => {

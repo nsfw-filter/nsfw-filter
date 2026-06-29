@@ -76,7 +76,7 @@ export const Theme: React.FC<{ children?: React.ReactNode }> = ({ children }) =>
           colorText: theme.text.primary,
           colorTextQuaternary: theme.text.secondary,
           borderRadius: 8,
-          fontFamily: "'Inter', sans-serif"
+          fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
         },
         components: {
           Segmented: {

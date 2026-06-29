@@ -90,18 +90,22 @@ export const Production: React.FC = () => {
             style={{ marginTop: 8 }}
             placeholder="twitter.com, facebook.com"
             defaultValue={websites.join(', ')}
-            onChange={event => dispatch(setWebsiteList(event.target.value.split(/\s*,\s*/)))}
+            onChange={event => dispatch(setWebsiteList(event.target.value.split(/\s*,\s*/).filter(Boolean)))}
           />
         </Field>
       </Card>
 
       <div>
-        <AdvancedToggle onClick={() => setAdvancedOpen(open => !open)}>
+        <AdvancedToggle
+          aria-expanded={advancedOpen}
+          aria-controls="advanced-panel"
+          onClick={() => setAdvancedOpen(open => !open)}
+        >
           {advancedOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           Advanced
         </AdvancedToggle>
         {advancedOpen && (
-          <AdvancedPanel>
+          <AdvancedPanel id="advanced-panel">
             <AdvancedRow>
               <FieldLabel>Trained model</FieldLabel>
               <Select
