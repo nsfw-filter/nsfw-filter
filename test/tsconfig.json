@@ -1,0 +1,11 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "isolatedModules": true,
+    "rootDir": "..",
+    "types": ["jest", "chrome"]
+  },
+  "include": ["./**/*.ts", "../src/**/*.ts"]
+}

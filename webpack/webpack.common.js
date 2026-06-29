@@ -1,9 +1,5 @@
 const path = require('path')
-const glob = require('glob')
 const CopyPlugin = require('copy-webpack-plugin')
-const AntdDayjsWebpackPlugin = require('antd-dayjs-webpack-plugin')
-const MiniCSSExtractPlugin = require('mini-css-extract-plugin')
-const PurgeCSSPlugin = require('purgecss-webpack-plugin')
 
 const PATHS = {
     src: path.join(__dirname, '../src'),
@@ -28,16 +24,20 @@ module.exports = {
                 use: 'ts-loader',
                 exclude: /node_modules/
             },
+            // tfjs registers its backend flags and kernels via top-level
+            // side-effect calls (e.g. ENV.registerFlag('CPU_HANDOFF_SIZE_THRESHOLD',
+            // ...) in flags_webgl). webpack resolves @tensorflow to fesm bundles
+            // whose filenames aren't in tfjs's per-file `sideEffects` whitelist, so
+            // it marks those registrations dead and terser deletes them under
+            // minification. The model then reads an unregistered flag at module
+            // init and throws "no evaluation function found". Force side effects on.
             {
-                test: /\.(eot|png|svg|[ot]tf|woff2?)(\?v=\d+\.\d+\.\d+)?$/,
-                loaders: ['file-loader']
+                test: /[\\/]node_modules[\\/]@tensorflow[\\/]/,
+                sideEffects: true
             },
             {
-                test: /\.css$/,
-                use: [
-                    "style-loader",
-                    "css-loader"
-                ]
+                test: /\.(eot|png|svg|[ot]tf|woff2?)(\?v=\d+\.\d+\.\d+)?$/,
+                type: 'asset/resource'
             }
         ]
     },
@@ -53,13 +53,6 @@ module.exports = {
                     to: PATHS.dist
                 },
             ],
-        }),
-        new AntdDayjsWebpackPlugin(),
-        new MiniCSSExtractPlugin({
-            filename: "[name].css",
-        }),
-        new PurgeCSSPlugin({
-            paths: glob.sync(`${PATHS.src}/**/*`,  { nodir: true }),
         }),
     ],
     resolve: {

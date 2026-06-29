@@ -3,4 +3,11 @@ dist/src
 node_modules
 dev
 CLAUDE.md
+TODO.md
 .DS_Store
+
+# Local Claude Code agent files (skills, scheduled tasks) — never committed
+.claude/
+
+# Local model-comparison benchmark harness — kept out of the repo
+benchmark/

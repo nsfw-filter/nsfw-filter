@@ -35,6 +35,6 @@ export class LRUCache<K, V> {
   }
 
   private first (): K {
-    return this.cache.keys().next().value
+    return this.cache.keys().next().value as K
   }
 }

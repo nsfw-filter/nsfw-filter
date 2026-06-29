@@ -1,3 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unsafe-function-type --
+   This queue is a generic dispatcher: its five hooks have heterogeneous,
+   bivariant signatures supplied by PredictionQueue. Pinning each one precisely
+   would mean threading four distinct callback types and casting inside next()
+   for no runtime gain, so `Function` stays here on purpose. */
 import { OnSuccessParam, OnFailureParam } from './PredictionQueue'
 
 type ConcurrentQueueParams = {

@@ -1,9 +1,0 @@
-.cache
-demo
-dist
-docs
-node_modules
-webpack
-test
-src/popup/popup.html
-jest-puppeteer.config.js
