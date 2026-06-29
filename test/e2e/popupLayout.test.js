@@ -54,7 +54,7 @@ describe('Popup layout', () => {
   test('key controls and links render in full', async () => {
     await open()
     const text = await page.evaluate(() => document.getElementById('popup').textContent)
-    for (const label of ['NSFW', 'Filter', 'Blur', 'Hide', 'Star on GitHub', 'Sponsor']) {
+    for (const label of ['NSFW', 'Filter', 'Blur', 'Hide', 'Star on GitHub', 'Sponsor on Patreon']) {
       expect(text).toContain(label)
     }
     // "Grayscale" is shortened to "Gray" so it fits its third of the block

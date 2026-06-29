@@ -16,6 +16,12 @@ export const Brand = styled.div`
   gap: 8px;
 `
 
+export const Wordmark = styled.div`
+  align-items: baseline;
+  display: flex;
+  gap: 6px;
+`
+
 export const Title = styled.div`
   color: ${props => props.theme.text.primary};
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -27,6 +33,12 @@ export const Title = styled.div`
     color: ${props => props.theme.accent};
     font-weight: 700;
   }
+`
+
+export const Version = styled.span`
+  color: ${props => props.theme.text.secondary};
+  font-size: 11px;
+  font-weight: 500;
 `
 
 export const ThemeToggle = styled.button`

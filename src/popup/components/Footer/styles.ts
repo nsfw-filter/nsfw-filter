@@ -30,8 +30,3 @@ export const Link = styled.a`
     text-decoration: underline;
   }
 `
-
-export const Version = styled.div`
-  color: ${props => props.theme.text.secondary};
-  font-size: 12px;
-`

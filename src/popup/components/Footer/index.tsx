@@ -1,11 +1,9 @@
 import { Bug, Heart, Star } from 'lucide-react'
 import React from 'react'
 
-import { Container, Links, Link, Version } from './styles'
+import { Container, Links, Link } from './styles'
 
 export const Footer: React.FC = () => {
-  const version = chrome.runtime.getManifest().version
-
   return (
     <Container>
       <Links>
@@ -16,10 +14,9 @@ export const Footer: React.FC = () => {
           <Bug size={15} /> Report a bug
         </Link>
         <Link rel="noreferrer" target="_blank" href="https://www.patreon.com/nsfwfilter">
-          <Heart size={15} /> Sponsor
+          <Heart size={15} /> Sponsor on Patreon
         </Link>
       </Links>
-      <Version>v{version}</Version>
     </Container>
   )
 }
