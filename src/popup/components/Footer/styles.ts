@@ -1,65 +1,37 @@
-import 'antd/lib/checkbox/style/index.css'
-
-import Checkbox from 'antd/lib/checkbox'
 import styled from 'styled-components'
 
 export const Container = styled.div`
+  align-items: center;
   background-color: ${props => props.theme.bg.primary};
+  border-top: 1px solid ${props => props.theme.border};
   display: flex;
   flex-direction: column;
-  padding: 0 15px 15px 15px;
+  gap: 8px;
+  padding: 12px 16px 14px 16px;
   width: 100%;
 `
 
-export const CheckboxArea = styled.div`
-  align-content: center;
+export const Links = styled.div`
   display: flex;
-  flex-direction: column;
-  padding: 7px 0;
-`
-
-export const StyledCheckbox = styled(Checkbox)`
-  color: ${props => props.theme.text.primary};
-`
-
-export const BugReport = styled.div`
-  align-items: center;
-  display: flex;
-  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px 16px;
   justify-content: center;
-  padding-top: 5px;
-
-  span {
-    padding-left: 5px;
-    padding-right: 5px;
-
-    a {
-      color: inherit;
-      text-decoration: underline;
-    }
-  }
 `
 
-export const Sponsor = styled.div`
+export const Link = styled.a`
   align-items: center;
+  color: ${props => props.theme.accent};
   display: flex;
-  flex-direction: row;
-  justify-content: center;
-  padding-top: 5px;
+  font-size: 12px;
+  gap: 6px;
+  text-decoration: none;
 
-  span {
-    padding-left: 5px;
-    padding-right: 5px;
-
-    a {
-      color: inherit;
-      text-decoration: underline;
-    }
+  &:hover {
+    text-decoration: underline;
   }
 `
 
 export const Version = styled.div`
-  font-size: 12px; 
-  padding-top: 7px;
-  text-align: center;
+  color: ${props => props.theme.text.secondary};
+  font-size: 12px;
 `

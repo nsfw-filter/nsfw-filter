@@ -1,9 +1,6 @@
-import React from 'react'
-import { render } from 'react-dom'
+import { createRoot } from 'react-dom/client'
 import { Provider } from 'react-redux'
 import { createStore } from 'redux'
-
-import 'antd/lib/style/index.css'
 
 import { Popup } from './components'
 import { createChromeStore } from './redux/chrome-storage'
@@ -15,15 +12,15 @@ chrome.tabs.query({ active: true, currentWindow: true }, _tab => {
     chrome.runtime.connect()
     const store = await createChromeStore({ createStore })(rootReducer)
 
-    render(
-      (
-        <Provider store={store}>
-          <Theme>
-            <Popup />
-          </Theme>
-        </Provider>
-      ),
-      document.getElementById('popup')
+    const container = document.getElementById('popup')
+    if (container === null) return
+
+    createRoot(container).render(
+      <Provider store={store}>
+        <Theme>
+          <Popup />
+        </Theme>
+      </Provider>
     )
   })()
 })

@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/strict-boolean-expressions */
-
 import { createStore } from 'redux'
 
 import { SettingsActionTypes } from '../popup/redux/actions/settings'
@@ -198,7 +196,8 @@ chrome.runtime.onConnect.addListener(port => port.onDisconnect.addListener(() =>
     .then(({ store, logger, model, queue }) => {
       const { logging, filterStrictness } = store.getState().settings
 
-      logging ? logger.enable() : logger.disable()
+      if (logging) logger.enable()
+      else logger.disable()
       model.setSettings(filterStrictness, logging)
 
       queue.clearCache()

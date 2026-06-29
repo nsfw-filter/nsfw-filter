@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/strict-boolean-expressions */
-
 // The offscreen document is the only place in a Manifest V3 extension with both
 // a full DOM (so `new Image()` works) and the ability to run TensorFlow.js. The
 // service worker forwards every image URL here; we load it, classify it, and
@@ -9,7 +7,7 @@
 
 import { enableProdMode, env as tfEnv, getBackend, ready as tfReady, setBackend, tensor1d, tidy } from '@tensorflow/tfjs'
 import { setWasmPaths } from '@tensorflow/tfjs-backend-wasm'
-import { load as loadModel, NSFWJS } from 'nsfwjs'
+import { load as loadModel, NSFWJS } from 'nsfwjs/core'
 
 import { Model } from '../background/Model'
 import { Logger } from '../utils/Logger'
@@ -120,7 +118,6 @@ const warmUpModel = async (nsfwModel: NSFWJS): Promise<boolean> => {
 // null if the warm-up hung or failed (used when probing WebGL so we can retry on
 // WASM).
 const loadAndWarm = async (requireWarm: boolean): Promise<NSFWJS | null> => {
-  // @ts-expect-error nsfwjs load options typing
   const nsfwModel: NSFWJS = await loadModel(MODEL_PATH, { type: 'graph' })
   const warmed = await warmUpModel(nsfwModel)
   if (!warmed && requireWarm) return null
@@ -132,7 +129,6 @@ const modelReady: Promise<void> = (async () => {
   if (backend === 'wasm') await setWasmBackend()
 
   let attempts = 0
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     try {
       // On WebGL the warm-up doubles as GPU validation: if the full model can't
@@ -194,7 +190,8 @@ chrome.runtime.onMessage.addListener((
 
   if (message.type === 'SET_SETTINGS') {
     pendingStrictness = message.filterStrictness
-    message.logging ? logger.enable() : logger.disable()
+    if (message.logging) logger.enable()
+    else logger.disable()
     if (model !== null) model.setSettings({ filterStrictness: message.filterStrictness })
     return
   }

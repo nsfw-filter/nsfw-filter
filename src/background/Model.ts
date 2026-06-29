@@ -1,4 +1,4 @@
-import { NSFWJS, predictionType } from 'nsfwjs'
+import { NSFWJS, PredictionType } from 'nsfwjs/core'
 
 import { ILogger } from '../utils/Logger'
 
@@ -78,7 +78,7 @@ export class Model implements IModel {
     }
   }
 
-  private handlePrediction (prediction: predictionType[]): { result: boolean, className: string, probability: number } {
+  private handlePrediction (prediction: PredictionType[]): { result: boolean, className: string, probability: number } {
     const [{ className: cn1, probability: pb1 }, { className: cn2, probability: pb2 }] = prediction
 
     const result1 = this.FILTER_LIST.has(cn1) && pb1 > (this.firstFilterPercentages.get(cn1) as number)

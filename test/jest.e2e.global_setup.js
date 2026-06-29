@@ -1,7 +1,6 @@
 const path = require('path')
 const fs = require('fs')
 const os = require('os')
-const mkdirp = require('mkdirp')
 const puppeteer = require('puppeteer')
 
 const { launchOptions, startFixtureServer } = require('./e2e/helpers')
@@ -16,7 +15,7 @@ module.exports = async function () {
   global.__BROWSER_GLOBAL__ = browser
 
   // Hand the wsEndpoint and fixture URL to the per-file test environments.
-  mkdirp.sync(DIR)
+  fs.mkdirSync(DIR, { recursive: true })
   fs.writeFileSync(path.join(DIR, 'wsEndpoint'), browser.wsEndpoint())
   fs.writeFileSync(path.join(DIR, 'baseUrl'), baseUrl)
 

@@ -2,7 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const puppeteer = require('puppeteer');
-const NodeEnvironment = require('jest-environment-node');
+// Jest 28+ ships the environment as a named `TestEnvironment` export rather
+// than a bare module.exports constructor.
+const { TestEnvironment: NodeEnvironment } = require('jest-environment-node');
 
 const DIR = path.join(os.tmpdir(), 'jest_puppeteer_global_setup');
 

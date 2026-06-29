@@ -1,26 +1,45 @@
 import styled from 'styled-components'
 
 export const Container = styled.div`
-  padding: 15px 15px 15px 15px;
+  align-items: center;
+  border-bottom: 1px solid ${props => props.theme.border};
+  display: flex;
+  justify-content: space-between;
+  padding: 14px 16px;
   width: 100%;
 `
 
-export const Title = styled.div`
+export const Brand = styled.div`
+  align-items: center;
   cursor: default;
-  font-family: 'Roboto', sans-serif;
-  font-size: 26px;
-  font-weight: 400;
-  text-align: center;
+  display: flex;
+  gap: 8px;
+`
+
+export const Title = styled.div`
+  color: ${props => props.theme.text.primary};
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
 
   #logo-first-letters {
+    color: ${props => props.theme.accent};
     font-weight: 700;
   }
 `
 
-export const ThemeToggle = styled.div`
-  margin: 15px 15px;
-  position: absolute;
-  right: 0;
-  top: 0;
-  transform: scale(0.8);
+export const ThemeToggle = styled.button`
+  align-items: center;
+  background: none;
+  border: none;
+  color: ${props => props.theme.text.secondary};
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  padding: 4px;
+
+  &:hover {
+    color: ${props => props.theme.text.primary};
+  }
 `

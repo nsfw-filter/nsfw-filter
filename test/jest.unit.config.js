@@ -4,6 +4,8 @@ module.exports = {
     testTimeout: 100000,
     maxConcurrency: 1,
     maxWorkers: 1,
-    preset: 'ts-jest',
-    testEnvironment: 'node'
+    transform: {
+        "^.+\\.[jt]sx?$": [ "ts-jest", { tsconfig: "test/tsconfig.json" } ]
+    },
+    testEnvironment: "node"
 }
