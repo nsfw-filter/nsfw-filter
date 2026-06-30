@@ -55,9 +55,18 @@ const wireContextMenuUnhide = (imageFilter: ImageFilter): void => {
 
 const init = (): void => {
   const imageFilter = new ImageFilter()
-  const domWatcher = new DOMWatcher(imageFilter)
 
+  // The unhide menu must work per-frame: contextmenu events don't cross the
+  // iframe boundary, and the background targets the UNHIDE reply to the exact
+  // frame that reported the image. So wire reporting/unhide in every frame, but
+  // keep the actual filtering (DOMWatcher, pending-hide, store) top-frame only.
+  // Without this, the menu's global visibility goes stale over iframe images.
   wireContextMenuUnhide(imageFilter)
+
+  // Ignore iframes for filtering, https://stackoverflow.com/a/326076/10432429
+  if (window.self !== window.top) return
+
+  const domWatcher = new DOMWatcher(imageFilter)
 
   injectPendingHide()
   const safety = setTimeout(removePendingHide, HIDE_STYLE_SAFETY_TIMEOUT)
@@ -87,5 +96,4 @@ const init = (): void => {
     })
 }
 
-// Ignore iframes, https://stackoverflow.com/a/326076/10432429
-if (window.self === window.top) init()
+init()
