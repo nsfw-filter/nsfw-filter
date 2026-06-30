@@ -249,6 +249,10 @@ chrome.runtime.onConnect.addListener(port => port.onDisconnect.addListener(() =>
 // DOM_SCRAPING reason has no idle timeout and outlives the worker, so the loaded
 // model stays resident across restarts and ensureOffscreenDocument() reuses it.
 // Pre-warm on install and on startup, plus whenever the worker first spins up.
-chrome.runtime.onInstalled.addListener(() => { createUnhideMenu(); getRuntime().catch(() => undefined) })
-chrome.runtime.onStartup.addListener(() => { createUnhideMenu(); getRuntime().catch(() => undefined) })
+chrome.runtime.onInstalled.addListener(() => { getRuntime().catch(() => undefined) })
+chrome.runtime.onStartup.addListener(() => { getRuntime().catch(() => undefined) })
+// Recreate the menu on every worker spin-up, not just onInstalled/onStartup:
+// disabling then re-enabling the extension tears the menu down but fires neither
+// event, which would otherwise leave the unhide item gone until a browser restart.
+createUnhideMenu()
 getRuntime().catch(() => undefined)

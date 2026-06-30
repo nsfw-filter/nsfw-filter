@@ -28,20 +28,25 @@ const initialState: SettingsState = {
 }
 
 export function settings (state = initialState, action: SettingsActionTypes): SettingsState {
+  // Persisted state from an older version may be missing keys added later (e.g.
+  // `enabled`). reduxed-chrome-storage hydrates from storage as-is, so merge over
+  // initialState to backfill defaults; otherwise a missing `enabled` reads as
+  // undefined and silently disables filtering after an upgrade.
+  const s = { ...initialState, ...state }
   switch (action.type) {
     case TOGGLE_ENABLED:
-      return { ...state, enabled: !state.enabled }
+      return { ...s, enabled: !s.enabled }
     case TOGGLE_LOGGING:
-      return { ...state, logging: !state.logging }
+      return { ...s, logging: !s.logging }
     case SET_FILTER_EFFECT:
-      return { ...state, filterEffect: action.payload.filterEffect }
+      return { ...s, filterEffect: action.payload.filterEffect }
     case SET_TRAINED_MODEL:
-      return { ...state, trainedModel: action.payload.trainedModel }
+      return { ...s, trainedModel: action.payload.trainedModel }
     case SET_FILTER_STRICTNESS:
-      return { ...state, filterStrictness: action.payload.filterStrictness }
+      return { ...s, filterStrictness: action.payload.filterStrictness }
     case SET_WEBSITE_LIST:
-      return { ...state, websites: action.payload.websites }
+      return { ...s, websites: action.payload.websites }
     default:
-      return state
+      return s
   }
 }
