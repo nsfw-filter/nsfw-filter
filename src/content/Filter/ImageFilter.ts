@@ -9,6 +9,7 @@ type imageFilterSettingsType = {
 export type IImageFilter = {
   analyzeImage: (image: HTMLImageElement, srcAttribute: boolean) => void
   setSettings: (settings: imageFilterSettingsType) => void
+  revealImage: (image: HTMLImageElement) => void
 }
 
 export class ImageFilter extends Filter implements IImageFilter {
@@ -24,6 +25,16 @@ export class ImageFilter extends Filter implements IImageFilter {
 
   public setSettings (settings: imageFilterSettingsType): void {
     this.settings = settings
+  }
+
+  // User-initiated unhide from the right-click menu. Clears whatever effect was
+  // applied and tags the image `sfw` so analyzeImage won't re-filter it (and a
+  // later src change re-triggers analysis as usual).
+  public revealImage (image: HTMLImageElement): void {
+    if (image.parentNode?.nodeName === 'BODY') image.hidden = false
+    image.style.filter = ''
+    image.style.visibility = 'visible'
+    image.dataset.nsfwFilterStatus = 'sfw'
   }
 
   public analyzeImage (image: HTMLImageElement, srcAttribute: boolean = false): void {

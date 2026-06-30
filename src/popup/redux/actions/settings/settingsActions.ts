@@ -1,6 +1,7 @@
 import {
   TOGGLE_LOGGING,
   TOGGLE_DIV_FILTERING,
+  TOGGLE_ENABLED,
   SET_FILTER_EFFECT,
   SET_TRAINED_MODEL,
   SET_FILTER_STRICTNESS,
@@ -9,6 +10,7 @@ import {
 
 export const toggleLogging = () => ({ type: TOGGLE_LOGGING } as const)
 export const toggleDivFiltering = () => ({ type: TOGGLE_DIV_FILTERING } as const)
+export const toggleEnabled = () => ({ type: TOGGLE_ENABLED } as const)
 
 export const setFilterEffect = (filterEffect: 'hide' | 'blur' | 'grayscale') => ({
   type: SET_FILTER_EFFECT,

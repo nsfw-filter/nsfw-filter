@@ -17,6 +17,33 @@ export const Stat = styled.div`
   text-align: center;
 `
 
+export const PowerRow = styled.div`
+  align-items: center;
+  background-color: ${props => props.theme.bg.surface};
+  border: 1px solid ${props => props.theme.border};
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 14px;
+`
+
+export const PowerText = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+`
+
+export const PowerTitle = styled.span`
+  color: ${props => props.theme.text.primary};
+  font-size: 14px;
+  font-weight: 600;
+`
+
+export const PowerHint = styled.span`
+  color: ${props => props.theme.text.secondary};
+  font-size: 12px;
+`
+
 export const StatNumber = styled.div`
   color: ${props => props.theme.accent};
   font-size: 30px;

@@ -5,7 +5,7 @@ import { StatisticsActionTypes } from '../popup/redux/actions/statistics'
 import { createChromeStore } from '../popup/redux/chrome-storage'
 import { rootReducer, RootState } from '../popup/redux/reducers'
 import { ILogger, Logger } from '../utils/Logger'
-import { PredictionResponse } from '../utils/messages'
+import { CONTEXT_TARGET, ContextTargetMessage, PredictionResponse, UNHIDE_IMAGE } from '../utils/messages'
 
 import { OffscreenModel } from './OffscreenModel'
 import { DEFAULT_TAB_ID, TabIdUrl } from './Queue/QueueBase'
@@ -99,7 +99,8 @@ const initRuntime = async (): Promise<Runtime> => {
   await ensureOffscreenDocument()
 
   const store = await createChromeStore({ createStore })(rootReducer)
-  const { logging, filterStrictness } = store.getState().settings
+  const { enabled, logging, filterStrictness } = store.getState().settings
+  refreshActionBadge(enabled)
 
   const logger = new Logger()
   if (logging === true) logger.enable()
@@ -133,7 +134,44 @@ const getRuntime = async (): Promise<Runtime> => {
   }
 }
 
+// A small "OFF" badge on the toolbar icon mirrors the popup's on/off switch, so
+// the disabled state is visible without opening the popup.
+const refreshActionBadge = (enabled: boolean): void => {
+  chrome.action.setBadgeText({ text: enabled ? '' : 'OFF' }).catch(() => undefined)
+  chrome.action.setBadgeBackgroundColor({ color: '#71717f' }).catch(() => undefined)
+}
+
+// --- Right-click "unhide" context menu ------------------------------------
+
+const UNHIDE_MENU_ID = 'nsfw-filter-unhide'
+
+// Created hidden; the content script flips it visible only while the cursor is
+// over an image this extension filtered (see CONTEXT_TARGET below).
+const createUnhideMenu = (): void => {
+  chrome.contextMenus.removeAll(() => {
+    chrome.contextMenus.create({
+      id: UNHIDE_MENU_ID,
+      title: 'Unhide this image (NSFW Filter)',
+      contexts: ['image'],
+      visible: false
+    })
+  })
+}
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId !== UNHIDE_MENU_ID || tab?.id === undefined) return
+  // Target the exact frame that reported the image, not the whole tab.
+  chrome.tabs.sendMessage(tab.id, { type: UNHIDE_IMAGE }, { frameId: info.frameId }).catch(() => undefined)
+})
+
 // --- Event listeners (registered synchronously) ---------------------------
+
+// Content scripts report, on each right-click, whether the cursor is over an
+// image we filtered, so the menu item only appears over reversible images.
+chrome.runtime.onMessage.addListener((message: ContextTargetMessage) => {
+  if (message?.type !== CONTEXT_TARGET) return
+  chrome.contextMenus.update(UNHIDE_MENU_ID, { visible: message.filtered === true }).catch(() => undefined)
+})
 
 // Any message reaching this listener: a content-script classification request,
 // plus the offscreen and SIGN_CONNECT messages that are handled elsewhere.
@@ -194,7 +232,8 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
 chrome.runtime.onConnect.addListener(port => port.onDisconnect.addListener(() => {
   getRuntime()
     .then(({ store, logger, model, queue }) => {
-      const { logging, filterStrictness } = store.getState().settings
+      const { enabled, logging, filterStrictness } = store.getState().settings
+      refreshActionBadge(enabled)
 
       if (logging) logger.enable()
       else logger.disable()
@@ -210,6 +249,6 @@ chrome.runtime.onConnect.addListener(port => port.onDisconnect.addListener(() =>
 // DOM_SCRAPING reason has no idle timeout and outlives the worker, so the loaded
 // model stays resident across restarts and ensureOffscreenDocument() reuses it.
 // Pre-warm on install and on startup, plus whenever the worker first spins up.
-chrome.runtime.onInstalled.addListener(() => { getRuntime().catch(() => undefined) })
-chrome.runtime.onStartup.addListener(() => { getRuntime().catch(() => undefined) })
+chrome.runtime.onInstalled.addListener(() => { createUnhideMenu(); getRuntime().catch(() => undefined) })
+chrome.runtime.onStartup.addListener(() => { createUnhideMenu(); getRuntime().catch(() => undefined) })
 getRuntime().catch(() => undefined)

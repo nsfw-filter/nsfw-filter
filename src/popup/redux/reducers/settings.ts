@@ -2,6 +2,7 @@
 import { SettingsActionTypes } from '../actions/settings'
 import {
   TOGGLE_LOGGING,
+  TOGGLE_ENABLED,
   SET_FILTER_EFFECT,
   SET_TRAINED_MODEL,
   SET_FILTER_STRICTNESS,
@@ -9,6 +10,7 @@ import {
 } from '../actions/settings/settingsTypes'
 
 export type SettingsState = {
+  enabled: boolean
   logging: boolean
   filterEffect: 'hide' | 'blur' | 'grayscale'
   trainedModel: 'MobileNet_v1.2'
@@ -17,6 +19,7 @@ export type SettingsState = {
 }
 
 const initialState: SettingsState = {
+  enabled: true,
   logging: process.env.NODE_ENV === 'development',
   filterEffect: 'blur',
   trainedModel: 'MobileNet_v1.2',
@@ -26,6 +29,8 @@ const initialState: SettingsState = {
 
 export function settings (state = initialState, action: SettingsActionTypes): SettingsState {
   switch (action.type) {
+    case TOGGLE_ENABLED:
+      return { ...state, enabled: !state.enabled }
     case TOGGLE_LOGGING:
       return { ...state, logging: !state.logging }
     case SET_FILTER_EFFECT:

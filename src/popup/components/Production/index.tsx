@@ -1,4 +1,4 @@
-import { Checkbox, Input, Segmented, Select, Slider } from 'antd'
+import { Checkbox, Input, Segmented, Select, Slider, Switch } from 'antd'
 import { ChevronDown, ChevronUp, Contrast, Droplet, EyeOff } from 'lucide-react'
 import React, { useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
@@ -8,6 +8,7 @@ import {
   setTrainedModel,
   setFilterEffect,
   setWebsiteList,
+  toggleEnabled,
   toggleLogging
 } from '../../redux/actions/settings/index'
 import { RootState } from '../../redux/reducers'
@@ -19,6 +20,10 @@ import {
   Stat,
   StatNumber,
   StatCaption,
+  PowerRow,
+  PowerText,
+  PowerTitle,
+  PowerHint,
   Card,
   Field,
   EffectField,
@@ -35,6 +40,7 @@ export const Production: React.FC = () => {
   const dispatch = useDispatch()
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const {
+    enabled,
     filterStrictness,
     trainedModel,
     filterEffect,
@@ -49,6 +55,14 @@ export const Production: React.FC = () => {
         <StatNumber>{totalBlocked.toLocaleString()}</StatNumber>
         <StatCaption>images blocked</StatCaption>
       </Stat>
+
+      <PowerRow>
+        <PowerText>
+          <PowerTitle>Protection</PowerTitle>
+          <PowerHint>{enabled ? 'Filtering is on' : 'Filtering is paused'}</PowerHint>
+        </PowerText>
+        <Switch checked={enabled} onChange={() => dispatch(toggleEnabled())} />
+      </PowerRow>
 
       <Card>
         <Field>
