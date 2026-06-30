@@ -102,6 +102,18 @@ const initRuntime = async (): Promise<Runtime> => {
   const { enabled, logging, filterStrictness } = store.getState().settings
   refreshActionBadge(enabled)
 
+  // reduxed keeps this worker's store synced with storage, so a popup toggle
+  // updates it even while the popup is open. Mirror `enabled` onto the badge
+  // live, guarding on change so per-image statistics ticks don't rewrite it.
+  let badgeEnabled = enabled
+  store.subscribe(() => {
+    const next = store.getState().settings.enabled
+    if (next !== badgeEnabled) {
+      badgeEnabled = next
+      refreshActionBadge(next)
+    }
+  })
+
   const logger = new Logger()
   if (logging === true) logger.enable()
 

@@ -29,10 +29,12 @@ const initialState: SettingsState = {
 
 export function settings (state = initialState, action: SettingsActionTypes): SettingsState {
   // Persisted state from an older version may be missing keys added later (e.g.
-  // `enabled`). reduxed-chrome-storage hydrates from storage as-is, so merge over
-  // initialState to backfill defaults; otherwise a missing `enabled` reads as
-  // undefined and silently disables filtering after an upgrade.
-  const s = { ...initialState, ...state }
+  // `enabled`). reduxed-chrome-storage hydrates from storage as-is, so backfill
+  // defaults; otherwise a missing `enabled` reads as undefined and silently
+  // disables filtering after an upgrade. Only allocate when a key is actually
+  // missing, so unrelated actions keep the same `settings` reference.
+  const hydrated = (state as Partial<SettingsState>).enabled !== undefined
+  const s = hydrated ? state : { ...initialState, ...state }
   switch (action.type) {
     case TOGGLE_ENABLED:
       return { ...s, enabled: !s.enabled }
