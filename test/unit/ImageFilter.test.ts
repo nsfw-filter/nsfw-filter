@@ -103,3 +103,32 @@ describe('content => ImageFilter => analyzeImage', () => {
     expect(spy).not.toHaveBeenCalled()
   })
 })
+
+describe('content => ImageFilter => revealImage', () => {
+  test('clears a blurred image and retags it sfw', () => {
+    const image = makeImage(200, 200)
+    image.dataset.nsfwFilterStatus = 'nsfw'
+    image.style.filter = 'blur(25px)'
+    image.style.visibility = 'hidden'
+
+    new ImageFilter().revealImage(image)
+
+    expect(image.style.filter).toBe('')
+    expect(image.style.visibility).toBe('visible')
+    expect(image.dataset.nsfwFilterStatus).toBe('sfw')
+  })
+
+  test('unhides a BODY-child image blocked in hide mode', () => {
+    const image = makeImage(200, 200)
+    image.dataset.nsfwFilterStatus = 'nsfw'
+    image.hidden = true
+    document.body.appendChild(image)
+
+    new ImageFilter().revealImage(image)
+
+    expect(image.hidden).toBe(false)
+    expect(image.dataset.nsfwFilterStatus).toBe('sfw')
+
+    image.remove()
+  })
+})

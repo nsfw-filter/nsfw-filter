@@ -16,6 +16,22 @@ export class PredictionRequest {
   }
 }
 
+// Right-click "unhide" flow. The content script reports whether the element
+// under the cursor is one this extension filtered, so the service worker can
+// show the context-menu item only over filtered images; clicking it sends the
+// unhide command back to the exact frame that reported the target.
+export const CONTEXT_TARGET = 'NSFW_FILTER_CONTEXT_TARGET'
+export const UNHIDE_IMAGE = 'NSFW_FILTER_UNHIDE'
+
+export type ContextTargetMessage = {
+  type: typeof CONTEXT_TARGET
+  filtered: boolean
+}
+
+export type UnhideImageMessage = {
+  type: typeof UNHIDE_IMAGE
+}
+
 // Messages exchanged between the service worker and the offscreen document.
 // The offscreen document hosts TensorFlow.js + the DOM image loading that a
 // Manifest V3 service worker cannot do itself.

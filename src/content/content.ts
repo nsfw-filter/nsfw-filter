@@ -2,6 +2,7 @@ import { createStore } from 'redux'
 
 import { createChromeStore } from '../popup/redux/chrome-storage'
 import { rootReducer } from '../popup/redux/reducers'
+import { CONTEXT_TARGET, UNHIDE_IMAGE, UnhideImageMessage } from '../utils/messages'
 
 import { DOMWatcher } from './DOMWatcher/DOMWatcher'
 import { ImageFilter } from './Filter/ImageFilter'
@@ -29,8 +30,42 @@ const removePendingHide = (): void => {
   document.getElementById(HIDE_STYLE_ID)?.remove()
 }
 
+// Wire the right-click "unhide" menu. On every context-menu open we tell the
+// service worker whether the cursor is over an image we filtered, so it can show
+// the menu item only then; if the user picks it, the worker messages this frame
+// to reveal the element we last reported.
+const wireContextMenuUnhide = (imageFilter: ImageFilter): void => {
+  let lastTarget: HTMLImageElement | null = null
+
+  document.addEventListener('contextmenu', event => {
+    const target = event.target
+    const filtered = target instanceof HTMLImageElement && target.dataset.nsfwFilterStatus === 'nsfw'
+    lastTarget = filtered ? target : null
+    chrome.runtime.sendMessage({ type: CONTEXT_TARGET, filtered }).catch(() => undefined)
+  }, true)
+
+  chrome.runtime.onMessage.addListener((message: UnhideImageMessage) => {
+    if (message?.type !== UNHIDE_IMAGE) return
+    if (lastTarget !== null) {
+      imageFilter.revealImage(lastTarget)
+      lastTarget = null
+    }
+  })
+}
+
 const init = (): void => {
   const imageFilter = new ImageFilter()
+
+  // The unhide menu must work per-frame: contextmenu events don't cross the
+  // iframe boundary, and the background targets the UNHIDE reply to the exact
+  // frame that reported the image. So wire reporting/unhide in every frame, but
+  // keep the actual filtering (DOMWatcher, pending-hide, store) top-frame only.
+  // Without this, the menu's global visibility goes stale over iframe images.
+  wireContextMenuUnhide(imageFilter)
+
+  // Ignore iframes for filtering, https://stackoverflow.com/a/326076/10432429
+  if (window.self !== window.top) return
+
   const domWatcher = new DOMWatcher(imageFilter)
 
   injectPendingHide()
@@ -38,16 +73,17 @@ const init = (): void => {
 
   createChromeStore({ createStore })(rootReducer)
     .then(store => {
-      const { filterEffect, websites } = store.getState().settings
+      const { enabled, filterEffect, websites } = store.getState().settings
       imageFilter.setSettings({ filterEffect })
-      if (websites.includes(window.location.hostname) === false) {
+      const allowed = websites.includes(window.location.hostname)
+      if (enabled && !allowed) {
         // Keep the pending-hide stylesheet in place: from here per-image tagging
         // governs visibility (and it also hides dynamically-added images before
         // the observer's callback can run hideImage).
         clearTimeout(safety)
         domWatcher.watch()
       } else {
-        // Filtering disabled for this site: reveal everything.
+        // Extension turned off, or filtering disabled for this site: reveal everything.
         clearTimeout(safety)
         removePendingHide()
       }
@@ -60,5 +96,4 @@ const init = (): void => {
     })
 }
 
-// Ignore iframes, https://stackoverflow.com/a/326076/10432429
-if (window.self === window.top) init()
+init()

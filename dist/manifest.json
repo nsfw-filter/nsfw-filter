@@ -6,7 +6,8 @@
   "homepage_url": "https://nsfw-filter.com",
   "permissions": [
     "storage",
-    "offscreen"
+    "offscreen",
+    "contextMenus"
   ],
   "host_permissions": [
     "<all_urls>"
