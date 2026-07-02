@@ -99,7 +99,7 @@ const initRuntime = async (): Promise<Runtime> => {
   await ensureOffscreenDocument()
 
   const store = await createChromeStore({ createStore })(rootReducer)
-  const { enabled, logging, filterStrictness } = store.getState().settings
+  const { enabled, logging, filterStrictness, trainedModel } = store.getState().settings
   refreshActionBadge(enabled)
 
   // reduxed keeps this worker's store synced with storage, so a popup toggle
@@ -118,7 +118,7 @@ const initRuntime = async (): Promise<Runtime> => {
   if (logging === true) logger.enable()
 
   const model = new OffscreenModel()
-  model.setSettings(filterStrictness, logging)
+  model.setSettings(filterStrictness, logging, trainedModel)
 
   const queue = new Queue(model, logger, store)
 
@@ -244,12 +244,12 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
 chrome.runtime.onConnect.addListener(port => port.onDisconnect.addListener(() => {
   getRuntime()
     .then(({ store, logger, model, queue }) => {
-      const { enabled, logging, filterStrictness } = store.getState().settings
+      const { enabled, logging, filterStrictness, trainedModel } = store.getState().settings
       refreshActionBadge(enabled)
 
       if (logging) logger.enable()
       else logger.disable()
-      model.setSettings(filterStrictness, logging)
+      model.setSettings(filterStrictness, logging, trainedModel)
 
       queue.clearCache()
     })

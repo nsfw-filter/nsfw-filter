@@ -1,3 +1,5 @@
+import { TrainedModel } from './models'
+
 export class PredictionRequest {
   public readonly url: string
   public readonly type?: string // @DOCS Chrome internal usage
@@ -46,6 +48,7 @@ export type OffscreenSettingsRequest = {
   type: 'SET_SETTINGS'
   filterStrictness: number
   logging: boolean
+  trainedModel: TrainedModel
 }
 
 export type OffscreenRequest = OffscreenClassifyRequest | OffscreenSettingsRequest

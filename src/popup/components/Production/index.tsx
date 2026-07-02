@@ -3,6 +3,7 @@ import { ChevronDown, ChevronUp, Contrast, Droplet, EyeOff } from 'lucide-react'
 import React, { useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 
+import { TRAINED_MODELS, TRAINED_MODEL_LABELS, TrainedModel } from '../../../utils/models'
 import { setFilterStrictness } from '../../redux/actions/settings'
 import {
   setTrainedModel,
@@ -122,11 +123,11 @@ export const Production: React.FC = () => {
           <AdvancedPanel id="advanced-panel">
             <AdvancedRow>
               <FieldLabel>Trained model</FieldLabel>
-              <Select
+              <Select<TrainedModel>
                 value={trainedModel}
-                style={{ width: 150 }}
+                style={{ width: 170 }}
                 onChange={value => dispatch(setTrainedModel(value))}
-                options={[{ value: trainedModel, label: trainedModel }]}
+                options={TRAINED_MODELS.map(value => ({ value, label: TRAINED_MODEL_LABELS[value] }))}
               />
             </AdvancedRow>
             <Checkbox checked={logging} onChange={() => dispatch(toggleLogging())}>
