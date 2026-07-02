@@ -20,6 +20,30 @@ const GlobalStyle = createGlobalStyle`
     color: ${props => props.theme.text.primary};
     margin: 0;
   }
+  /* The popup content is tuned to fit under Chrome's ~600px popup cap, so this
+     scrollbar normally never appears. It's a fallback for when it does (long
+     locale, large default font): Chrome's default is a chunky grey gutter, so
+     replace it with a thin, rounded, floating thumb (transparent track; the 3px
+     transparent border + background-clip leaves a ~4px visible thumb). */
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: ${props => props.theme.scrollbar.thumb} transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: ${props => props.theme.scrollbar.thumb};
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: ${props => props.theme.scrollbar.thumbHover};
+  }
 `
 
 const light = {
@@ -33,6 +57,10 @@ const light = {
   },
   accent: '#6366f1',
   border: '#ececf3',
+  scrollbar: {
+    thumb: '#d4d4e0',
+    thumbHover: '#b9b9c9'
+  },
   // The card surface is already near-white, so the default near-white track
   // vanishes into it. Sink the track a few shades and keep the selected thumb
   // pure white so the group reads as a distinct control.
@@ -54,6 +82,10 @@ const dark = {
   // Lighter indigo so the accent keeps contrast on the dark background.
   accent: '#818cf8',
   border: '#2c3742',
+  scrollbar: {
+    thumb: '#3a4651',
+    thumbHover: '#4a5765'
+  },
   segmented: {
     track: '#19222a',
     thumb: '#323f4a'

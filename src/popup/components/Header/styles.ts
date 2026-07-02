@@ -5,7 +5,7 @@ export const Container = styled.div`
   border-bottom: 1px solid ${props => props.theme.border};
   display: flex;
   justify-content: space-between;
-  padding: 14px 16px;
+  padding: 11px 16px;
   width: 100%;
 `
 
