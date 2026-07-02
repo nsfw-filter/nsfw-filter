@@ -15,6 +15,10 @@ declare module 'styled-components' {
     }
     accent: string
     border: string
+    scrollbar: {
+      thumb: string
+      thumbHover: string
+    }
     segmented: {
       track: string
       thumb: string

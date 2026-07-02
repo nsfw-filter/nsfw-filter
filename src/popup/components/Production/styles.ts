@@ -3,8 +3,8 @@ import styled from 'styled-components'
 export const Container = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 16px;
+  gap: 8px;
+  padding: 12px 16px;
   width: 100%;
 
   .ant-slider {
@@ -64,7 +64,7 @@ export const Card = styled.div`
   border-radius: 12px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   padding: 14px;
 `
 
@@ -129,8 +129,8 @@ export const AdvancedToggle = styled.button`
 export const AdvancedPanel = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding-top: 12px;
+  gap: 10px;
+  padding-top: 10px;
 `
 
 export const AdvancedRow = styled.div`
