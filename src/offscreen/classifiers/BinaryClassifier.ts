@@ -12,7 +12,7 @@ import { ILogger } from '../../utils/Logger'
 import { TrainedModel } from '../../utils/models'
 import { withTimeout } from '../../utils/withTimeout'
 
-import { Classifier, ClassifierSettings, WARMUP_TIMEOUT } from './Classifier'
+import { Classifier, ClassifierSettings, MODEL_LOAD_TIMEOUT, WARMUP_TIMEOUT } from './Classifier'
 
 // Marqo/nsfw-image-detection-384 (ViT-Tiny), converted to a TFJS GraphModel.
 // Binary: the model outputs two logits and class index 0 is NSFW. onnx2tf
@@ -55,7 +55,7 @@ export class BinaryClassifier implements Classifier {
   }
 
   public async load (requireWarm: boolean): Promise<boolean> {
-    this.model = await loadGraphModel(MODEL_PATH)
+    this.model = await withTimeout(loadGraphModel(MODEL_PATH), MODEL_LOAD_TIMEOUT, 'Model load')
     const warmed = await this.warmUp()
     if (!warmed && requireWarm) {
       this.dispose()
@@ -98,8 +98,12 @@ export class BinaryClassifier implements Classifier {
     if (this.model === null) throw new Error('Model is not loaded')
 
     const prob = this.nsfwProbability(image)
-    const [probability] = await prob.data()
-    prob.dispose()
+    let probability: number
+    try {
+      [probability] = await prob.data()
+    } finally {
+      prob.dispose()
+    }
 
     const result = probability >= this.threshold
     if (this.logger.status) {

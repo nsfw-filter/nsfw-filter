@@ -109,6 +109,12 @@ const enqueue = async <T>(op: () => Promise<T>): Promise<T> => {
   return await run
 }
 
+// A prediction that exceeds PREDICTION_TIMEOUT rejects and frees the chain (so
+// one stuck image can't wedge the rest), but the underlying predict() may still
+// be running against the model. Track it so switchTo() can wait for it to settle
+// before disposing — otherwise a queued switch would dispose tensors mid-inference.
+let inFlightPredict: Promise<unknown> = Promise.resolve()
+
 const createClassifier = (id: TrainedModel): Classifier => {
   const settings = { filterStrictness: pendingStrictness }
   if (id === 'ViT_NSFW_384') return new BinaryClassifier(logger, settings)
@@ -125,13 +131,17 @@ const bringUpClassifier = async (id: TrainedModel): Promise<Classifier> => {
   while (true) {
     try {
       let classifier = createClassifier(id)
-      let ok = await classifier.load(currentBackend === 'webgl')
+      // Require warm-up on every backend. On WebGL a failed warm-up returns false
+      // (not throw) so we can drop to WASM; on WASM a failed warm-up must also
+      // fail here, so bringUpOrFallback can try the default model instead of
+      // accepting a model that can't actually run.
+      let ok = await classifier.load(true)
       if (!ok && currentBackend === 'webgl') {
         logger.log('WebGL cannot run the model; falling back to WASM')
         currentBackend = 'wasm'
         await setWasmBackend()
         classifier = createClassifier(id)
-        ok = await classifier.load(false)
+        ok = await classifier.load(true)
       }
       if (!ok) {
         classifier.dispose()
@@ -183,6 +193,9 @@ const ensureUp = (): void => {
 const switchTo = async (id: TrainedModel): Promise<void> => {
   const previous = activeClassifier
   activeClassifier = null
+  // A timed-out prediction may still be running on `previous`; let it settle so
+  // we never dispose the model out from under an in-flight inference.
+  await inFlightPredict
   previous?.dispose()
   try {
     activeClassifier = await bringUpOrFallback(id)
@@ -210,7 +223,9 @@ const classify = async (url: string): Promise<boolean> => {
 
   return await enqueue(async () => {
     if (activeClassifier === null) throw new Error('Model is not loaded')
-    return await withTimeout(activeClassifier.predict(image, url), PREDICTION_TIMEOUT, 'Prediction')
+    const prediction = activeClassifier.predict(image, url)
+    inFlightPredict = prediction.catch(() => undefined)
+    return await withTimeout(prediction, PREDICTION_TIMEOUT, 'Prediction')
   })
 }
 

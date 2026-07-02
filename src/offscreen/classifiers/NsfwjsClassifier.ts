@@ -5,7 +5,7 @@ import { ILogger } from '../../utils/Logger'
 import { TrainedModel } from '../../utils/models'
 import { withTimeout } from '../../utils/withTimeout'
 
-import { Classifier, ClassifierSettings, WARMUP_TIMEOUT } from './Classifier'
+import { Classifier, ClassifierSettings, MODEL_LOAD_TIMEOUT, WARMUP_TIMEOUT } from './Classifier'
 
 // The original gantman/nsfwjs MobileNetV2 graph model: 5 classes, 224x224. The
 // strictness slider tunes per-class thresholds; that decision logic stays in
@@ -28,7 +28,7 @@ export class NsfwjsClassifier implements Classifier {
   }
 
   public async load (requireWarm: boolean): Promise<boolean> {
-    this.nsfw = await loadModel(MODEL_PATH, { type: 'graph' })
+    this.nsfw = await withTimeout(loadModel(MODEL_PATH, { type: 'graph' }), MODEL_LOAD_TIMEOUT, 'Model load')
     const warmed = await this.warmUp()
     if (!warmed && requireWarm) {
       this.dispose()

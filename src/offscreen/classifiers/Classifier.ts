@@ -29,3 +29,9 @@ export type Classifier = {
 // Warm-up doubles as WebGL validation: a small probe op can succeed on a GPU
 // that then hangs on the real graph, so we time-box the first full classify.
 export const WARMUP_TIMEOUT = 8000
+
+// Weights load from bundled local files, but a stalled GPU weight upload or disk
+// read would still wedge the (serialised) op chain, since bring-up runs on it.
+// Time-box the load so a hang recovers via bringUpClassifier's retry instead of
+// pinning the offscreen document.
+export const MODEL_LOAD_TIMEOUT = 15000
