@@ -1,3 +1,5 @@
+import { TrainedModel } from '../../../../utils/models'
+
 import {
   TOGGLE_LOGGING,
   TOGGLE_DIV_FILTERING,
@@ -17,7 +19,7 @@ export const setFilterEffect = (filterEffect: 'hide' | 'blur' | 'grayscale') => 
   payload: { filterEffect }
 } as const)
 
-export const setTrainedModel = (trainedModel: 'MobileNet_v1.2') => ({
+export const setTrainedModel = (trainedModel: TrainedModel) => ({
   type: SET_TRAINED_MODEL,
   payload: { trainedModel }
 } as const)

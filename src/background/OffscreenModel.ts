@@ -2,6 +2,7 @@ import {
   OffscreenClassifyResponse,
   OffscreenRequest
 } from '../utils/messages'
+import { TrainedModel } from '../utils/models'
 
 // Service-worker-side proxy for the model that runs in the offscreen document.
 // It plays the same role the `Model` class did for the queues (`predict` and
@@ -9,7 +10,7 @@ import {
 // can't touch the DOM or run the WebGL/WASM model itself.
 export type IOffscreenModel = {
   predict: (url: string) => Promise<boolean>
-  setSettings: (filterStrictness: number, logging: boolean) => void
+  setSettings: (filterStrictness: number, logging: boolean, trainedModel: TrainedModel) => void
 }
 
 export class OffscreenModel implements IOffscreenModel {
@@ -38,12 +39,13 @@ export class OffscreenModel implements IOffscreenModel {
     })
   }
 
-  public setSettings (filterStrictness: number, logging: boolean): void {
+  public setSettings (filterStrictness: number, logging: boolean, trainedModel: TrainedModel): void {
     const request: OffscreenRequest = {
       target: 'offscreen',
       type: 'SET_SETTINGS',
       filterStrictness,
-      logging
+      logging,
+      trainedModel
     }
 
     chrome.runtime.sendMessage(request, () => {

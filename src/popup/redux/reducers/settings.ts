@@ -1,4 +1,5 @@
 
+import { DEFAULT_TRAINED_MODEL, isTrainedModel, TrainedModel } from '../../../utils/models'
 import { SettingsActionTypes } from '../actions/settings'
 import {
   TOGGLE_LOGGING,
@@ -13,7 +14,7 @@ export type SettingsState = {
   enabled: boolean
   logging: boolean
   filterEffect: 'hide' | 'blur' | 'grayscale'
-  trainedModel: 'MobileNet_v1.2'
+  trainedModel: TrainedModel
   filterStrictness: number
   websites: string[]
 }
@@ -22,7 +23,7 @@ const initialState: SettingsState = {
   enabled: true,
   logging: process.env.NODE_ENV === 'development',
   filterEffect: 'blur',
-  trainedModel: 'MobileNet_v1.2',
+  trainedModel: DEFAULT_TRAINED_MODEL,
   filterStrictness: 55,
   websites: []
 }
@@ -34,7 +35,10 @@ export function settings (state = initialState, action: SettingsActionTypes): Se
   // disables filtering after an upgrade. Only allocate when a key is actually
   // missing, so unrelated actions keep the same `settings` reference.
   const hydrated = (state as Partial<SettingsState>).enabled !== undefined
-  const s = hydrated ? state : { ...initialState, ...state }
+  let s = hydrated ? state : { ...initialState, ...state }
+  // A model removed in a later version (or a downgrade) would leave an id the
+  // offscreen document can't load; reset it so classification never wedges.
+  if (!isTrainedModel(s.trainedModel)) s = { ...s, trainedModel: DEFAULT_TRAINED_MODEL }
   switch (action.type) {
     case TOGGLE_ENABLED:
       return { ...s, enabled: !s.enabled }

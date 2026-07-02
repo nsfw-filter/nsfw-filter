@@ -4,19 +4,26 @@
 // return a boolean. We prefer the WebGL (GPU) backend, the one the MV2 background
 // page used, and fall back to single-threaded WASM (CPU) when no usable GPU is
 // available. See trySetWebglBackend() and setWasmBackend() for the CSP details.
+//
+// This file owns the shared tfjs backend and serializes work; the actual model
+// (weights, preprocessing, decision) lives behind a Classifier so the user can
+// switch between models. Switching disposes one Classifier and loads another.
 
 import { enableProdMode, env as tfEnv, getBackend, ready as tfReady, setBackend, tensor1d, tidy } from '@tensorflow/tfjs'
 import { setWasmPaths } from '@tensorflow/tfjs-backend-wasm'
-import { load as loadModel, NSFWJS } from 'nsfwjs/core'
 
-import { Model } from '../background/Model'
 import { Logger } from '../utils/Logger'
 import {
   OffscreenClassifyResponse,
   OffscreenRequest
 } from '../utils/messages'
+import { DEFAULT_TRAINED_MODEL, TrainedModel } from '../utils/models'
+import { withTimeout } from '../utils/withTimeout'
 
-const MODEL_PATH = '../models/'
+import { BinaryClassifier } from './classifiers/BinaryClassifier'
+import { Classifier } from './classifiers/Classifier'
+import { NsfwjsClassifier } from './classifiers/NsfwjsClassifier'
+
 const IMAGE_SIZE = 224
 const LOADING_TIMEOUT = 1000
 const DEFAULT_FILTER_STRICTNESS = 55
@@ -24,37 +31,14 @@ const MAX_LOAD_ATTEMPTS = 5
 
 const logger = new Logger()
 
-let model: Model | null = null
-let pendingStrictness = DEFAULT_FILTER_STRICTNESS
-
-// Serialise predictions so the model is never called re-entrantly (the original
-// PredictionQueue used concurrency 1). Image loading still runs in parallel; it
-// happens before joining this chain.
-let predictionChain: Promise<unknown> = Promise.resolve()
-
 enableProdMode()
 
 const WEBGL_PROBE_TIMEOUT = 3000
-const WARMUP_TIMEOUT = 8000
-// Cap a single classification. Predictions are serialised through
-// predictionChain, so one stuck predictImage would wedge every queued image
-// behind it (and the content script's pending-hide stylesheet would leave them
-// hidden). On timeout the prediction rejects, the image is revealed, and the
-// chain is freed for the next request.
+// Cap a single classification. Predictions are serialised through `enqueue`, so
+// one stuck predict would wedge every queued image behind it (and the content
+// script's pending-hide stylesheet would leave them hidden). On timeout the
+// prediction rejects, the image is revealed, and the chain is freed.
 const PREDICTION_TIMEOUT = 10000
-
-// Reject if `promise` doesn't settle within `ms`, so a hang (not just a thrown
-// error) in WebGL init or warm-up can't wedge the offscreen document, e.g. a
-// buggy GPU driver that never returns from a read-back.
-const withTimeout = async <T>(promise: Promise<T>, ms: number, label: string): Promise<T> => {
-  return await new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms)
-    promise.then(
-      (value) => { clearTimeout(timer); resolve(value) },
-      (error) => { clearTimeout(timer); reject(error) }
-    )
-  })
-}
 
 // Switch TensorFlow.js to the WebGL (GPU) backend, the one the MV2 background
 // page used by default. The MV3 CSP only forbids JS eval; the WebGL backend
@@ -96,56 +80,65 @@ const setWasmBackend = async (): Promise<void> => {
   await tfReady()
 }
 
-// Run one throwaway classification. This compiles the backend's kernels during
-// init (while page images are still hidden) so the first real image isn't slow,
-// and it confirms the backend can run the full model: a small probe op can
-// succeed on a GPU that then hangs on the real graph. Returns true if it
-// finished within the timeout, so WebGL can be abandoned for WASM otherwise.
-const warmUpModel = async (nsfwModel: NSFWJS): Promise<boolean> => {
-  try {
-    const canvas = document.createElement('canvas')
-    canvas.width = IMAGE_SIZE
-    canvas.height = IMAGE_SIZE
-    await withTimeout(nsfwModel.classify(canvas, 1), WARMUP_TIMEOUT, 'Model warm-up')
-    return true
-  } catch (error) {
-    logger.error(error as Error)
-    return false
-  }
+// The tfjs backend is global and picked once: try WebGL, else WASM. A later
+// per-model fallback can still drop WebGL->WASM if a specific model can't run
+// on the GPU (see bringUpClassifier).
+let currentBackend: 'webgl' | 'wasm' | null = null
+
+const ensureBackend = async (): Promise<void> => {
+  if (currentBackend !== null) return
+  currentBackend = (await trySetWebglBackend()) ? 'webgl' : 'wasm'
+  if (currentBackend === 'wasm') await setWasmBackend()
 }
 
-// Load the model on the current backend and warm it up. Returns the model, or
-// null if the warm-up hung or failed (used when probing WebGL so we can retry on
-// WASM).
-const loadAndWarm = async (requireWarm: boolean): Promise<NSFWJS | null> => {
-  const nsfwModel: NSFWJS = await loadModel(MODEL_PATH, { type: 'graph' })
-  const warmed = await warmUpModel(nsfwModel)
-  if (!warmed && requireWarm) return null
-  return nsfwModel
+// --- The active model and the work queue ----------------------------------
+
+let activeClassifier: Classifier | null = null
+let bringingUp = false
+let pendingStrictness = DEFAULT_FILTER_STRICTNESS
+let pendingModelId: TrainedModel = DEFAULT_TRAINED_MODEL
+
+// Serialise predictions AND model switches on one chain so a switch never
+// disposes a model out from under an in-flight prediction (model concurrency =
+// 1). Image *loading* still runs in parallel; it happens before joining here.
+let opChain: Promise<unknown> = Promise.resolve()
+
+const enqueue = async <T>(op: () => Promise<T>): Promise<T> => {
+  const run = opChain.then(op)
+  opChain = run.catch(() => undefined) // keep the chain alive past a rejection
+  return await run
 }
 
-const modelReady: Promise<void> = (async () => {
-  let backend = (await trySetWebglBackend()) ? 'webgl' : 'wasm'
-  if (backend === 'wasm') await setWasmBackend()
+const createClassifier = (id: TrainedModel): Classifier => {
+  const settings = { filterStrictness: pendingStrictness }
+  if (id === 'ViT_NSFW_384') return new BinaryClassifier(logger, settings)
+  return new NsfwjsClassifier(logger, settings)
+}
+
+// Load a model on the current backend, with the same WebGL->WASM fallback and
+// retry the single-model version used. A model that can't warm up on WebGL is
+// disposed (inside load) and reloaded on WASM, so the GPU path can't wedge.
+const bringUpClassifier = async (id: TrainedModel): Promise<Classifier> => {
+  await ensureBackend()
 
   let attempts = 0
   while (true) {
     try {
-      // On WebGL the warm-up doubles as GPU validation: if the full model can't
-      // run there, drop to WASM and reload instead of using a backend that hangs
-      // on every image.
-      let nsfwModel = await loadAndWarm(backend === 'webgl')
-      if (nsfwModel === null && backend === 'webgl') {
+      let classifier = createClassifier(id)
+      let ok = await classifier.load(currentBackend === 'webgl')
+      if (!ok && currentBackend === 'webgl') {
         logger.log('WebGL cannot run the model; falling back to WASM')
-        backend = 'wasm'
+        currentBackend = 'wasm'
         await setWasmBackend()
-        nsfwModel = await loadAndWarm(false)
+        classifier = createClassifier(id)
+        ok = await classifier.load(false)
       }
-      if (nsfwModel === null) throw new Error('Model warm-up failed')
-
-      logger.log(`TFJS backend: ${backend}`)
-      model = new Model(nsfwModel, logger, { filterStrictness: pendingStrictness })
-      return
+      if (!ok) {
+        classifier.dispose()
+        throw new Error('Model warm-up failed')
+      }
+      logger.log(`TFJS backend: ${currentBackend}, model: ${id}`)
+      return classifier
     } catch (error) {
       attempts++
       logger.error(error as Error)
@@ -154,7 +147,50 @@ const modelReady: Promise<void> = (async () => {
       await new Promise(resolve => setTimeout(resolve, 200))
     }
   }
-})()
+}
+
+// Never leave the document with no usable model: if the requested model can't
+// load, fall back to the default rather than wedging every page's images hidden.
+const bringUpOrFallback = async (id: TrainedModel): Promise<Classifier> => {
+  try {
+    return await bringUpClassifier(id)
+  } catch (error) {
+    if (id === DEFAULT_TRAINED_MODEL) throw error
+    logger.error(error as Error)
+    logger.log(`Model ${id} failed to load; falling back to ${DEFAULT_TRAINED_MODEL}`)
+    return await bringUpClassifier(DEFAULT_TRAINED_MODEL)
+  }
+}
+
+// Lazily bring up the model the first time it's needed (first settings push or
+// first image). The background pushes settings on every worker start, so this
+// still pre-warms before the first page image in practice.
+const ensureUp = (): void => {
+  if (bringingUp) return
+  bringingUp = true
+  enqueue(async () => {
+    try {
+      activeClassifier = await bringUpOrFallback(pendingModelId)
+    } catch (error) {
+      bringingUp = false // allow a later event to retry from scratch
+      throw error
+    }
+  }).catch(() => undefined)
+}
+
+// Dispose the old model BEFORE loading the new one (never both resident). Safe
+// because this runs on the same chain as predictions, so nothing is mid-predict.
+const switchTo = async (id: TrainedModel): Promise<void> => {
+  const previous = activeClassifier
+  activeClassifier = null
+  previous?.dispose()
+  try {
+    activeClassifier = await bringUpOrFallback(id)
+  } catch (error) {
+    bringingUp = false // both the target and the default failed; let a retry rebuild
+    throw error
+  }
+}
 
 const loadImage = async (url: string): Promise<HTMLImageElement> => {
   const image: HTMLImageElement = new Image(IMAGE_SIZE, IMAGE_SIZE)
@@ -169,16 +205,13 @@ const loadImage = async (url: string): Promise<HTMLImageElement> => {
 }
 
 const classify = async (url: string): Promise<boolean> => {
-  await modelReady
-  if (model === null) throw new Error('Model is not loaded')
-
+  ensureUp()
   const image = await loadImage(url)
 
-  const run = predictionChain.then(async () =>
-    await withTimeout((model as Model).predictImage(image, url), PREDICTION_TIMEOUT, 'Prediction'))
-  // Keep the chain alive even if this prediction rejects.
-  predictionChain = run.catch(() => undefined)
-  return await run
+  return await enqueue(async () => {
+    if (activeClassifier === null) throw new Error('Model is not loaded')
+    return await withTimeout(activeClassifier.predict(image, url), PREDICTION_TIMEOUT, 'Prediction')
+  })
 }
 
 chrome.runtime.onMessage.addListener((
@@ -190,9 +223,16 @@ chrome.runtime.onMessage.addListener((
 
   if (message.type === 'SET_SETTINGS') {
     pendingStrictness = message.filterStrictness
+    pendingModelId = message.trainedModel
     if (message.logging) logger.enable()
     else logger.disable()
-    if (model !== null) model.setSettings({ filterStrictness: message.filterStrictness })
+
+    ensureUp()
+    enqueue(async () => {
+      if (activeClassifier === null) return // ensureUp is loading pendingModelId already
+      if (activeClassifier.trainedModel !== pendingModelId) await switchTo(pendingModelId)
+      else activeClassifier.setSettings({ filterStrictness: pendingStrictness })
+    }).catch(() => undefined)
     return
   }
 
