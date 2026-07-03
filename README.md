@@ -24,31 +24,31 @@ Click the icon in your extensions tab to open the popup. From there you can turn
 
 Install dependencies by running:
 
-```sh
+```bash
 npm install
 ```
 
 Then build the project:
 
-```sh
+```bash
 npm run build
 ```
 
 To run the tests:
 
-```sh
+```bash
 npm run test
 ```
 
 To develop with live reload, start a watch build that rebuilds on every change:
 
-```sh
+```bash
 npm run dev
 ```
 
 Then, in a separate terminal, launch Chromium with the extension loaded. It reloads automatically as the build updates:
 
-```sh
+```bash
 npm run start:chrome
 ```
 
