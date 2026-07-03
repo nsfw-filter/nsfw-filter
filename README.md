@@ -2,27 +2,21 @@
 
 A free, open source, and privacy-focused browser extension to block "not safe for work" content.
 
-Built using TensorFlow.js and [NSFWJS](https://github.com/infinitered/nsfwjs).
+Images are classified on your device with TensorFlow.js. Nothing is uploaded, and no data leaves your browser.
 
-[Download now from chrome web store!](https://chrome.google.com/webstore/detail/nsfw-filter/kmgagnlkckiamnenbpigfaljmanlbbhh)
+NSFW Filter ships two models you can switch between in the popup: a small, accurate Vision Transformer (ViT-384) that classifies images as safe or not safe (the default), and the original [NSFWJS](https://github.com/infinitered/nsfwjs) MobileNet model.
 
-![Demo of using NSFW Filter](demo/images/demo.gif)
+Download now for [Google Chrome](https://chrome.google.com/webstore/detail/nsfw-filter/kmgagnlkckiamnenbpigfaljmanlbbhh).
 
-# Table of contents
-
-- [NSFW Filter](#nsfw-filter)
-- [Table of contents](#table-of-contents)
-- [Usage](#usage)
-- [Development](#development)
-- [Contribute](#contribute)
+![Demo of NSFW Filter extension in action.](demo/images/demo.gif)
 
 # Usage
 
-You can install the extension from the [chrome web store](https://chrome.google.com/webstore/detail/nsfw-filter/kmgagnlkckiamnenbpigfaljmanlbbhh) or [source](#development).
+You can install the extension from the [Chrome Web Store](https://chrome.google.com/webstore/detail/nsfw-filter/kmgagnlkckiamnenbpigfaljmanlbbhh) or [source](#development).
 
 When you load web pages, NSFW Filter will first hide all images and only show those classified as safe.
 
-To customize the extension, click the icon in your extensions tab.
+Click the icon in your extensions tab to open the popup. From there you can turn protection on or off, adjust how strict the filter is, choose how flagged images are handled (blur, grayscale, or hide), pick which model does the classifying, and allow specific sites.
 
 ![NSFW Filter popup](demo/images/popup-window.png)
 
@@ -46,25 +40,31 @@ To run the tests:
 npm run test
 ```
 
-To run a development version with live reload, run:
+To develop with live reload, start a watch build that rebuilds on every change:
 
 ```sh
-npm run dev:chrome
+npm run dev
 ```
 
-Or open Google Chrome and open the Extension Management page by navigating to ```chrome://extensions``` or by opening Settings and clicking Extensions from the bottom left.
+Then, in a separate terminal, launch Chromium with the extension loaded. It reloads automatically as the build updates:
 
-Enable Developer Mode by clicking the toggle switch next to Developer mode.
+```sh
+npm run start:chrome
+```
 
-Click the "Load Unpacked" button and select the extension directory(```.../dist```).
+To load the build manually instead, open Google Chrome and open the **Extensions** page by navigating to `chrome://extensions` or by opening **Settings** and clicking **Extensions** from the bottom left.
 
-![Load extension to Chrome in developer mode](./demo/images/install-instructions.png)
+Enable **Developer Mode** by clicking the toggle switch.
+
+Click the **Load Unpacked** button and select the extension directory (`.../dist`).
+
+![Load extension to Chrome in Developer Mode.](./demo/images/install-instructions.png)
 
 # Contribute
 
 Please check the [**Contributing Guidelines**](https://github.com/navendu-pottekkat/nsfw-filter/blob/master/.github/markdown/CONTRIBUTING.md) before contributing.
 
-Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+Thanks to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)) for helping build and maintain NSFW Filter:
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
@@ -105,4 +105,4 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
-This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
+This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind are welcome!
