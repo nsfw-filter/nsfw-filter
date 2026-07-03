@@ -62,7 +62,7 @@ Click the **Load Unpacked** button and select the extension directory (`.../dist
 
 # Contribute
 
-Please check the [**Contributing Guidelines**](https://github.com/navendu-pottekkat/nsfw-filter/blob/master/.github/markdown/CONTRIBUTING.md) before contributing.
+Please check the [**Contributor Guidelines**](https://github.com/nsfw-filter/nsfw-filter/blob/master/CONTRIBUTING.md) before contributing.
 
 Thanks to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)) for helping build and maintain NSFW Filter:
 
