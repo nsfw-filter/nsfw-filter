@@ -11,20 +11,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Setup Node
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
         with:
-          node-version: 16
-      - name: Setup release
-        uses: softprops/action-gh-release@v1
+          node-version: 22
       - name: Build
         run: |
           npm ci
           npm run build
       - name: Archive production artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: dist-folder
-          path: |
-            dist
+          path: dist
+      - name: Setup release
+        uses: softprops/action-gh-release@v2
