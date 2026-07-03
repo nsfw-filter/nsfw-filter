@@ -60,7 +60,7 @@ export const Production: React.FC = () => {
       <PowerRow>
         <PowerText>
           <PowerTitle>Protection</PowerTitle>
-          <PowerHint>{enabled ? 'On. Reload open tabs to apply changes' : 'Paused. Reload open tabs to apply changes'}</PowerHint>
+          <PowerHint>{enabled ? 'On' : 'Paused'}</PowerHint>
         </PowerText>
         <Switch checked={enabled} onChange={() => dispatch(toggleEnabled())} />
       </PowerRow>

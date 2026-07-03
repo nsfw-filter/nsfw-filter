@@ -15,7 +15,7 @@ export const Header: React.FC = () => {
   return (
     <Container>
       <Brand>
-        <Logo size={18} />
+        <Logo size={15} />
         <Wordmark>
           <Title>
             <span id="logo-first-letters">NSFW</span>

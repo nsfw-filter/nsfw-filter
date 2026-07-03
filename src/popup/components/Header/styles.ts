@@ -13,7 +13,7 @@ export const Brand = styled.div`
   align-items: center;
   cursor: default;
   display: flex;
-  gap: 8px;
+  gap: 7px;
 `
 
 export const Wordmark = styled.div`

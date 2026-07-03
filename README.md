@@ -1,8 +1,8 @@
-# NSFW Filter
+# <img src="demo/images/logo-mark.svg" width="34" align="middle" alt=""> NSFW Filter
 
 A free, open source, and privacy-focused browser extension to block "not safe for work" content.
 
-Built using TypeScript, TensorFlow.js, and [NSFWJS](https://github.com/infinitered/nsfwjs).
+Built using TensorFlow.js and [NSFWJS](https://github.com/infinitered/nsfwjs).
 
 [Download now from chrome web store!](https://chrome.google.com/webstore/detail/nsfw-filter/kmgagnlkckiamnenbpigfaljmanlbbhh)
 
