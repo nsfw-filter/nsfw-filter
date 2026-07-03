@@ -1,5 +1,8 @@
 # <img src="demo/images/logo-mark.svg" width="34" align="middle" alt=""> NSFW Filter
 
+> [!NOTE]
+> v3.0.0 released! See the release notes here: https://nsfwfilter.com/news/v3.0.0
+
 A free, open source, and privacy-focused browser extension to block "not safe for work" content.
 
 Images are classified on your device with TensorFlow.js. Nothing is uploaded, and no data leaves your browser.
