@@ -104,6 +104,69 @@ describe('content => ImageFilter => analyzeImage', () => {
   })
 })
 
+describe('content => ImageFilter => checkStyleMutation', () => {
+  test('re-hides a blocked image whose visibility the page reset (hide mode)', () => {
+    const filter = new ImageFilter()
+    filter.setSettings({ filterEffect: 'hide' })
+    const image = makeImage(200, 200)
+    image.dataset.nsfwFilterStatus = 'nsfw'
+    image.style.visibility = 'visible'
+
+    filter.checkStyleMutation(image)
+
+    expect(image.style.visibility).toBe('hidden')
+  })
+
+  test('re-applies blur whose filter the page cleared (blur mode)', () => {
+    const filter = new ImageFilter()
+    filter.setSettings({ filterEffect: 'blur' })
+    const image = makeImage(200, 200)
+    image.dataset.nsfwFilterStatus = 'nsfw'
+    image.style.filter = ''
+
+    filter.checkStyleMutation(image)
+
+    expect(image.style.filter).toContain('blur')
+  })
+
+  test('restores full blur when the page downgrades it to a weak blur', () => {
+    const filter = new ImageFilter()
+    filter.setSettings({ filterEffect: 'blur' })
+    const image = makeImage(200, 200)
+    image.dataset.nsfwFilterStatus = 'nsfw'
+    image.style.filter = 'blur(1px)'
+
+    filter.checkStyleMutation(image)
+
+    expect(image.style.filter).toBe('blur(25px)')
+  })
+
+  test('leaves an sfw image untouched', () => {
+    const filter = new ImageFilter()
+    filter.setSettings({ filterEffect: 'hide' })
+    const image = makeImage(200, 200)
+    image.dataset.nsfwFilterStatus = 'sfw'
+    image.style.visibility = 'visible'
+
+    filter.checkStyleMutation(image)
+
+    expect(image.style.visibility).toBe('visible')
+  })
+
+  test('does not rewrite the style when the effect is still intact', () => {
+    const filter = new ImageFilter()
+    filter.setSettings({ filterEffect: 'hide' })
+    const image = makeImage(200, 200)
+    image.dataset.nsfwFilterStatus = 'nsfw'
+    image.style.visibility = 'hidden'
+    const spy = jest.spyOn(image.style, 'visibility', 'set')
+
+    filter.checkStyleMutation(image)
+
+    expect(spy).not.toHaveBeenCalled()
+  })
+})
+
 describe('content => ImageFilter => revealImage', () => {
   test('clears a blurred image and retags it sfw', () => {
     const image = makeImage(200, 200)
