@@ -86,7 +86,15 @@ export class ImageFilter extends Filter implements IImageFilter {
   // the page clears the effect on a still-blocked image, put it back. The
   // effect-intact check keeps this from looping against our own style writes.
   public checkStyleMutation (image: HTMLImageElement): void {
-    if (image.dataset.nsfwFilterStatus !== 'nsfw') return
+    const status = image.dataset.nsfwFilterStatus
+    // An in-flight image is hidden only by our inline visibility; a restyle wipes
+    // it. Keep it hidden (not revealed-with-effect: it isn't classified yet) until
+    // the prediction returns and either reveals or blocks it.
+    if (status === 'processing') {
+      if (image.style.visibility !== 'hidden') this.hideImage(image)
+      return
+    }
+    if (status !== 'nsfw') return
     if (this.isEffectApplied(image)) return
     this.applyEffect(image)
   }

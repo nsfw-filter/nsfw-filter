@@ -141,6 +141,31 @@ describe('content => ImageFilter => checkStyleMutation', () => {
     expect(image.style.filter).toBe('blur(25px)')
   })
 
+  test('re-applies grayscale whose filter the page cleared (grayscale mode)', () => {
+    const filter = new ImageFilter()
+    filter.setSettings({ filterEffect: 'grayscale' })
+    const image = makeImage(200, 200)
+    image.dataset.nsfwFilterStatus = 'nsfw'
+    image.style.filter = ''
+
+    filter.checkStyleMutation(image)
+
+    expect(image.style.filter).toBe('grayscale(1)')
+  })
+
+  test('keeps an in-flight image hidden rather than revealing it (blur mode)', () => {
+    const filter = new ImageFilter()
+    filter.setSettings({ filterEffect: 'blur' })
+    const image = makeImage(200, 200)
+    image.dataset.nsfwFilterStatus = 'processing'
+    image.style.visibility = 'visible'
+
+    filter.checkStyleMutation(image)
+
+    expect(image.style.visibility).toBe('hidden')
+    expect(image.style.filter).not.toContain('blur')
+  })
+
   test('leaves an sfw image untouched', () => {
     const filter = new ImageFilter()
     filter.setSettings({ filterEffect: 'hide' })
