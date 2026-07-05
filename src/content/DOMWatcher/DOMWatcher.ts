@@ -48,9 +48,17 @@ export class DOMWatcher implements IDOMWatcher {
   }
 
   private checkAttributeMutation (mutation: MutationRecord): void {
-    if ((mutation.target as HTMLImageElement).nodeName === 'IMG') {
-      this.imageFilter.analyzeImage(mutation.target as HTMLImageElement, mutation.attributeName === 'src')
+    if ((mutation.target as HTMLImageElement).nodeName !== 'IMG') return
+
+    const image = mutation.target as HTMLImageElement
+    // A style change is the page overwriting our effect (see checkStyleMutation),
+    // not a new image to classify.
+    if (mutation.attributeName === 'style') {
+      this.imageFilter.checkStyleMutation(image)
+      return
     }
+
+    this.imageFilter.analyzeImage(image, mutation.attributeName === 'src')
   }
 
   private static getConfig (): MutationObserverInit {
@@ -59,7 +67,7 @@ export class DOMWatcher implements IDOMWatcher {
       subtree: true,
       childList: true,
       attributes: true,
-      attributeFilter: ['src']
+      attributeFilter: ['src', 'style']
     }
   }
 }

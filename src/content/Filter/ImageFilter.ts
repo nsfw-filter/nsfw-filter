@@ -10,6 +10,7 @@ export type IImageFilter = {
   analyzeImage: (image: HTMLImageElement, srcAttribute: boolean) => void
   setSettings: (settings: imageFilterSettingsType) => void
   revealImage: (image: HTMLImageElement) => void
+  checkStyleMutation: (image: HTMLImageElement) => void
 }
 
 export class ImageFilter extends Filter implements IImageFilter {
@@ -78,6 +79,48 @@ export class ImageFilter extends Filter implements IImageFilter {
 
     image.dataset.nsfwFilterStatus = 'processing'
     this._analyzeImage(image)
+  }
+
+  // Some sites (Instagram, Google) rewrite an image's inline style on every
+  // re-render, wiping the effect we applied so a blocked image reappears. When
+  // the page clears the effect on a still-blocked image, put it back. The
+  // effect-intact check keeps this from looping against our own style writes.
+  public checkStyleMutation (image: HTMLImageElement): void {
+    const status = image.dataset.nsfwFilterStatus
+    // An in-flight image is hidden only by our inline visibility; a restyle wipes
+    // it. Keep it hidden (not revealed-with-effect: it isn't classified yet) until
+    // the prediction returns and either reveals or blocks it.
+    if (status === 'processing') {
+      if (image.style.visibility !== 'hidden') this.hideImage(image)
+      return
+    }
+    if (status !== 'nsfw') return
+    if (this.isEffectApplied(image)) return
+    this.applyEffect(image)
+  }
+
+  private isEffectApplied (image: HTMLImageElement): boolean {
+    // Match our exact value, not a substring: a site setting its own weak
+    // `filter: blur(1px)` on a blocked image must still count as effect-gone so
+    // we re-apply the full blur(25px), not leave the image barely obscured.
+    if (this.settings.filterEffect === 'blur') return image.style.filter === 'blur(25px)'
+    if (this.settings.filterEffect === 'grayscale') return image.style.filter === 'grayscale(1)'
+    return image.style.visibility === 'hidden'
+  }
+
+  private applyEffect (image: HTMLImageElement): void {
+    if (this.settings.filterEffect === 'blur') {
+      image.style.filter = 'blur(25px)'
+      image.style.visibility = 'visible'
+      if (image.parentNode?.nodeName === 'BODY') image.hidden = false
+    } else if (this.settings.filterEffect === 'grayscale') {
+      image.style.filter = 'grayscale(1)'
+      image.style.visibility = 'visible'
+      if (image.parentNode?.nodeName === 'BODY') image.hidden = false
+    } else {
+      image.style.visibility = 'hidden'
+      if (image.parentNode?.nodeName === 'BODY') image.hidden = true
+    }
   }
 
   private _analyzeImage (image: HTMLImageElement): void {
