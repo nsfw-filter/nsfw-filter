@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { setWebsiteList } from '../../popup/redux/actions/settings/index'
 import { RootState } from '../../popup/redux/reducers'
 import { SettingsState } from '../../popup/redux/reducers/settings'
-import { normalizeHostEntry } from '../../utils/allowlist'
+import { isHostAllowed, normalizeHostEntry } from '../../utils/allowlist'
 
 import { Wrap, Title, Sub, AddRow, ListCard, Row, Host, Remove, EmptyNote } from './styles'
 
@@ -19,7 +19,8 @@ export const Options: React.FC = () => {
     event.preventDefault()
     const entry = normalizeHostEntry(draft)
     if (entry === '') return
-    if (!websites.includes(entry)) dispatch(setWebsiteList([...websites, entry]))
+    // isHostAllowed, not includes: a broader entry already covers a subdomain.
+    if (!isHostAllowed(entry, websites)) dispatch(setWebsiteList([...websites, entry]))
     setDraft('')
   }
 

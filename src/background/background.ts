@@ -113,8 +113,7 @@ const initRuntime = async (): Promise<Runtime> => {
   // reduxed keeps this worker's store synced with storage, so a popup change
   // lands here even while the popup is open. Propagate live: mirror `enabled`
   // onto the badge, and push model/strictness/logging to the offscreen document
-  // as they change (it swaps the model in place, gated on its prediction chain),
-  // clearing the cache so the new settings apply to already-seen images too.
+  // as they change (it swaps the model in place, gated on its prediction chain).
   // Guard on change so per-image statistics ticks don't trigger any of this.
   let applied = { enabled, logging, filterStrictness, trainedModel }
   store.subscribe(() => {
@@ -129,7 +128,11 @@ const initRuntime = async (): Promise<Runtime> => {
       if (next.logging) logger.enable()
       else logger.disable()
       model.setSettings(next.filterStrictness, next.logging, next.trainedModel)
-      queue.clearCache()
+      // Only a new verdict invalidates cached predictions; a logging toggle
+      // doesn't, so don't force re-classification of already-seen images for it.
+      if (next.filterStrictness !== applied.filterStrictness || next.trainedModel !== applied.trainedModel) {
+        queue.clearCache()
+      }
     }
 
     applied = {
