@@ -50,6 +50,35 @@ describe('content => DOMWatcher => watch', () => {
   })
 })
 
+// Live enable/disable and allowlist toggles have to start and stop watching on
+// an already-open page without a reload, so watch() must be idempotent and
+// unwatch() must stop reporting future mutations.
+describe('content => DOMWatcher => start/stop live', () => {
+  test('sweeps existing images once even if watch() is called twice', () => {
+    document.body.innerHTML = '<img id="a">'
+    const filter = makeFilter()
+
+    const watcher = new DOMWatcher(filter)
+    watcher.watch()
+    watcher.watch()
+
+    expect(filter.analyzeImage).toHaveBeenCalledTimes(1)
+  })
+
+  test('unwatch stops reacting to later mutations', async () => {
+    const filter = makeFilter()
+    const watcher = new DOMWatcher(filter)
+    watcher.watch()
+    watcher.unwatch();
+    (filter.analyzeImage as jest.Mock).mockClear()
+
+    document.body.appendChild(document.createElement('img'))
+    await flushMutations()
+
+    expect(filter.analyzeImage).not.toHaveBeenCalled()
+  })
+})
+
 // Instagram (and Google) rewrite an image's inline style on every re-render,
 // wiping the effect we applied so the blocked image reappears. The observer has
 // to react to style changes, not just src, and re-apply the effect. Issue #244.

@@ -1,4 +1,4 @@
-import { Checkbox, Input, Segmented, Select, Slider, Switch } from 'antd'
+import { Checkbox, Segmented, Select, Slider, Switch } from 'antd'
 import { ChevronDown, ChevronUp, Contrast, Droplet, EyeOff } from 'lucide-react'
 import React, { useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
@@ -8,7 +8,6 @@ import { setFilterStrictness } from '../../redux/actions/settings'
 import {
   setTrainedModel,
   setFilterEffect,
-  setWebsiteList,
   toggleEnabled,
   toggleLogging
 } from '../../redux/actions/settings/index'
@@ -16,6 +15,7 @@ import { RootState } from '../../redux/reducers'
 import { SettingsState } from '../../redux/reducers/settings'
 import { StatisticsState } from '../../redux/reducers/statistics'
 
+import { AllowSiteField } from './AllowSiteField'
 import {
   Container,
   Stat,
@@ -32,6 +32,7 @@ import {
   FieldLabel,
   FieldValue,
   SliderEnds,
+  ManageLink,
   AdvancedToggle,
   AdvancedPanel,
   AdvancedRow
@@ -45,7 +46,6 @@ export const Production: React.FC = () => {
     filterStrictness,
     trainedModel,
     filterEffect,
-    websites,
     logging
   } = useSelector<RootState>((state) => state.settings) as SettingsState
   const { totalBlocked } = useSelector<RootState>((state) => state.statistics) as StatisticsState
@@ -99,15 +99,10 @@ export const Production: React.FC = () => {
           />
         </EffectField>
 
-        <Field>
-          <FieldLabel>Allowed sites</FieldLabel>
-          <Input
-            style={{ marginTop: 8 }}
-            placeholder="twitter.com, facebook.com"
-            defaultValue={websites.join(', ')}
-            onChange={event => dispatch(setWebsiteList(event.target.value.split(/\s*,\s*/).filter(Boolean)))}
-          />
-        </Field>
+        <AllowSiteField />
+        <ManageLink onClick={() => chrome.runtime.openOptionsPage()}>
+          Manage allowed sites
+        </ManageLink>
       </Card>
 
       <div>

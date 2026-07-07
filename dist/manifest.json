@@ -36,6 +36,10 @@
     "default_title": "NSFW Filter",
     "default_popup": "src/popup.html"
   },
+  "options_ui": {
+    "page": "src/options.html",
+    "open_in_tab": true
+  },
   "icons": {
     "16": "images/icon16.png",
     "32": "images/icon32.png",

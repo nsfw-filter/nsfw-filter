@@ -2,6 +2,8 @@ import { createStore } from 'redux'
 
 import { createChromeStore } from '../popup/redux/chrome-storage'
 import { rootReducer } from '../popup/redux/reducers'
+import { SettingsState } from '../popup/redux/reducers/settings'
+import { isHostAllowed } from '../utils/allowlist'
 import { CONTEXT_TARGET, UNHIDE_IMAGE, UnhideImageMessage } from '../utils/messages'
 
 import { DOMWatcher } from './DOMWatcher/DOMWatcher'
@@ -71,22 +73,54 @@ const init = (): void => {
   injectPendingHide()
   const safety = setTimeout(removePendingHide, HIDE_STYLE_SAFETY_TIMEOUT)
 
+  // Whether this page should be filtered right now, from a settings snapshot.
+  const shouldFilter = (settings: SettingsState): boolean =>
+    settings.enabled && !isHostAllowed(window.location.hostname, settings.websites)
+
   createChromeStore({ createStore })(rootReducer)
     .then(store => {
-      const { enabled, filterEffect, websites } = store.getState().settings
-      imageFilter.setSettings({ filterEffect })
-      const allowed = websites.includes(window.location.hostname)
-      if (enabled && !allowed) {
+      clearTimeout(safety)
+
+      let previous = store.getState().settings
+      imageFilter.setSettings({ filterEffect: previous.filterEffect })
+
+      let filtering = shouldFilter(previous)
+      if (filtering) {
         // Keep the pending-hide stylesheet in place: from here per-image tagging
         // governs visibility (and it also hides dynamically-added images before
         // the observer's callback can run hideImage).
-        clearTimeout(safety)
         domWatcher.watch()
       } else {
         // Extension turned off, or filtering disabled for this site: reveal everything.
-        clearTimeout(safety)
         removePendingHide()
       }
+
+      // reduxed keeps this store synced with chrome.storage, so a popup toggle or
+      // an allowlist edit lands here without a reload. React live: start/stop
+      // watching when on/off or the allowlist flips, and re-render already-blocked
+      // images when the effect changes (a new effect isn't a new verdict).
+      store.subscribe(() => {
+        const next = store.getState().settings
+        const prev = previous
+        previous = next
+
+        if (next.filterEffect !== prev.filterEffect) {
+          imageFilter.setSettings({ filterEffect: next.filterEffect })
+          if (filtering) imageFilter.applyEffectToBlocked()
+        }
+
+        const nextFiltering = shouldFilter(next)
+        if (nextFiltering === filtering) return
+        filtering = nextFiltering
+
+        if (filtering) {
+          domWatcher.watch()
+        } else {
+          domWatcher.unwatch()
+          removePendingHide()
+          imageFilter.revealAll()
+        }
+      })
     })
     .catch(error => {
       console.warn(error)
