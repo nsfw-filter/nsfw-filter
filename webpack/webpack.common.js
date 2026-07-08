@@ -12,6 +12,7 @@ module.exports = {
         background: `${PATHS.src}/background/background.ts`,
         offscreen: `${PATHS.src}/offscreen/offscreen.ts`,
         popup: `${PATHS.src}/popup/index.tsx`,
+        options: `${PATHS.src}/options/index.tsx`,
     },
     output: {
         path: PATHS.dist,
@@ -45,6 +46,7 @@ module.exports = {
         new CopyPlugin({
             patterns: [
                 { from: `${PATHS.src}/popup/popup.html`, to: PATHS.dist },
+                { from: `${PATHS.src}/options/options.html`, to: PATHS.dist },
                 { from: `${PATHS.src}/offscreen/offscreen.html`, to: PATHS.dist },
                 // TensorFlow.js WASM backend binaries, loaded via setWasmPaths()
                 {

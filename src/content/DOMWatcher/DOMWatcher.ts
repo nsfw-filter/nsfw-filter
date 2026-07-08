@@ -10,23 +10,39 @@ import { IImageFilter } from '../Filter/ImageFilter'
 
 export type IDOMWatcher = {
   watch: () => void
+  unwatch: () => void
 }
 
 export class DOMWatcher implements IDOMWatcher {
   private readonly observer: MutationObserver
   private readonly imageFilter: IImageFilter
+  private watching: boolean
 
   constructor (imageFilter: IImageFilter) {
     this.imageFilter = imageFilter
     this.observer = new MutationObserver(this.callback.bind(this))
+    this.watching = false
   }
 
+  // Idempotent: a live enable toggle may call watch() on a page already being
+  // watched, and re-sweeping would re-run analyzeImage on every existing image.
   public watch (): void {
+    if (this.watching) return
+    this.watching = true
+
     this.observer.observe(document, DOMWatcher.getConfig())
     // The observer only reports future mutations. Sweep the images already in the
     // DOM so any image parsed before the (async) store resolved is still hidden
     // and classified instead of missed.
     this.findAndCheckAllImages(document.documentElement)
+  }
+
+  // Live pause / allow-list: stop reacting to the page so no new image gets
+  // hidden. Revealing the already-filtered ones is ImageFilter.revealAll's job.
+  public unwatch (): void {
+    if (!this.watching) return
+    this.watching = false
+    this.observer.disconnect()
   }
 
   private callback (mutationsList: MutationRecord[]): void {

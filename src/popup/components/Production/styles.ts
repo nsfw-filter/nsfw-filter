@@ -109,6 +109,44 @@ export const SliderEnds = styled.div`
   margin-top: -2px;
 `
 
+export const AllowRow = styled.div`
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+`
+
+export const AllowText = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+`
+
+export const AllowHost = styled.span`
+  color: ${props => props.theme.text.secondary};
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`
+
+export const ManageLink = styled.button`
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: ${props => props.theme.accent};
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  margin-top: 8px;
+  padding: 2px;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`
+
 export const AdvancedToggle = styled.button`
   align-items: center;
   background: none;

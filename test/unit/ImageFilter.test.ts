@@ -192,6 +192,58 @@ describe('content => ImageFilter => checkStyleMutation', () => {
   })
 })
 
+// Live filterEffect changes must re-render already-blocked images without
+// re-running classification (the verdict hasn't changed, only its presentation).
+describe('content => ImageFilter => applyEffectToBlocked', () => {
+  afterEach(() => { document.body.innerHTML = '' })
+
+  test('re-renders blocked images from blur to grayscale', () => {
+    const image = makeImage(200, 200)
+    image.dataset.nsfwFilterStatus = 'nsfw'
+    image.style.filter = 'blur(25px)'
+    document.body.appendChild(image)
+
+    const filter = new ImageFilter()
+    filter.setSettings({ filterEffect: 'grayscale' })
+    filter.applyEffectToBlocked()
+
+    expect(image.style.filter).toBe('grayscale(1)')
+  })
+
+  test('leaves sfw images untouched', () => {
+    const image = makeImage(200, 200)
+    image.dataset.nsfwFilterStatus = 'sfw'
+    image.style.filter = ''
+    document.body.appendChild(image)
+
+    const filter = new ImageFilter()
+    filter.setSettings({ filterEffect: 'grayscale' })
+    filter.applyEffectToBlocked()
+
+    expect(image.style.filter).toBe('')
+  })
+})
+
+// Pausing the extension or allow-listing the site mid-page must bring already
+// blocked images back, and clear their status so re-enabling reclassifies them.
+describe('content => ImageFilter => revealAll', () => {
+  afterEach(() => { document.body.innerHTML = '' })
+
+  test('reveals every blocked image and clears its status', () => {
+    const image = makeImage(200, 200)
+    image.dataset.nsfwFilterStatus = 'nsfw'
+    image.style.filter = 'blur(25px)'
+    image.style.visibility = 'hidden'
+    document.body.appendChild(image)
+
+    new ImageFilter().revealAll()
+
+    expect(image.style.filter).toBe('')
+    expect(image.style.visibility).toBe('visible')
+    expect(image.dataset.nsfwFilterStatus).toBeUndefined()
+  })
+})
+
 describe('content => ImageFilter => revealImage', () => {
   test('clears a blurred image and retags it sfw', () => {
     const image = makeImage(200, 200)

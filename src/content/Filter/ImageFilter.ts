@@ -11,6 +11,8 @@ export type IImageFilter = {
   setSettings: (settings: imageFilterSettingsType) => void
   revealImage: (image: HTMLImageElement) => void
   checkStyleMutation: (image: HTMLImageElement) => void
+  applyEffectToBlocked: () => void
+  revealAll: () => void
 }
 
 export class ImageFilter extends Filter implements IImageFilter {
@@ -97,6 +99,28 @@ export class ImageFilter extends Filter implements IImageFilter {
     if (status !== 'nsfw') return
     if (this.isEffectApplied(image)) return
     this.applyEffect(image)
+  }
+
+  // A live filterEffect change (blur -> grayscale -> hide) doesn't alter the
+  // NSFW verdict, only how it's shown, so re-render every already-blocked image
+  // from the current setting instead of reclassifying. applyEffect clears the
+  // other modes' styles, so switching modes doesn't leave a stale blur behind.
+  public applyEffectToBlocked (): void {
+    const blocked = document.querySelectorAll<HTMLImageElement>('img[data-nsfw-filter-status="nsfw"]')
+    blocked.forEach(image => this.applyEffect(image))
+  }
+
+  // Live pause / allow-list of the current page: bring back every image we
+  // touched. Clearing the status (not tagging sfw) means a later re-enable's
+  // sweep reclassifies them rather than trusting a verdict made while off.
+  public revealAll (): void {
+    const filtered = document.querySelectorAll<HTMLImageElement>('img[data-nsfw-filter-status]')
+    filtered.forEach(image => {
+      if (image.parentNode?.nodeName === 'BODY') image.hidden = false
+      image.style.filter = ''
+      image.style.visibility = 'visible'
+      delete image.dataset.nsfwFilterStatus
+    })
   }
 
   private isEffectApplied (image: HTMLImageElement): boolean {
