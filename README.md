@@ -1,4 +1,4 @@
-# <img src="demo/images/logo-mark.svg" width="34" align="middle" alt=""> NSFW Filter
+j# <img src="demo/images/logo-mark.svg" width="34" align="middle" alt=""> NSFW Filter
 
 > [!NOTE]
 > v3.0.0 released! See the release notes here: https://nsfwfilter.com/news/v3.0.0
