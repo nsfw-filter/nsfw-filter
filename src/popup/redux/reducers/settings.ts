@@ -63,7 +63,12 @@ export function settings (state = initialState, action: SettingsActionTypes): Se
     case SET_WEBSITE_LIST:
       return { ...s, websites: action.payload.websites }
     case SET_SETTINGS_PASSWORD:
-      return { ...s, settingsPassword: action.payload.settingsPassword }
+      return {
+        ...s,
+        settingsPassword: isStoredSettingsPassword(action.payload.settingsPassword)
+          ? action.payload.settingsPassword
+          : null
+      }
     case CLEAR_SETTINGS_PASSWORD:
       return { ...s, settingsPassword: null }
     default:

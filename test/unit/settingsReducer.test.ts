@@ -1,7 +1,12 @@
 import { clearSettingsPassword, setSettingsPassword, toggleEnabled } from '../../src/popup/redux/actions/settings'
 import { settings, SettingsState } from '../../src/popup/redux/reducers/settings'
+import { HASH_HEX_LENGTH, SALT_HEX_LENGTH, StoredSettingsPassword } from '../../src/utils/settingsPassword'
 
-const password = { hash: 'aa', salt: 'bb', iterations: 120000 }
+const password = {
+  hash: 'a'.repeat(HASH_HEX_LENGTH),
+  salt: 'b'.repeat(SALT_HEX_LENGTH),
+  iterations: 120000
+}
 
 describe('popup => redux => settings', () => {
   test('setSettingsPassword stores the hash record', () => {
@@ -35,6 +40,14 @@ describe('popup => redux => settings', () => {
     const next = settings(
       { ...corrupt, settingsPassword: { hash: '', salt: '', iterations: 0 } },
       { type: '@@unknown' } as never
+    )
+    expect(next.settingsPassword).toBeNull()
+  })
+
+  test('refuses to persist a malformed password payload', () => {
+    const next = settings(
+      undefined,
+      setSettingsPassword({ hash: 'aa', salt: 'bb', iterations: 1 } as StoredSettingsPassword)
     )
     expect(next.settingsPassword).toBeNull()
   })

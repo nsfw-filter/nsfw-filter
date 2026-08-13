@@ -1,43 +1,69 @@
 import { Button, Input } from 'antd'
+import { Lock } from 'lucide-react'
 import React, { useState } from 'react'
 
-import { MIN_PASSWORD_LENGTH } from '../../../utils/settingsPassword'
-import { useSettingsLock } from '../../hooks/useSettingsLock'
-import { AdvancedRow, FieldLabel } from '../Production/styles'
+import { MIN_PASSWORD_LENGTH, normalizePassword } from '../../../utils/settingsPassword'
 
-import { LockActions, LockCard, LockError, LockFields, LockHint, LockTitle } from './styles'
+import {
+  LockActions,
+  LockCard,
+  LockError,
+  LockFields,
+  LockForm,
+  LockHint,
+  LockLabel,
+  LockRow,
+  LockTextButton,
+  LockTitle
+} from './styles'
+import { SettingsLock } from './useSettingsLock'
 
-type LockApi = ReturnType<typeof useSettingsLock>
+export { useSettingsLock } from './useSettingsLock'
+export type { SettingsLock } from './useSettingsLock'
 
-type UnlockFormProps = {
-  lock: LockApi
-}
-
-export const UnlockForm: React.FC<UnlockFormProps> = ({ lock }) => {
+export const UnlockForm: React.FC<{ lock: SettingsLock }> = ({ lock }) => {
   const [password, setPassword] = useState('')
+  const empty = normalizePassword(password) === ''
 
   const submit = async (): Promise<void> => {
-    const ok = await lock.unlock(password)
-    if (ok) setPassword('')
+    if (lock.busy || empty) return
+    if (await lock.unlock(password)) setPassword('')
   }
 
   return (
-    <LockCard>
-      <LockTitle>Settings locked</LockTitle>
-      <LockHint>
-        Enter the password to change protection, strictness, the model, or allowed sites.
-      </LockHint>
+    <LockCard
+      onSubmit={event => {
+        event.preventDefault()
+        void submit()
+      }}
+    >
+      <LockTitle>
+        <Lock size={14} aria-hidden="true" />
+        Settings locked
+      </LockTitle>
+      <LockHint>Enter the password to change filter settings.</LockHint>
       <LockFields>
         <Input.Password
           size="small"
           placeholder="Password or PIN"
           value={password}
-          onChange={event => setPassword(event.target.value)}
-          onPressEnter={() => { void submit() }}
+          autoFocus
+          autoComplete="off"
+          spellCheck={false}
+          onChange={event => {
+            setPassword(event.target.value)
+            if (lock.error !== '') lock.clearError()
+          }}
           disabled={lock.busy}
         />
-        {lock.error !== '' && <LockError>{lock.error}</LockError>}
-        <Button type="primary" size="small" onClick={() => { void submit() }} loading={lock.busy}>
+        {lock.error !== '' && <LockError role="alert">{lock.error}</LockError>}
+        <Button
+          type="primary"
+          htmlType="submit"
+          size="small"
+          loading={lock.busy}
+          disabled={empty}
+        >
           Unlock
         </Button>
       </LockFields>
@@ -45,61 +71,53 @@ export const UnlockForm: React.FC<UnlockFormProps> = ({ lock }) => {
   )
 }
 
-type SettingsLockControlsProps = {
-  lock: LockApi
-}
-
-export const SettingsLockControls: React.FC<SettingsLockControlsProps> = ({ lock }) => {
-  const [open, setOpen] = useState(false)
+export const SettingsLockControls: React.FC<{ lock: SettingsLock }> = ({ lock }) => {
+  const [editing, setEditing] = useState(false)
   const [current, setCurrent] = useState('')
   const [next, setNext] = useState('')
   const [confirm, setConfirm] = useState('')
 
-  const reset = (): void => {
+  const close = (): void => {
     setCurrent('')
     setNext('')
     setConfirm('')
+    setEditing(false)
+    lock.clearError()
   }
 
   const save = async (): Promise<void> => {
-    const ok = await lock.setPassword(next, confirm, current)
-    if (ok) {
-      reset()
-      setOpen(false)
-    }
+    const ok = await lock.setPassword({ password: next, confirm, current })
+    if (ok) close()
   }
 
   const remove = async (): Promise<void> => {
-    const ok = await lock.removePassword(current)
-    if (ok) {
-      reset()
-      setOpen(false)
-    }
+    if (await lock.removePassword(current)) close()
   }
 
   return (
     <>
-      <AdvancedRow>
-        <FieldLabel>Settings lock</FieldLabel>
+      <LockRow>
+        <LockLabel>Settings lock</LockLabel>
         {lock.hasPassword
-          ? (
-            <Button size="small" onClick={lock.lock}>
-              Lock now
-            </Button>
-            )
+          ? <Button size="small" htmlType="button" onClick={lock.lock}>Lock now</Button>
           : (
-            <Button size="small" onClick={() => setOpen(value => !value)}>
-              {open ? 'Cancel' : 'Set password'}
+            <Button size="small" htmlType="button" onClick={() => editing ? close() : setEditing(true)}>
+              {editing ? 'Cancel' : 'Set password'}
             </Button>
             )}
-      </AdvancedRow>
+      </LockRow>
       {lock.hasPassword && (
-        <Button size="small" onClick={() => setOpen(value => !value)}>
-          {open ? 'Cancel' : 'Change or remove'}
-        </Button>
+        <LockTextButton type="button" onClick={() => editing ? close() : setEditing(true)}>
+          {editing ? 'Cancel' : 'Change or remove'}
+        </LockTextButton>
       )}
-      {open && (
-        <LockFields>
+      {editing && (
+        <LockForm
+          onSubmit={event => {
+            event.preventDefault()
+            void save()
+          }}
+        >
           <LockHint>
             {lock.hasPassword
               ? 'Current password is required to change or remove the lock.'
@@ -110,6 +128,8 @@ export const SettingsLockControls: React.FC<SettingsLockControlsProps> = ({ lock
               size="small"
               placeholder="Current password"
               value={current}
+              autoComplete="off"
+              spellCheck={false}
               onChange={event => setCurrent(event.target.value)}
               disabled={lock.busy}
             />
@@ -118,6 +138,8 @@ export const SettingsLockControls: React.FC<SettingsLockControlsProps> = ({ lock
             size="small"
             placeholder={lock.hasPassword ? 'New password or PIN' : 'Password or PIN'}
             value={next}
+            autoComplete="new-password"
+            spellCheck={false}
             onChange={event => setNext(event.target.value)}
             disabled={lock.busy}
           />
@@ -125,22 +147,23 @@ export const SettingsLockControls: React.FC<SettingsLockControlsProps> = ({ lock
             size="small"
             placeholder="Confirm"
             value={confirm}
+            autoComplete="new-password"
+            spellCheck={false}
             onChange={event => setConfirm(event.target.value)}
-            onPressEnter={() => { void save() }}
             disabled={lock.busy}
           />
-          {lock.error !== '' && <LockError>{lock.error}</LockError>}
+          {lock.error !== '' && <LockError role="alert">{lock.error}</LockError>}
           <LockActions>
-            <Button type="primary" size="small" onClick={() => { void save() }} loading={lock.busy}>
+            <Button type="primary" htmlType="submit" size="small" loading={lock.busy}>
               {lock.hasPassword ? 'Change password' : 'Save password'}
             </Button>
             {lock.hasPassword && (
-              <Button size="small" danger onClick={() => { void remove() }} disabled={lock.busy}>
+              <Button size="small" danger htmlType="button" onClick={() => { void remove() }} disabled={lock.busy}>
                 Remove lock
               </Button>
             )}
           </LockActions>
-        </LockFields>
+        </LockForm>
       )}
     </>
   )
