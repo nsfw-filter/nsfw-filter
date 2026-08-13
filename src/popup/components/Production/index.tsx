@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 
 import { TRAINED_MODELS, TRAINED_MODEL_LABELS, TrainedModel } from '../../../utils/models'
+import { useSettingsLock } from '../../hooks/useSettingsLock'
 import { setFilterStrictness } from '../../redux/actions/settings'
 import {
   setTrainedModel,
@@ -14,6 +15,7 @@ import {
 import { RootState } from '../../redux/reducers'
 import { SettingsState } from '../../redux/reducers/settings'
 import { StatisticsState } from '../../redux/reducers/statistics'
+import { SettingsLockControls, UnlockForm } from '../SettingsLock'
 
 import { AllowSiteField } from './AllowSiteField'
 import {
@@ -41,6 +43,7 @@ import {
 export const Production: React.FC = () => {
   const dispatch = useDispatch()
   const [advancedOpen, setAdvancedOpen] = useState(false)
+  const lock = useSettingsLock()
   const {
     enabled,
     filterStrictness,
@@ -62,75 +65,82 @@ export const Production: React.FC = () => {
           <PowerTitle>Protection</PowerTitle>
           <PowerHint>{enabled ? 'On' : 'Paused'}</PowerHint>
         </PowerText>
-        <Switch checked={enabled} onChange={() => dispatch(toggleEnabled())} />
+        {lock.canEdit && <Switch checked={enabled} onChange={() => dispatch(toggleEnabled())} />}
       </PowerRow>
 
-      <Card>
-        <Field>
-          <FieldHead>
-            <FieldLabel>Filter strictness</FieldLabel>
-            <FieldValue>{filterStrictness}%</FieldValue>
-          </FieldHead>
-          <Slider
-            min={1}
-            max={100}
-            value={filterStrictness}
-            tooltip={{ open: false }}
-            onChange={(value: number) => dispatch(setFilterStrictness(value))}
-          />
-          <SliderEnds>
-            <span>Lenient</span>
-            <span>Strict</span>
-          </SliderEnds>
-        </Field>
+      {!lock.canEdit && <UnlockForm lock={lock} />}
 
-        <EffectField>
-          <FieldLabel>Filter effect</FieldLabel>
-          <Segmented<'blur' | 'grayscale' | 'hide'>
-            block
-            style={{ marginTop: 8 }}
-            value={filterEffect}
-            onChange={value => dispatch(setFilterEffect(value))}
-            options={[
-              { label: 'Blur', value: 'blur', icon: <Droplet size={14} /> },
-              { label: 'Gray', value: 'grayscale', icon: <Contrast size={14} /> },
-              { label: 'Hide', value: 'hide', icon: <EyeOff size={14} /> }
-            ]}
-          />
-        </EffectField>
+      {lock.canEdit && (
+        <Card>
+          <Field>
+            <FieldHead>
+              <FieldLabel>Filter strictness</FieldLabel>
+              <FieldValue>{filterStrictness}%</FieldValue>
+            </FieldHead>
+            <Slider
+              min={1}
+              max={100}
+              value={filterStrictness}
+              tooltip={{ open: false }}
+              onChange={(value: number) => dispatch(setFilterStrictness(value))}
+            />
+            <SliderEnds>
+              <span>Lenient</span>
+              <span>Strict</span>
+            </SliderEnds>
+          </Field>
 
-        <AllowSiteField />
-        <ManageLink onClick={() => chrome.runtime.openOptionsPage()}>
-          Manage allowed sites
-        </ManageLink>
-      </Card>
+          <EffectField>
+            <FieldLabel>Filter effect</FieldLabel>
+            <Segmented<'blur' | 'grayscale' | 'hide'>
+              block
+              style={{ marginTop: 8 }}
+              value={filterEffect}
+              onChange={value => dispatch(setFilterEffect(value))}
+              options={[
+                { label: 'Blur', value: 'blur', icon: <Droplet size={14} /> },
+                { label: 'Gray', value: 'grayscale', icon: <Contrast size={14} /> },
+                { label: 'Hide', value: 'hide', icon: <EyeOff size={14} /> }
+              ]}
+            />
+          </EffectField>
 
-      <div>
-        <AdvancedToggle
-          aria-expanded={advancedOpen}
-          aria-controls="advanced-panel"
-          onClick={() => setAdvancedOpen(open => !open)}
-        >
-          {advancedOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          Advanced
-        </AdvancedToggle>
-        {advancedOpen && (
-          <AdvancedPanel id="advanced-panel">
-            <AdvancedRow>
-              <FieldLabel>Trained model</FieldLabel>
-              <Select<TrainedModel>
-                value={trainedModel}
-                style={{ width: 170 }}
-                onChange={value => dispatch(setTrainedModel(value))}
-                options={TRAINED_MODELS.map(value => ({ value, label: TRAINED_MODEL_LABELS[value] }))}
-              />
-            </AdvancedRow>
-            <Checkbox checked={logging} onChange={() => dispatch(toggleLogging())}>
-              Show logs in browser console
-            </Checkbox>
-          </AdvancedPanel>
-        )}
-      </div>
+          <AllowSiteField />
+          <ManageLink onClick={() => chrome.runtime.openOptionsPage()}>
+            Manage allowed sites
+          </ManageLink>
+        </Card>
+      )}
+
+      {lock.canEdit && (
+        <div>
+          <AdvancedToggle
+            aria-expanded={advancedOpen}
+            aria-controls="advanced-panel"
+            onClick={() => setAdvancedOpen(open => !open)}
+          >
+            {advancedOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            Advanced
+          </AdvancedToggle>
+          {advancedOpen && (
+            <AdvancedPanel id="advanced-panel">
+              <AdvancedRow>
+                <FieldLabel>Trained model</FieldLabel>
+                <Select<TrainedModel>
+                  value={trainedModel}
+                  style={{ width: 170 }}
+                  onChange={value => dispatch(setTrainedModel(value))}
+                  options={TRAINED_MODELS.map(value => ({ value, label: TRAINED_MODEL_LABELS[value] }))}
+                />
+              </AdvancedRow>
+              <Checkbox checked={logging} onChange={() => dispatch(toggleLogging())}>
+                Show logs in browser console
+              </Checkbox>
+              <SettingsLockControls lock={lock} />
+            </AdvancedPanel>
+          )}
+        </div>
+      )}
     </Container>
   )
 }

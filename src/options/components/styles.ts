@@ -21,6 +21,10 @@ export const Sub = styled.p`
   margin: 8px 0 24px;
 `
 
+export const LockWrap = styled.div`
+  margin-bottom: 20px;
+`
+
 export const AddRow = styled.form`
   display: flex;
   gap: 8px;

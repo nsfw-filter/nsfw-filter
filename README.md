@@ -19,7 +19,7 @@ You can install the extension from the [Chrome Web Store](https://chrome.google.
 
 When you load web pages, NSFW Filter will first hide all images and only show those classified as safe.
 
-Click the icon in your extensions tab to open the popup. From there you can turn protection on or off, adjust how strict the filter is, choose how flagged images are handled (blur, grayscale, or hide), pick which model does the classifying, and allow specific sites.
+Click the icon in your extensions tab to open the popup. From there you can turn protection on or off, adjust how strict the filter is, choose how flagged images are handled (blur, grayscale, or hide), pick which model does the classifying, and allow specific sites. Under Advanced you can optionally set a password so those controls cannot be changed from the popup or the allowed-sites page without it. Closing the popup locks them again. This does not stop someone from removing the extension; use a Chrome or Edge policy for that.
 
 ![NSFW Filter popup](demo/images/popup-window.png)
 
