@@ -33,7 +33,10 @@ const resolveChromePath = () => {
   ].map(parts => path.join(cache, build, ...parts)).find(p => fs.existsSync(p))
 }
 
-const launchOptions = () => ({
+// `webgl: false` drops the software-GL flags and turns GL off entirely, so the
+// offscreen document has to bring the model up on the WASM backend instead --
+// the path a machine with no usable GPU takes.
+const launchOptions = ({ webgl = true } = {}) => ({
   headless: process.env.HEADLESS !== 'false',
   executablePath: resolveChromePath(),
   defaultViewport: null,
@@ -45,10 +48,10 @@ const launchOptions = () => ({
     '--no-sandbox',
     '--disable-setuid-sandbox',
     '--disable-dev-shm-usage',
-    // The model runs on WebGL; force a software backend so it works without a GPU.
-    '--enable-unsafe-swiftshader',
-    '--use-gl=angle',
-    '--use-angle=swiftshader'
+    ...(webgl
+      // The model runs on WebGL; force a software backend so it works without a GPU.
+      ? ['--enable-unsafe-swiftshader', '--use-gl=angle', '--use-angle=swiftshader']
+      : ['--disable-gpu', '--disable-software-rasterizer', '--use-gl=disabled'])
   ]
 })
 

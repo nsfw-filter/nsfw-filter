@@ -8,6 +8,7 @@ module.exports = async function () {
   // Guard both globals: if setup failed part-way they may be undefined, and an
   // unguarded close() here would throw and mask the original setup error.
   if (global.__BROWSER_GLOBAL__ !== undefined) await global.__BROWSER_GLOBAL__.close()
+  if (global.__BROWSER_NO_GPU_GLOBAL__ !== undefined) await global.__BROWSER_NO_GPU_GLOBAL__.close()
   if (global.__FIXTURE_SERVER__ !== undefined) {
     await new Promise(resolve => global.__FIXTURE_SERVER__.close(resolve))
   }
