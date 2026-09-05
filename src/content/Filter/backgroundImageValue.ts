@@ -1,4 +1,4 @@
-import valueParser, { Node } from 'postcss-value-parser'
+import valueParser from 'postcss-value-parser'
 
 const IMAGE_SET = new Set(['image-set', '-webkit-image-set'])
 
@@ -10,7 +10,7 @@ export const backgroundImageUrls = (value: string): string[] => {
   if (value === '' || value === 'none') return []
 
   const urls = new Set<string>()
-  const collect = (nodes: Node[], inImageSet: boolean): void => {
+  const collect = (nodes: valueParser.Node[], inImageSet: boolean): void => {
     for (const node of nodes) {
       if (node.type === 'function') {
         const name = node.value.toLowerCase()

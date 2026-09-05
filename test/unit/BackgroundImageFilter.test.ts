@@ -63,7 +63,11 @@ const flush = async (): Promise<void> => {
   await Promise.resolve()
 }
 
-afterEach(() => { document.body.innerHTML = '' })
+afterEach(() => {
+  // A failing test must not leave fake timers behind for the next one.
+  jest.useRealTimers()
+  document.body.innerHTML = ''
+})
 
 describe('content => BackgroundImageFilter', () => {
   test('removes the background while it is being classified', () => {
@@ -191,7 +195,6 @@ describe('content => BackgroundImageFilter', () => {
 
     expect(element.dataset.nsfwFilterBackgroundStatus).toBe('sfw')
     expect(element.style.getPropertyValue('background-image')).toBe(`url("${IMAGE}")`)
-    jest.useRealTimers()
   })
 
   test('restores every background it removed when filtering is turned off', async () => {
@@ -395,6 +398,5 @@ describe('content => BackgroundImageFilter => rechecks', () => {
 
     expect(read).toHaveBeenCalledWith(element)
     read.mockRestore()
-    jest.useRealTimers()
   })
 })
