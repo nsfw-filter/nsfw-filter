@@ -16,7 +16,7 @@ export class ImageFilter extends Filter implements IImageFilter {
   // Bumped when filtering is turned off. A verdict from before that is for a page
   // the user has since asked us to leave alone.
   private epoch: number
-  private readonly unhidden: WeakSet<HTMLImageElement>
+  private unhidden: WeakSet<HTMLImageElement>
 
   constructor () {
     super()
@@ -102,6 +102,9 @@ export class ImageFilter extends Filter implements IImageFilter {
   // sweep reclassifies them rather than trusting a verdict made while off.
   public revealAll (): void {
     this.epoch++
+    // Dropping the user's unhides too: kept, they would discard the verdict for
+    // an image re-enabled filtering has already hidden.
+    this.unhidden = new WeakSet()
 
     const filtered = document.querySelectorAll<HTMLImageElement>('img[data-nsfw-filter-status]')
     filtered.forEach(image => {

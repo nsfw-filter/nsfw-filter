@@ -103,6 +103,8 @@ const makeVideo = ({ size = 320, poster = '', playing = true } = {}): HTMLVideoE
   Object.defineProperty(video, 'readyState', { value: 2, configurable: true })
   Object.defineProperty(video, 'currentTime', { value: 0, writable: true, configurable: true })
   Object.defineProperty(video, 'paused', { value: !playing, writable: true, configurable: true })
+  // Whether the poster is still what the element shows.
+  Object.defineProperty(video, 'played', { value: { length: playing ? 1 : 0 }, writable: true, configurable: true })
   Object.defineProperty(video, 'pause', {
     value: () => { Object.defineProperty(video, 'paused', { value: true, writable: true, configurable: true }) },
     configurable: true
@@ -393,6 +395,62 @@ describe('content => VideoFilter', () => {
     video.dispatchEvent(new Event('seeked'))
     await settle()
     expect(runtime.sent).toHaveLength(2)
+  })
+
+  // A frame verdict says nothing about a video that has never played: the poster
+  // is still the whole of what is on screen.
+  test('judges a poster swapped in before the video has played', async () => {
+    const runtime = stubRuntime(() => false)
+    const video = makeVideo({ playing: false })
+    const filter = new VideoFilter()
+
+    watch(filter, video)
+    await settle()
+
+    video.poster = 'http://example.com/swapped.jpg'
+    filter.checkPoster(video)
+    await settle()
+
+    expect(runtime.sent).toHaveLength(2)
+    expect(runtime.sent[1].url).toBe('http://example.com/swapped.jpg')
+  })
+
+  test('ignores a poster swapped in once the video has played', async () => {
+    const runtime = stubRuntime(() => false)
+    const video = makeVideo()
+    const filter = new VideoFilter()
+
+    watch(filter, video)
+    await settle()
+
+    video.poster = 'http://example.com/swapped.jpg'
+    filter.checkPoster(video)
+    await settle()
+
+    expect(runtime.sent).toHaveLength(1)
+    expect(video.style.visibility).toBe('visible')
+  })
+
+  // Turning filtering off retires the user's unhide with everything else. Keeping
+  // it would discard the verdict for a video re-enabling has just hidden.
+  test('judges a video the user unhid once filtering is turned off and on', async () => {
+    const runtime = stubRuntime(() => false)
+    const video = makeVideo({ poster: 'http://example.com/poster.jpg', playing: false })
+    const filter = new VideoFilter()
+
+    watch(filter, video)
+    await settle()
+    filter.revealVideo(video)
+
+    filter.stop()
+    filter.revealAll()
+    filter.start()
+    filter.analyzeVideo(video, false)
+    await settle()
+
+    expect(runtime.sent.filter(({ url }) => url.endsWith('poster.jpg'))).toHaveLength(2)
+    expect(video.dataset.nsfwFilterStatus).toBe('sfw')
+    expect(video.style.visibility).toBe('visible')
   })
 
   // The poster is the only thing on screen for a video with nothing decoded, so

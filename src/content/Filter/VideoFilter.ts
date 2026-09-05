@@ -130,7 +130,9 @@ export class VideoFilter extends Filter implements IVideoFilter {
       return
     }
     if (video.dataset.nsfwFilterStatus === 'nsfw') return
-    if (state.approved === state.generation) return
+    // Until the video has played, the poster is what is on screen, however many
+    // frames have been decoded and judged behind it.
+    if (state.approved === state.generation && video.played.length > 0) return
 
     state.posterGeneration++
     video.dataset.nsfwFilterStatus = 'processing'
@@ -176,8 +178,12 @@ export class VideoFilter extends Filter implements IVideoFilter {
       this.due.delete(video)
       // A verdict reached while filtering was on does not survive being turned
       // off and on again, the same way images are reclassified rather than
-      // trusted.
-      this.stateOf(video).generation++
+      // trusted. The user's unhide goes with it, or the next verdict is dropped
+      // and the video stays hidden.
+      const state = this.stateOf(video)
+      state.generation++
+      state.unsampleable = false
+      state.overridden = false
     })
   }
 

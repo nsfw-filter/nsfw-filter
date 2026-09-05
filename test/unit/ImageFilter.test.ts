@@ -242,6 +242,36 @@ describe('content => ImageFilter => revealAll', () => {
     expect(image.style.visibility).toBe('visible')
     expect(image.dataset.nsfwFilterStatus).toBeUndefined()
   })
+
+  // Turning filtering off retires the user's unhide with everything else. Keeping
+  // it would discard the verdict for an image re-enabling has just hidden.
+  test('blocks an image the user unhid once filtering is turned off and on', async () => {
+    let answer = (): void => undefined
+    ;(global as unknown as { chrome: unknown }).chrome = {
+      runtime: {
+        lastError: undefined,
+        sendMessage: (message: { url: string }, respond: (response: unknown) => void) => {
+          answer = () => respond({ result: true, url: message.url })
+        }
+      }
+    }
+
+    const image = makeImage(200, 200)
+    document.body.appendChild(image)
+
+    const filter = new ImageFilter()
+    filter.setSettings({ filterEffect: 'blur' })
+    filter.revealImage(image)
+    filter.revealAll()
+
+    filter.analyzeImage(image)
+    answer()
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(image.dataset.nsfwFilterStatus).toBe('nsfw')
+    expect(image.style.filter).toBe('blur(25px)')
+  })
 })
 
 describe('content => ImageFilter => revealImage', () => {
