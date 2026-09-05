@@ -132,6 +132,25 @@ describe('CSS background images', () => {
     expect(inline.backgroundImage).toContain('icon.png')
   })
 
+  // An id change can bring in a rule of its own, and nothing about the element
+  // moves or gains a class when it does.
+  test('classifies a background an id change brings in', async () => {
+    await page.evaluate(() => {
+      const card = document.createElement('div')
+      card.id = 'placeholder'
+      card.textContent = 'promoted text'
+      document.body.appendChild(card)
+    })
+    await page.evaluate(() => {
+      document.getElementById('placeholder').id = 'promoted'
+    })
+    await settled(page, 'promoted')
+
+    const promoted = await read(page, 'promoted')
+    expect(promoted.status).toBe('sfw')
+    expect(promoted.backgroundImage).toContain('promoted=1')
+  })
+
   test('leaves no background stuck missing or unprocessed', async () => {
     const leftovers = await page.evaluate(() =>
       [...document.querySelectorAll('[data-nsfw-filter-background-status]')].filter(element => {

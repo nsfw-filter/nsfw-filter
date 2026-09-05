@@ -11,3 +11,9 @@
   height: 128px;
   background-image: url("/icon.png?revision=2");
 }
+
+#promoted {
+  width: 128px;
+  height: 128px;
+  background-image: url("/icon.png?promoted=1");
+}

@@ -19,6 +19,9 @@ export class DOMWatcher implements IDOMWatcher {
   private readonly imageFilter: IImageFilter
   private readonly videoFilter: IVideoFilter
   private readonly backgroundFilter: IBackgroundImageFilter
+  private sheetObservers: MutationObserver[]
+  private sheetLoads: AbortController
+  private registered: WeakSet<Element>
   private watching: boolean
 
   constructor (
@@ -30,6 +33,9 @@ export class DOMWatcher implements IDOMWatcher {
     this.videoFilter = videoFilter
     this.backgroundFilter = backgroundFilter
     this.observer = new MutationObserver(this.callback.bind(this))
+    this.sheetObservers = []
+    this.sheetLoads = new AbortController()
+    this.registered = new WeakSet()
     this.watching = false
   }
 
@@ -54,6 +60,13 @@ export class DOMWatcher implements IDOMWatcher {
     if (!this.watching) return
     this.watching = false
     this.observer.disconnect()
+    // Every stylesheet gets its own observer, so a stop that left them running
+    // would keep both the callbacks and the removed <style> elements alive.
+    this.sheetObservers.forEach(observer => observer.disconnect())
+    this.sheetObservers = []
+    this.sheetLoads.abort()
+    this.sheetLoads = new AbortController()
+    this.registered = new WeakSet()
   }
 
   private callback (mutationsList: MutationRecord[]): void {
@@ -98,20 +111,29 @@ export class DOMWatcher implements IDOMWatcher {
 
     this.backgroundFilter.recheckVisible()
     sheets.forEach(sheet => {
+      if (this.registered.has(sheet)) return
+      this.registered.add(sheet)
+
       if (sheet.nodeName === 'LINK') {
-        sheet.addEventListener('load', () => this.backgroundFilter.recheckVisible())
+        sheet.addEventListener(
+          'load',
+          () => this.backgroundFilter.recheckVisible(),
+          { signal: this.sheetLoads.signal }
+        )
         return
       }
 
       // A <style> is often inserted empty and filled in afterwards, and its rules
       // are text: nothing about that reaches the document-level observer.
-      new MutationObserver(() => this.backgroundFilter.recheckVisible())
-        .observe(sheet, { characterData: true, childList: true, subtree: true })
+      const observer = new MutationObserver(() => this.backgroundFilter.recheckVisible())
+      observer.observe(sheet, { characterData: true, childList: true, subtree: true })
+      this.sheetObservers.push(observer)
     })
   }
 
+  // A sheet is usually removed with the container it sits in, not on its own.
   private isStyleSheet (element: Element): boolean {
-    return element.matches(STYLE_SHEET)
+    return element.matches(STYLE_SHEET) || element.querySelector(STYLE_SHEET) !== null
   }
 
   private findAndCheckAllMedia (element: Element): void {
@@ -130,12 +152,12 @@ export class DOMWatcher implements IDOMWatcher {
     const node = mutation.target
     if (!(node instanceof HTMLElement)) return
 
-    // A class change can bring in a rule carrying a background image; a style
-    // change can set one directly. An <img> can carry one too, so this runs for
-    // images as well as for everything else.
+    // A class, id or hidden change can bring in a rule carrying a background
+    // image; a style change can set one directly. An <img> can carry one too, so
+    // this runs for images as well as for everything else.
     if (mutation.attributeName === 'style') {
       this.backgroundFilter.checkStyleMutation(node)
-    } else if (mutation.attributeName === 'class') {
+    } else if (mutation.attributeName !== 'src' && mutation.attributeName !== 'poster') {
       this.backgroundFilter.checkElement(node)
     }
 

@@ -141,3 +141,46 @@ describe('content => DOMWatcher => cascade changes', () => {
     expect(background.recheckVisible).toHaveBeenCalled()
   })
 })
+
+describe('content => DOMWatcher => stylesheet registrations', () => {
+  test('re-reads what is on screen when a wrapper holding a stylesheet is removed', async () => {
+    document.body.innerHTML = '<div id="wrapper"><style></style></div>'
+    const background = makeBackgroundFilter()
+    new DOMWatcher(makeFilter(), background).watch()
+    ;(background.recheckVisible as jest.Mock).mockClear()
+
+    document.getElementById('wrapper')?.remove()
+    await flushMutations()
+
+    expect(background.recheckVisible).toHaveBeenCalled()
+  })
+
+  test('re-reads what is on screen when an id change brings in a new rule', async () => {
+    document.body.innerHTML = '<div id="card"></div>'
+    const background = makeBackgroundFilter()
+    new DOMWatcher(makeFilter(), background).watch()
+
+    const card = document.getElementById('card') as HTMLElement
+    card.id = 'other'
+    await flushMutations()
+
+    expect(background.checkElement).toHaveBeenCalledWith(card)
+  })
+
+  // Each <style> carries its own observer, so a pause that left them running
+  // would keep answering for a filter that is meant to be idle.
+  test('stops watching stylesheets when watching stops', async () => {
+    document.body.innerHTML = '<style id="sheet"></style>'
+    const background = makeBackgroundFilter()
+    const watcher = new DOMWatcher(makeFilter(), background)
+    watcher.watch()
+    watcher.unwatch()
+    ;(background.recheckVisible as jest.Mock).mockClear()
+
+    const sheet = document.getElementById('sheet') as HTMLElement
+    sheet.textContent = '.card { background-image: url("http://example.com/a.jpg") }'
+    await flushMutations()
+
+    expect(background.recheckVisible).not.toHaveBeenCalled()
+  })
+})
