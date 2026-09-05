@@ -45,6 +45,18 @@ const classified = async (page, id) => await page.waitForFunction(
   id
 )
 
+// A playing video is sampled again every ten seconds of media time, so its status
+// passes back through 'processing' on its own. Any assertion about a video that
+// is still playing has to wait for a settled moment rather than read one.
+const settledStatus = async (page, id) => {
+  await page.waitForFunction((id) => {
+    const status = document.getElementById(id).getAttribute('data-nsfw-filter-status')
+    return status !== null && status !== 'processing'
+  }, { timeout: SETTLE_TIMEOUT, polling: 250 }, id)
+
+  return await read(page, id)
+}
+
 const waitForStatus = async (page, id, status) => await page.waitForFunction(
   (id, status) => document.getElementById(id).getAttribute('data-nsfw-filter-status') === status,
   { timeout: SETTLE_TIMEOUT, polling: 250 },
@@ -118,19 +130,67 @@ describe('Videos on the page', () => {
     }, global.__BASE_URL__)
 
     await classified(page, 'added')
-    await settled(page)
+    await waitForStatus(page, 'added', 'sfw')
 
-    const added = await read(page, 'added')
-    expect(added.status).toBe('sfw')
-    expect(added.visibility).toBe('visible')
+    expect((await read(page, 'added')).visibility).toBe('visible')
+  })
+
+  // Once a frame of the current footage has been judged, the poster is no longer
+  // what the element shows. Swapping it must not hide the video again.
+  test('ignores a poster swapped in after a frame was judged', async () => {
+    await settledStatus(page, 'postered')
+    await page.evaluate(() => {
+      document.getElementById('postered').poster = '/icon.png?revision=2'
+    })
+    await new Promise(resolve => setTimeout(resolve, 2000))
+
+    expect((await read(page, 'postered')).visibility).toBe('visible')
+  })
+
+  // Removing a poster leaves nothing for the outstanding verdict to apply to, so
+  // whatever it was holding hidden has to be settled by the removal itself.
+  test('settles a paused video whose poster is removed', async () => {
+    await page.evaluate((base) => {
+      const video = document.createElement('video')
+      video.id = 'unpostered'
+      video.src = `${base}video.webm`
+      video.poster = '/icon.png?revision=3'
+      video.width = 320
+      video.height = 240
+      video.muted = true
+      video.playsInline = true
+      document.body.appendChild(video)
+    }, global.__BASE_URL__)
+    await page.evaluate(() => {
+      document.getElementById('unpostered').removeAttribute('poster')
+    })
+
+    expect((await settledStatus(page, 'unpostered')).visibility).toBe('visible')
+  })
+
+  // An infinite-scroll feed takes elements out and puts them back. A video that
+  // came back must not be left hidden or wedged.
+  test('keeps a removed and reinserted video settled', async () => {
+    await page.evaluate(() => {
+      const video = document.getElementById('added')
+      window.__parked = video
+      video.remove()
+    })
+    await page.evaluate(() => {
+      document.body.appendChild(window.__parked)
+      window.__parked.play().catch(() => undefined)
+    })
+
+    expect((await settledStatus(page, 'added')).visibility).toBe('visible')
   })
 
   test('leaves no video stuck hidden or unprocessed', async () => {
+    await settled(page)
     const leftovers = await page.evaluate(() =>
-      [...document.querySelectorAll('video')].filter(video => {
-        const status = video.getAttribute('data-nsfw-filter-status')
-        return status === null || status === 'processing' || getComputedStyle(video).visibility === 'hidden'
-      }).length
+      [...document.querySelectorAll('video')].filter(video =>
+        video.getAttribute('data-nsfw-filter-status') === null ||
+        getComputedStyle(video).visibility === 'hidden'
+      ).length
     )
     expect(leftovers).toBe(0)
   })
