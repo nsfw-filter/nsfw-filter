@@ -3,8 +3,8 @@
 // service worker forwards every image URL here; we load it, classify it, and
 // return a boolean. We prefer the WebGL (GPU) backend, the one the MV2 background
 // page used, and fall back to single-threaded WASM (CPU) when no usable GPU is
-// available. See trySetWebglBackend() and setWasmBackend() for the CSP details,
-// and restartOnWasm() for why the fallback reloads the document.
+// available. trySetWebglBackend() and setWasmBackend() cover the CSP details, and
+// restartOnWasm() covers why the fallback reloads the document.
 //
 // This file owns the shared tfjs backend and serializes work; the actual model
 // (weights, preprocessing, decision) lives behind a Classifier so the user can
@@ -24,6 +24,7 @@ import { withTimeout } from '../utils/withTimeout'
 import { BinaryClassifier } from './classifiers/BinaryClassifier'
 import { Classifier } from './classifiers/Classifier'
 import { NsfwjsClassifier } from './classifiers/NsfwjsClassifier'
+import { readRestartState, saveRestartState } from './restartState'
 
 const IMAGE_SIZE = 224
 const LOADING_TIMEOUT = 1000
@@ -40,50 +41,20 @@ const WEBGL_PROBE_TIMEOUT = 3000
 // script's pending-hide stylesheet would leave them hidden). On timeout the
 // prediction rejects, the image is revealed, and the chain is freed.
 const PREDICTION_TIMEOUT = 10000
-// Bringing the WASM backend up fetches and compiles a .wasm binary, so it is
-// slower than the WebGL probe and needs its own bound.
+// Fetching and compiling the .wasm binary is slower than probing WebGL.
 const WASM_INIT_TIMEOUT = 15000
 
-// Anything that goes wrong on WebGL leaves work we cannot cancel: a probe or a
-// warm-up that timed out is still running on the GPU, and switching the live tfjs
-// engine to WASM waits on it forever, so every queued image stays hidden. Drop the
-// realm instead -- reload the offscreen document and come straight up on WASM.
-// What the reloaded document needs is written to sessionStorage first: the
-// settings, which the still-running service worker won't push again, and the fact
-// that it is a restart, so it skips WebGL instead of looping through the same
-// failure.
-const RESTART_KEY = 'nsfw-filter-restart'
-
-type RestartState = {
-  filterStrictness: number
-  trainedModel: TrainedModel
-  logging: boolean
-}
-
-const readRestartState = (): RestartState | null => {
-  const saved = sessionStorage.getItem(RESTART_KEY)
-  if (saved === null) return null
-
-  try {
-    return JSON.parse(saved) as RestartState
-  } catch (error) {
-    logger.error(error as Error)
-    return null
-  }
-}
-
-const restartState = readRestartState()
+const restartState = readRestartState(sessionStorage, logger)
 
 // Switch TensorFlow.js to the WebGL (GPU) backend, the one the MV2 background
 // page used by default. The MV3 CSP only forbids JS eval; the WebGL backend
 // compiles GLSL shaders on the GPU instead of evaluating JS, so it stays
 // CSP-safe. Returns true if WebGL registered and a small GPU op round-trips;
-// false (without throwing) if anything fails or hangs, so the caller can restart
-// on WASM.
+// false (without throwing) if anything fails or hangs, so the caller can restart.
 const trySetWebglBackend = async (): Promise<boolean> => {
   try {
-    // setBackend resolves false when asynchronous initialisation fails, so trust
-    // the boolean and getBackend() rather than calling tf.ready() after it.
+    // setBackend resolves false when async initialisation fails, so trust the
+    // boolean and getBackend() rather than calling tf.ready() after it.
     if (!(await withTimeout(setBackend('webgl'), WEBGL_PROBE_TIMEOUT, 'WebGL setBackend'))) return false
     // setBackend('webgl') can register but still fail or hang on the first real
     // op if the context is unusable. Run a small computation and read it back
@@ -124,9 +95,9 @@ let restarting = false
 const ensureBackend = async (): Promise<void> => {
   if (currentBackend !== null) return
 
-  // Only a document that has already restarted goes straight to WASM. A first
-  // attempt that fails restarts rather than switching the engine in place, since
-  // trySetWebglBackend also returns false when it times out.
+  // Only an already-restarted document goes straight to WASM. A first attempt that
+  // fails restarts instead, since trySetWebglBackend also returns false on a
+  // timeout, and the timed-out work is still holding the GPU.
   if (restartState === null) {
     if (await trySetWebglBackend()) {
       currentBackend = 'webgl'
@@ -135,23 +106,25 @@ const ensureBackend = async (): Promise<void> => {
     restartOnWasm()
   }
 
-  // Throw rather than leave currentBackend claiming a backend that isn't active:
-  // bringUpClassifier retries, and once it gives up every classification rejects
-  // and the content script reveals the images instead of holding them hidden.
+  // Throw rather than leave currentBackend claiming a backend that isn't active.
+  // bringUpClassifier retries, then every classification rejects and the content
+  // script reveals the images.
   if (!(await setWasmBackend())) throw new Error('No usable TensorFlow.js backend')
   currentBackend = 'wasm'
 }
 
-// Come back up in a clean realm on WASM. reload() only schedules the navigation,
-// so throw as well rather than carrying on in a realm that is about to go away.
-// In-flight classifications are dropped and the content script reveals those images.
+// A WebGL probe or warm-up that timed out is still running on the GPU, and
+// switching the live tfjs engine to WASM waits on it forever, so come back up in a
+// clean realm instead. reload() only schedules the navigation, so throw as well
+// rather than carry on in a realm about to go away. In-flight classifications are
+// dropped and the content script reveals those images.
 const restartOnWasm = (): never => {
   restarting = true
-  sessionStorage.setItem(RESTART_KEY, JSON.stringify({
+  saveRestartState(sessionStorage, {
     filterStrictness: pendingStrictness,
     trainedModel: pendingModelId,
     logging: pendingLogging
-  }))
+  })
   location.reload()
 
   throw new Error('Restarting the offscreen document on WASM')
@@ -190,9 +163,8 @@ const createClassifier = (id: TrainedModel): Classifier => {
   return new NsfwjsClassifier(logger, settings)
 }
 
-// Load a model on the current backend, with the retry the single-model version
-// used. A model that can't warm up on WebGL restarts the document on WASM, so the
-// GPU path can't wedge.
+// Load a model on the current backend, retrying as the single-model version did.
+// A model that can't come up on WebGL restarts the document on WASM instead.
 const bringUpClassifier = async (id: TrainedModel): Promise<Classifier> => {
   await ensureBackend()
 
@@ -200,10 +172,9 @@ const bringUpClassifier = async (id: TrainedModel): Promise<Classifier> => {
   while (true) {
     try {
       const classifier = createClassifier(id)
-      // Require warm-up on every backend. On WebGL a failed warm-up returns false
-      // (not throw) so we can restart on WASM; on WASM a failed warm-up must also
-      // fail here, so bringUpOrFallback can try the default model instead of
-      // accepting a model that can't actually run.
+      // Warm up on every backend so a model that can't run is never accepted. On
+      // WASM the failure has to throw, so bringUpOrFallback tries the default
+      // model instead.
       const ok = await classifier.load(true)
       if (!ok && currentBackend === 'webgl') {
         logger.log('WebGL cannot run the model; restarting the offscreen document on WASM')
@@ -216,13 +187,18 @@ const bringUpClassifier = async (id: TrainedModel): Promise<Classifier> => {
       logger.log(`TFJS backend: ${currentBackend}, model: ${id}`)
       return classifier
     } catch (error) {
-      // A restart is already scheduled; retrying here would just load the model
-      // again on the backend that can't run it, in a realm about to be dropped.
+      // A restart is already scheduled; retrying would reload the model on the
+      // backend that can't run it, in a realm about to be dropped.
       if (restarting) throw error
       attempts++
       logger.error(error as Error)
       logger.log(`Reload model, attempt: ${attempts}`)
-      if (attempts >= MAX_LOAD_ATTEMPTS) throw error
+      // Out of retries on WebGL. A load that keeps failing there may be waiting on
+      // GPU work we can't cancel, so drop the realm rather than report no model.
+      if (attempts >= MAX_LOAD_ATTEMPTS) {
+        if (currentBackend === 'webgl') restartOnWasm()
+        throw error
+      }
       await new Promise(resolve => setTimeout(resolve, 200))
     }
   }
@@ -234,7 +210,7 @@ const bringUpOrFallback = async (id: TrainedModel): Promise<Classifier> => {
   try {
     return await bringUpClassifier(id)
   } catch (error) {
-    if (id === DEFAULT_TRAINED_MODEL) throw error
+    if (restarting || id === DEFAULT_TRAINED_MODEL) throw error
     logger.error(error as Error)
     logger.log(`Model ${id} failed to load; falling back to ${DEFAULT_TRAINED_MODEL}`)
     return await bringUpClassifier(DEFAULT_TRAINED_MODEL)

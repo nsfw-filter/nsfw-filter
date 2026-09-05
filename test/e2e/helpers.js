@@ -33,9 +33,9 @@ const resolveChromePath = () => {
   ].map(parts => path.join(cache, build, ...parts)).find(p => fs.existsSync(p))
 }
 
-// `webgl: false` drops the software-GL flags and turns GL off entirely, so the
-// offscreen document has to bring the model up on the WASM backend instead --
-// the path a machine with no usable GPU takes.
+// `webgl: false` turns GL off entirely instead of enabling software GL, so the
+// offscreen document has to come up on WASM, the path a machine with no usable
+// GPU takes.
 const launchOptions = ({ webgl = true } = {}) => ({
   headless: process.env.HEADLESS !== 'false',
   executablePath: resolveChromePath(),

@@ -67,9 +67,9 @@ export class PredictionQueue extends QueueBase {
   private onFailure ({ url, error }: OnFailureParam): void {
     if (!this._checkUrlStatus(url)) return
 
-    // Deliberately not cached. A failure means we never got a verdict -- usually
-    // the model being unavailable, not the image being safe -- so caching it as
-    // `false` would keep serving "safe" for that URL for the rest of the session.
+    // Not cached. A failure means no verdict, usually an unavailable model rather
+    // than a safe image, so caching `false` would keep serving "safe" for that URL
+    // until the entry is evicted.
 
     for (const [{ reject }] of this.requestMap.get(url) as requestQueueValue) {
       reject(error)

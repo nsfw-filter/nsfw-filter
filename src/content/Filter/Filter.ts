@@ -15,13 +15,10 @@ type FilterRequestQueueValue = {
   request: PredictionRequest
 }
 
-// Nothing downstream is guaranteed to answer. The service worker can be torn
-// down mid-request, and an offscreen document whose TensorFlow.js backend wedged
-// never replies at all. The image stays hidden until this promise settles, so
-// without a deadline here one stuck classification leaves it hidden for the life
-// of the page. Reveal it instead: showing an unclassified image is a bad
-// outcome, but a permanently blank page is a worse one, and it matches how the
-// rest of the filter degrades when it can't get a verdict.
+// An image stays hidden until its prediction settles, and nothing downstream is
+// guaranteed to answer: the service worker can be torn down mid-request, and an
+// offscreen document whose TensorFlow.js backend wedged never replies. Reveal the
+// image rather than leave it hidden for the life of the page.
 const ANALYSIS_DEADLINE = 60000
 
 export class Filter implements IFilter {
@@ -65,9 +62,8 @@ export class Filter implements IFilter {
     })
   }
 
-  // Take the pending entry for `url` off the queue and stop its timers. Returns
-  // undefined when it was already settled, which is how a reply that arrives
-  // after we gave up gets dropped instead of resolving twice.
+  // Takes the pending entry off the queue and stops its timers. undefined means it
+  // was already settled, which is how a reply that arrives too late is dropped.
   private _take (url: string): FilterRequestQueueValue | undefined {
     const queued = this.requestQueue.get(url)
     if (queued === undefined) return undefined
@@ -79,10 +75,14 @@ export class Filter implements IFilter {
     return queued
   }
 
-  // Same, for a reply belonging to a specific request. The same url can be queued
-  // again after one times out, so a late reply must not settle the new entry.
+  // A url can be queued again after a request is abandoned, so a reply or a retry
+  // has to prove it still belongs to the entry on the queue.
+  private _isCurrent (request: PredictionRequest): boolean {
+    return this.requestQueue.get(request.url)?.request === request
+  }
+
   private _takeFor (request: PredictionRequest): FilterRequestQueueValue | undefined {
-    if (this.requestQueue.get(request.url)?.request !== request) return undefined
+    if (!this._isCurrent(request)) return undefined
 
     return this._take(request.url)
   }
@@ -112,6 +112,10 @@ export class Filter implements IFilter {
   }
 
   private _handleBackgroundErrors (request: PredictionRequest, message: string | undefined): void {
+    // A sendMessage callback can't be cancelled, so this still fires for a request
+    // we gave up on. Nothing is waiting on it; don't restart the retry loop.
+    if (!this._isCurrent(request)) return
+
     const reconnectCount = request.clearTimer()
     console.log(`[NSFW-Filter] Cannot connect to background worker for ${request.url} image, attempt ${reconnectCount}, error: ${message}`)
 

@@ -14,9 +14,9 @@ module.exports = async function () {
   const browser = await puppeteer.launch(launchOptions())
   global.__BROWSER_GLOBAL__ = browser
 
-  // A second browser with GL off, for the tests that need the WASM backend the
-  // extension falls back to when there is no usable GPU. Test files can't launch
-  // it themselves: jest doesn't transform their requires, and puppeteer is ESM.
+  // A second browser with GL off, for the tests that need the WASM fallback. Test
+  // files can't launch it themselves: jest doesn't transform their requires, and
+  // puppeteer is ESM.
   const noGpuBrowser = await puppeteer.launch(launchOptions({ webgl: false }))
   global.__BROWSER_NO_GPU_GLOBAL__ = noGpuBrowser
 

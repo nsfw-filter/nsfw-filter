@@ -3,46 +3,69 @@
  */
 import { ImageFilter } from '../../src/content/Filter/ImageFilter'
 
-// An image is hidden from the moment it is queued until a verdict comes back, so
-// a request nothing ever answers used to leave it hidden for the life of the
-// page. That is what a wedged TensorFlow.js backend in the offscreen document
-// looks like from here: the message is delivered, the callback never fires.
-// These cover the deadline that reveals the image anyway.
+// An image is hidden from the moment it is queued until a verdict comes back, so a
+// request nothing answers used to leave it hidden for the life of the page. That is
+// what a wedged backend looks like from here: the message is delivered, the
+// callback never fires. These cover the deadline that reveals the image anyway.
 
 const ANALYSIS_DEADLINE = 60000
 
+type StubRuntime = { lastError?: { message: string }, sendMessage: unknown }
+
+const installRuntime = (runtime: StubRuntime): void => {
+  (global as unknown as { chrome: unknown }).chrome = { runtime }
+}
+
+// chrome.runtime is a singleton, so lastError is read off whichever stub is
+// installed now, not the one that sent the message.
+const installedRuntime = (): StubRuntime =>
+  (global as unknown as { chrome: { runtime: StubRuntime } }).chrome.runtime
+
 // chrome.runtime.sendMessage, with the reply held back until a test releases it.
-const stubRuntime = (): { reply: (response: unknown) => void, sent: () => number } => {
+const stubRuntime = (): {
+  reply: (response: unknown) => void
+  replyWithError: () => void
+  sent: () => number
+} => {
   let callback: ((response: unknown) => void) | undefined
   let sent = 0
 
-  const runtime = {
+  const runtime: StubRuntime = {
     lastError: undefined,
     sendMessage: (_message: unknown, respond: (response: unknown) => void) => {
       sent++
       callback = respond
     }
-  };
+  }
 
-  (global as unknown as { chrome: unknown }).chrome = { runtime }
+  installRuntime(runtime)
 
-  return { reply: (response: unknown) => callback?.(response), sent: () => sent }
+  return {
+    reply: (response: unknown) => callback?.(response),
+    replyWithError: () => {
+      const installed = installedRuntime()
+      installed.lastError = { message: 'Could not establish connection' }
+      callback?.(undefined)
+      installed.lastError = undefined
+    },
+    sent: () => sent
+  }
 }
 
-// The same stub, but every send comes back as a runtime error, which is what a
-// torn-down service worker looks like from the content script.
+// The same stub, but every send comes back as a runtime error: a torn-down service
+// worker, seen from the content script.
 const stubUnreachableRuntime = (): { sent: () => number } => {
   let sent = 0
 
-  const runtime = {
+  const runtime: StubRuntime = {
     lastError: { message: 'Could not establish connection' },
     sendMessage: (_message: unknown, respond: (response: unknown) => void) => {
       sent++
       respond(undefined)
     }
-  };
+  }
 
-  (global as unknown as { chrome: unknown }).chrome = { runtime }
+  installRuntime(runtime)
 
   return { sent: () => sent }
 }
@@ -104,8 +127,8 @@ describe('content => Filter => analysis deadline', () => {
     expect(image.dataset.nsfwFilterStatus).toBe('nsfw')
   })
 
-  // A reply that lands after we gave up must not resolve a second time and undo
-  // the reveal, and must not blow up on a queue entry that is already gone.
+  // A reply that lands after we gave up must not resolve a second time, and must
+  // not blow up on a queue entry that is already gone.
   test('ignores a reply that arrives after the deadline', async () => {
     const { reply } = stubRuntime()
     const image = makeImage()
@@ -135,8 +158,7 @@ describe('content => Filter => analysis deadline', () => {
     expect(second.style.visibility).toBe('visible')
   })
 
-  // Giving up on an unreachable background worker has to settle every waiter too,
-  // and stop retrying once it has.
+  // Giving up on an unreachable worker settles every waiter and stops retrying.
   test('reveals every image when the background worker never comes back', async () => {
     const { sent } = stubUnreachableRuntime()
     const first = makeImage()
@@ -150,6 +172,41 @@ describe('content => Filter => analysis deadline', () => {
     expect(first.style.visibility).toBe('visible')
     expect(second.style.visibility).toBe('visible')
     expect(sent()).toBe(6)
+  })
+
+  // A sendMessage callback can't be cancelled, so the runtime error for a request
+  // we gave up on still arrives. It must not restart the retry loop.
+  test('does not retry a request that already timed out', async () => {
+    const runtime = stubRuntime()
+    const image = makeImage()
+
+    new ImageFilter().analyzeImage(image)
+    await jest.advanceTimersByTimeAsync(ANALYSIS_DEADLINE)
+    runtime.replyWithError()
+    await jest.advanceTimersByTimeAsync(5000)
+
+    expect(runtime.sent()).toBe(1)
+    expect(image.style.visibility).toBe('visible')
+  })
+
+  // The runtime error for an abandoned request arrives while the same url is queued
+  // again. It must not retry or settle on behalf of the new request.
+  test('drops a late runtime error belonging to an abandoned request', async () => {
+    const first = stubRuntime()
+    const image = makeImage()
+    const filter = new ImageFilter()
+
+    filter.analyzeImage(image)
+    await jest.advanceTimersByTimeAsync(ANALYSIS_DEADLINE)
+
+    const second = stubRuntime()
+    const requeued = makeImage()
+    filter.analyzeImage(requeued)
+    first.replyWithError()
+    await jest.advanceTimersByTimeAsync(5000)
+
+    expect(requeued.dataset.nsfwFilterStatus).toBe('processing')
+    expect(second.sent()).toBe(1)
   })
 
   // A url that timed out can be queued again by a later image. The reply to the

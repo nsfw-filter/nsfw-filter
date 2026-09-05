@@ -14,9 +14,9 @@ const makeQueue = (): PredictionQueue => {
 }
 
 describe('background => PredictionQueue => onFailure', () => {
-  // A rejected prediction means no verdict came back, not that the image is
-  // safe. Caching it would keep serving "safe" for that url until the cache is
-  // cleared, so a transient model outage would silently unblock images.
+  // A rejected prediction means no verdict, not a safe image. Caching it would
+  // serve "safe" for that url until the cache is cleared, so a transient model
+  // outage would silently unblock images.
   test('does not cache a url the model failed on', () => {
     const queue = makeQueue() as unknown as {
       requestMap: Map<string, unknown>
