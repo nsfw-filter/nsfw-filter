@@ -86,7 +86,8 @@ const startFixtureServer = async () => {
     // Chrome asks for video by range and will not start playback on a server that
     // answers 200 to every request.
     const range = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range ?? '')
-    if (range !== null) {
+    // An empty file has no satisfiable range; answering the whole of it is allowed.
+    if (range !== null && body.length > 0) {
       // `bytes=-500` asks for the last 500 bytes, not the first 501.
       const suffix = range[1] === ''
       const start = suffix ? Math.max(body.length - Number(range[2]), 0) : Number(range[1])
