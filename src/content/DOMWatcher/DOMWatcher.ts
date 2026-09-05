@@ -7,6 +7,8 @@ import { IBackgroundImageFilter } from '../Filter/BackgroundImageFilter'
 import { IImageFilter } from '../Filter/ImageFilter'
 import { IVideoFilter } from '../Filter/VideoFilter'
 
+const STYLE_SHEET = 'link[rel~="stylesheet"], style'
+
 export type IDOMWatcher = {
   watch: () => void
   unwatch: () => void
@@ -61,8 +63,15 @@ export class DOMWatcher implements IDOMWatcher {
         // A removed subtree has to give up its override and its pending request,
         // and a stale registration would keep the element alive with the page.
         mutation.removedNodes.forEach(node => {
-          if (node instanceof Element) this.backgroundFilter.release(node)
+          if (!(node instanceof Element)) return
+          this.backgroundFilter.release(node)
+          // Dropping a sheet takes its rules with it, which can expose a
+          // background an earlier sheet was overriding.
+          if (this.isStyleSheet(node)) this.backgroundFilter.recheckVisible()
         })
+        // A sibling arriving or leaving decides `+`, `~` and `:first-child`, so the
+        // element being changed is dirty even when nothing about it moved.
+        if (mutation.target instanceof HTMLElement) this.backgroundFilter.checkElement(mutation.target)
         if (mutation.addedNodes.length === 0) continue
 
         this.findAndCheckAllMedia(mutation.target as Element)
@@ -83,8 +92,8 @@ export class DOMWatcher implements IDOMWatcher {
   // A stylesheet can give an element on screen a background without touching an
   // attribute or an intersection, so its arrival is what prompts the recheck.
   private watchStyleSheets (root: Element): void {
-    const sheets = [...root.querySelectorAll('link[rel~="stylesheet"], style')]
-    if (root.matches('link[rel~="stylesheet"], style')) sheets.push(root)
+    const sheets = [...root.querySelectorAll(STYLE_SHEET)]
+    if (root.matches(STYLE_SHEET)) sheets.push(root)
     if (sheets.length === 0) return
 
     this.backgroundFilter.recheckVisible()
@@ -99,6 +108,10 @@ export class DOMWatcher implements IDOMWatcher {
       new MutationObserver(() => this.backgroundFilter.recheckVisible())
         .observe(sheet, { characterData: true, childList: true, subtree: true })
     })
+  }
+
+  private isStyleSheet (element: Element): boolean {
+    return element.matches(STYLE_SHEET)
   }
 
   private findAndCheckAllMedia (element: Element): void {
@@ -158,13 +171,16 @@ export class DOMWatcher implements IDOMWatcher {
     this.videoFilter.analyzeVideo(video, false)
   }
 
+  // Backgrounds selected through other attributes, through CSSOM insertRule, or
+  // through adopted stylesheets and shadow roots are not covered: watching every
+  // attribute would re-read the visible set on any page that animates one.
   private static getConfig (): MutationObserverInit {
     return {
       characterData: false,
       subtree: true,
       childList: true,
       attributes: true,
-      attributeFilter: ['src', 'style', 'poster', 'class']
+      attributeFilter: ['src', 'style', 'poster', 'class', 'id', 'hidden']
     }
   }
 }

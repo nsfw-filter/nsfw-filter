@@ -114,3 +114,30 @@ describe('content => DOMWatcher => style rewrites (issue #244)', () => {
     expect(image.style.visibility).toBe('hidden')
   })
 })
+
+// A background can be selected by what is around an element rather than by the
+// element itself, so what changed is not always what has to be re-read.
+describe('content => DOMWatcher => cascade changes', () => {
+  test('re-reads the parent of an inserted sibling', async () => {
+    document.body.innerHTML = '<div id="list"><div id="card"></div></div>'
+    const background = makeBackgroundFilter()
+    new DOMWatcher(makeFilter(), background).watch()
+
+    document.getElementById('list')?.prepend(document.createElement('div'))
+    await flushMutations()
+
+    expect(background.checkElement).toHaveBeenCalledWith(document.getElementById('list'))
+  })
+
+  test('re-reads what is on screen when a stylesheet is removed', async () => {
+    document.body.innerHTML = '<style id="sheet"></style>'
+    const background = makeBackgroundFilter()
+    new DOMWatcher(makeFilter(), background).watch()
+    ;(background.recheckVisible as jest.Mock).mockClear()
+
+    document.getElementById('sheet')?.remove()
+    await flushMutations()
+
+    expect(background.recheckVisible).toHaveBeenCalled()
+  })
+})
