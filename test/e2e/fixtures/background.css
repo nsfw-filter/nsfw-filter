@@ -1,0 +1,13 @@
+/* An external stylesheet, so the url can only be found through computed style:
+   the element carries no inline style and the sheet is a separate request. */
+.card {
+  width: 128px;
+  height: 128px;
+  background-image: linear-gradient(transparent, transparent), url("/icon.png");
+}
+
+.card-revised {
+  width: 128px;
+  height: 128px;
+  background-image: url("/icon.png?revision=2");
+}

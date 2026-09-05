@@ -2,6 +2,7 @@
  * @jest-environment jsdom
  */
 import { DOMWatcher } from '../../src/content/DOMWatcher/DOMWatcher'
+import { IBackgroundImageFilter } from '../../src/content/Filter/BackgroundImageFilter'
 import { IImageFilter, ImageFilter } from '../../src/content/Filter/ImageFilter'
 
 const flushMutations = async (): Promise<void> => await Promise.resolve()
@@ -13,6 +14,18 @@ const makeFilter = (): IImageFilter => ({
   checkStyleMutation: jest.fn()
 })
 
+const makeBackgroundFilter = (): IBackgroundImageFilter => ({
+  observe: jest.fn(),
+  release: jest.fn(),
+  recheckVisible: jest.fn(),
+  checkElement: jest.fn(),
+  checkStyleMutation: jest.fn(),
+  applyEffectToBlocked: jest.fn(),
+  revealAll: jest.fn(),
+  start: jest.fn(),
+  stop: jest.fn()
+})
+
 afterEach(() => { document.body.innerHTML = '' })
 
 describe('content => DOMWatcher => watch', () => {
@@ -20,7 +33,7 @@ describe('content => DOMWatcher => watch', () => {
     document.body.innerHTML = '<img id="a"><img id="b">'
     const filter = makeFilter()
 
-    new DOMWatcher(filter).watch()
+    new DOMWatcher(filter, makeBackgroundFilter()).watch()
 
     expect(filter.analyzeImage).toHaveBeenCalledTimes(2)
     expect(filter.analyzeImage).toHaveBeenCalledWith(document.getElementById('a'), false)
@@ -29,7 +42,7 @@ describe('content => DOMWatcher => watch', () => {
 
   test('checks images added after watching starts', async () => {
     const filter = makeFilter()
-    new DOMWatcher(filter).watch()
+    new DOMWatcher(filter, makeBackgroundFilter()).watch()
 
     document.body.appendChild(document.createElement('img'))
     await flushMutations()
@@ -40,7 +53,7 @@ describe('content => DOMWatcher => watch', () => {
   test('reanalyzes an image when its src attribute changes', async () => {
     document.body.innerHTML = '<img id="a">'
     const filter = makeFilter()
-    new DOMWatcher(filter).watch();
+    new DOMWatcher(filter, makeBackgroundFilter()).watch();
     (filter.analyzeImage as jest.Mock).mockClear()
 
     document.getElementById('a')!.setAttribute('src', 'http://example.com/a.jpg')
@@ -58,7 +71,7 @@ describe('content => DOMWatcher => start/stop live', () => {
     document.body.innerHTML = '<img id="a">'
     const filter = makeFilter()
 
-    const watcher = new DOMWatcher(filter)
+    const watcher = new DOMWatcher(filter, makeBackgroundFilter())
     watcher.watch()
     watcher.watch()
 
@@ -67,7 +80,7 @@ describe('content => DOMWatcher => start/stop live', () => {
 
   test('unwatch stops reacting to later mutations', async () => {
     const filter = makeFilter()
-    const watcher = new DOMWatcher(filter)
+    const watcher = new DOMWatcher(filter, makeBackgroundFilter())
     watcher.watch()
     watcher.unwatch();
     (filter.analyzeImage as jest.Mock).mockClear()
@@ -93,7 +106,7 @@ describe('content => DOMWatcher => style rewrites (issue #244)', () => {
 
     const filter = new ImageFilter()
     filter.setSettings({ filterEffect: 'hide' })
-    new DOMWatcher(filter).watch()
+    new DOMWatcher(filter, makeBackgroundFilter()).watch()
 
     image.setAttribute('style', 'visibility: visible')
     await flushMutations()

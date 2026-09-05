@@ -7,6 +7,7 @@ import { isHostAllowed } from '../utils/allowlist'
 import { CONTEXT_TARGET, UNHIDE_IMAGE, UnhideImageMessage } from '../utils/messages'
 
 import { DOMWatcher } from './DOMWatcher/DOMWatcher'
+import { BackgroundImageFilter } from './Filter/BackgroundImageFilter'
 import { ImageFilter } from './Filter/ImageFilter'
 import { VideoFilter } from './Filter/VideoFilter'
 
@@ -73,7 +74,8 @@ const init = (): void => {
   // Ignore iframes for filtering, https://stackoverflow.com/a/326076/10432429
   if (window.self !== window.top) return
 
-  const domWatcher = new DOMWatcher(imageFilter, videoFilter)
+  const backgroundFilter = new BackgroundImageFilter()
+  const domWatcher = new DOMWatcher(imageFilter, videoFilter, backgroundFilter)
 
   injectPendingHide()
   const safety = setTimeout(removePendingHide, HIDE_STYLE_SAFETY_TIMEOUT)
@@ -98,6 +100,7 @@ const init = (): void => {
         domWatcher.watch()
       } else {
         // Extension turned off, or filtering disabled for this site: reveal everything.
+        backgroundFilter.stop()
         removePendingHide()
       }
 
@@ -125,13 +128,16 @@ const init = (): void => {
 
         if (filtering) {
           videoFilter.start()
+          backgroundFilter.start()
           domWatcher.watch()
         } else {
           domWatcher.unwatch()
+          backgroundFilter.stop()
           removePendingHide()
           imageFilter.revealAll()
           videoFilter.revealAll()
           videoFilter.stop()
+          backgroundFilter.revealAll()
         }
       })
     })
@@ -139,6 +145,7 @@ const init = (): void => {
       console.warn(error)
       imageFilter.setSettings({ filterEffect: 'blur' })
       videoFilter.setSettings({ filterEffect: 'blur' })
+      backgroundFilter.stop()
       clearTimeout(safety)
       removePendingHide()
     })
