@@ -87,8 +87,15 @@ const startFixtureServer = async () => {
     // answers 200 to every request.
     const range = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range ?? '')
     if (range !== null) {
-      const start = range[1] === '' ? 0 : Number(range[1])
-      const end = range[2] === '' ? body.length - 1 : Number(range[2])
+      // `bytes=-500` asks for the last 500 bytes, not the first 501.
+      const suffix = range[1] === ''
+      const start = suffix ? Math.max(body.length - Number(range[2]), 0) : Number(range[1])
+      const end = suffix || range[2] === '' ? body.length - 1 : Math.min(Number(range[2]), body.length - 1)
+      if (start > end) {
+        res.writeHead(416, { 'Content-Range': `bytes */${body.length}` })
+        res.end()
+        return
+      }
       res.writeHead(206, {
         'Content-Type': type,
         'Content-Range': `bytes ${start}-${end}/${body.length}`,
