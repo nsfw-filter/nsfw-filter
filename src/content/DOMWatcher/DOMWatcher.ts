@@ -114,14 +114,14 @@ export class DOMWatcher implements IDOMWatcher {
       if (this.registered.has(sheet)) return
       this.registered.add(sheet)
 
-      if (sheet.nodeName === 'LINK') {
-        sheet.addEventListener(
-          'load',
-          () => this.backgroundFilter.recheckVisible(),
-          { signal: this.sheetLoads.signal }
-        )
-        return
-      }
+      // A <style> fires load once its @import rules have finished, which is the
+      // only signal that those rules exist.
+      sheet.addEventListener(
+        'load',
+        () => this.backgroundFilter.recheckVisible(),
+        { signal: this.sheetLoads.signal }
+      )
+      if (sheet.nodeName === 'LINK') return
 
       // A <style> is often inserted empty and filled in afterwards, and its rules
       // are text: nothing about that reaches the document-level observer.
@@ -195,7 +195,9 @@ export class DOMWatcher implements IDOMWatcher {
 
   // Backgrounds selected through other attributes, through CSSOM insertRule, or
   // through adopted stylesheets and shadow roots are not covered: watching every
-  // attribute would re-read the visible set on any page that animates one.
+  // attribute would re-read the visible set on any page that animates one. Nor
+  // are selectors that reach outside the changed element's parent, :has() above
+  // all, for the same reason: a mutation there rechecks that subtree only.
   private static getConfig (): MutationObserverInit {
     return {
       characterData: false,

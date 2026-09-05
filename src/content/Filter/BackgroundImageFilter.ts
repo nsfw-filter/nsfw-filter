@@ -26,7 +26,7 @@ type BackgroundState = {
   pending: boolean
   // The inline declaration as the page left it, so the cascade comes back exactly
   // as it was rather than as a serialized computed value.
-  inline: { value: string, priority: string } | null
+  inline: { value: string, priority: string, shorthand: { value: string, priority: string } | null } | null
 }
 
 const MIN_ELEMENT_SIZE = 41
@@ -315,10 +315,17 @@ export class BackgroundImageFilter extends Filter implements IBackgroundImageFil
   // visibility on the element would take its text and children with it.
   private hide (element: HTMLElement, state: BackgroundState): void {
     if (state.inline === null) {
-      state.inline = {
-        value: element.style.getPropertyValue('background-image'),
-        priority: element.style.getPropertyPriority('background-image')
-      }
+      const value = element.style.getPropertyValue('background-image')
+      // `background: var(--photo)` has no readable longhand, and the override
+      // takes the shorthand with it, so the shorthand is what has to come back.
+      const shorthand = value === '' && element.style.getPropertyValue('background') !== ''
+        ? {
+            value: element.style.getPropertyValue('background'),
+            priority: element.style.getPropertyPriority('background')
+          }
+        : null
+
+      state.inline = { value, priority: element.style.getPropertyPriority('background-image'), shorthand }
     }
 
     this.write(element, () => element.style.setProperty('background-image', 'none', 'important'))
@@ -333,19 +340,16 @@ export class BackgroundImageFilter extends Filter implements IBackgroundImageFil
     const state = this.states.get(element)
     if (state?.inline == null) return
 
-    const { value, priority } = state.inline
+    const { value, priority, shorthand } = state.inline
     state.inline = null
     // The page overwrote the whole declaration; whatever it wants there now is
     // newer than what we saved.
     if (!this.overridden(element)) return
 
     this.write(element, () => {
-      if (value === '') {
-        element.style.removeProperty('background-image')
-        return
-      }
-
-      element.style.setProperty('background-image', value, priority)
+      element.style.removeProperty('background-image')
+      if (shorthand !== null) element.style.setProperty('background', shorthand.value, shorthand.priority)
+      else if (value !== '') element.style.setProperty('background-image', value, priority)
     })
   }
 

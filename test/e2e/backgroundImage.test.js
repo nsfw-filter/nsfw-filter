@@ -151,6 +151,26 @@ describe('CSS background images', () => {
     expect(promoted.backgroundImage).toContain('promoted=1')
   })
 
+  // A shorthand holding a custom property has no readable background-image
+  // longhand, so restoring one puts nothing back.
+  test('restores a background written as a shorthand with a variable', async () => {
+    await page.evaluate(() => {
+      const card = document.createElement('div')
+      card.id = 'variable'
+      card.textContent = 'variable text'
+      card.style.width = '128px'
+      card.style.height = '128px'
+      card.style.setProperty('--photo', 'url("/icon.png?variable=1")')
+      card.style.background = 'var(--photo)'
+      document.body.appendChild(card)
+    })
+    await settled(page, 'variable')
+
+    const variable = await read(page, 'variable')
+    expect(variable.status).toBe('sfw')
+    expect(variable.backgroundImage).toContain('variable=1')
+  })
+
   test('leaves no background stuck missing or unprocessed', async () => {
     const leftovers = await page.evaluate(() =>
       [...document.querySelectorAll('[data-nsfw-filter-background-status]')].filter(element => {
