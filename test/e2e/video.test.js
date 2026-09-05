@@ -171,17 +171,29 @@ describe('Videos on the page', () => {
   // An infinite-scroll feed takes elements out and puts them back. A video that
   // came back must not be left hidden or wedged.
   test('keeps a removed and reinserted video settled', async () => {
+    await page.evaluate((base) => {
+      const video = document.createElement('video')
+      video.id = 'reinserted'
+      video.src = `${base}video.webm`
+      video.width = 320
+      video.height = 240
+      video.muted = true
+      video.playsInline = true
+      document.body.appendChild(video)
+      video.play().catch(() => undefined)
+    }, global.__BASE_URL__)
+    await settledStatus(page, 'reinserted')
+
     await page.evaluate(() => {
-      const video = document.getElementById('added')
-      window.__parked = video
-      video.remove()
+      window.__parked = document.getElementById('reinserted')
+      window.__parked.remove()
     })
     await page.evaluate(() => {
       document.body.appendChild(window.__parked)
       window.__parked.play().catch(() => undefined)
     })
 
-    expect((await settledStatus(page, 'added')).visibility).toBe('visible')
+    expect((await settledStatus(page, 'reinserted')).visibility).toBe('visible')
   })
 
   test('leaves no video stuck hidden or unprocessed', async () => {
