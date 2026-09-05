@@ -1,14 +1,10 @@
 import { PredictionRequest } from '../../utils/messages'
 
-import { Filter } from './Filter'
-
-type imageFilterSettingsType = {
-  filterEffect: 'blur' | 'hide' | 'grayscale'
-}
+import { Filter, FilterSettings } from './Filter'
 
 export type IImageFilter = {
   analyzeImage: (image: HTMLImageElement, srcAttribute: boolean) => void
-  setSettings: (settings: imageFilterSettingsType) => void
+  setSettings: (settings: FilterSettings) => void
   revealImage: (image: HTMLImageElement) => void
   checkStyleMutation: (image: HTMLImageElement) => void
   applyEffectToBlocked: () => void
@@ -17,43 +13,40 @@ export type IImageFilter = {
 
 export class ImageFilter extends Filter implements IImageFilter {
   private readonly MIN_IMAGE_SIZE: number
-  private settings: imageFilterSettingsType
+  // Bumped when filtering is turned off. A verdict from before that is for a page
+  // the user has since asked us to leave alone.
+  private epoch: number
+  private readonly unhidden: WeakSet<HTMLImageElement>
 
   constructor () {
     super()
     this.MIN_IMAGE_SIZE = 41
-
-    this.settings = { filterEffect: 'hide' }
-  }
-
-  public setSettings (settings: imageFilterSettingsType): void {
-    this.settings = settings
+    this.epoch = 0
+    this.unhidden = new WeakSet()
   }
 
   // User-initiated unhide from the right-click menu. Clears whatever effect was
   // applied and tags the image `sfw` so analyzeImage won't re-filter it (and a
   // later src change re-triggers analysis as usual).
   public revealImage (image: HTMLImageElement): void {
-    if (image.parentNode?.nodeName === 'BODY') image.hidden = false
-    image.style.filter = ''
-    image.style.visibility = 'visible'
+    this.unhidden.add(image)
+    this.revealElement(image)
     image.dataset.nsfwFilterStatus = 'sfw'
   }
 
   public analyzeImage (image: HTMLImageElement, srcAttribute: boolean = false): void {
     // Only (re)process unseen images or images whose `src` just changed.
     if (!srcAttribute && image.dataset.nsfwFilterStatus !== undefined) return
+    // A different image in the same element: the unhide the user gave the old one
+    // does not carry over.
+    if (srcAttribute) this.unhidden.delete(image)
     if (image.src.length === 0) {
       // An image whose src is cleared while a prediction is in flight would keep
       // its `processing` tag and inline visibility:hidden forever: the pending
       // result is for the old src, so showImage's url guard skips it. Reveal it —
       // an empty image has nothing to filter, and a later real src re-triggers
       // analysis via srcAttribute.
-      if (image.dataset.nsfwFilterStatus === 'processing') {
-        image.dataset.nsfwFilterStatus = 'sfw'
-        if (image.parentNode?.nodeName === 'BODY') image.hidden = false
-        image.style.visibility = 'visible'
-      }
+      if (image.dataset.nsfwFilterStatus === 'processing') this.revealImage(image)
       return
     }
 
@@ -65,17 +58,11 @@ export class ImageFilter extends Filter implements IImageFilter {
       image.width !== 0 && image.height !== 0 &&
       (image.width <= this.MIN_IMAGE_SIZE || image.height <= this.MIN_IMAGE_SIZE)
     if (tooSmall) {
-      // Small images aren't filtered, but they still need a status so the
-      // pending-hide stylesheet reveals them. Reveal when untagged or when the
-      // src changed to a small icon mid-processing: the in-flight result is for
-      // the old src, so showImage's url guard would skip it and leave the image
-      // stuck hidden. A blocked (nsfw) image stays blocked.
+      // Reveal when untagged or when the src changed to a small icon mid-flight:
+      // the in-flight result is for the old src, so showImage's url guard would
+      // skip it and leave the image stuck hidden. A blocked image stays blocked.
       const status = image.dataset.nsfwFilterStatus
-      if (status === undefined || status === 'processing') {
-        image.dataset.nsfwFilterStatus = 'sfw'
-        if (image.parentNode?.nodeName === 'BODY') image.hidden = false
-        image.style.visibility = 'visible'
-      }
+      if (status === undefined || status === 'processing') this.revealImage(image)
       return
     }
 
@@ -93,7 +80,7 @@ export class ImageFilter extends Filter implements IImageFilter {
     // it. Keep it hidden (not revealed-with-effect: it isn't classified yet) until
     // the prediction returns and either reveals or blocks it.
     if (status === 'processing') {
-      if (image.style.visibility !== 'hidden') this.hideImage(image)
+      if (image.style.visibility !== 'hidden') this.hideElement(image)
       return
     }
     if (status !== 'nsfw') return
@@ -114,76 +101,43 @@ export class ImageFilter extends Filter implements IImageFilter {
   // touched. Clearing the status (not tagging sfw) means a later re-enable's
   // sweep reclassifies them rather than trusting a verdict made while off.
   public revealAll (): void {
+    this.epoch++
+
     const filtered = document.querySelectorAll<HTMLImageElement>('img[data-nsfw-filter-status]')
     filtered.forEach(image => {
-      if (image.parentNode?.nodeName === 'BODY') image.hidden = false
-      image.style.filter = ''
-      image.style.visibility = 'visible'
+      this.revealElement(image)
       delete image.dataset.nsfwFilterStatus
     })
   }
 
-  private isEffectApplied (image: HTMLImageElement): boolean {
-    // Match our exact value, not a substring: a site setting its own weak
-    // `filter: blur(1px)` on a blocked image must still count as effect-gone so
-    // we re-apply the full blur(25px), not leave the image barely obscured.
-    if (this.settings.filterEffect === 'blur') return image.style.filter === 'blur(25px)'
-    if (this.settings.filterEffect === 'grayscale') return image.style.filter === 'grayscale(1)'
-    return image.style.visibility === 'hidden'
-  }
-
-  private applyEffect (image: HTMLImageElement): void {
-    if (this.settings.filterEffect === 'blur') {
-      image.style.filter = 'blur(25px)'
-      image.style.visibility = 'visible'
-      if (image.parentNode?.nodeName === 'BODY') image.hidden = false
-    } else if (this.settings.filterEffect === 'grayscale') {
-      image.style.filter = 'grayscale(1)'
-      image.style.visibility = 'visible'
-      if (image.parentNode?.nodeName === 'BODY') image.hidden = false
-    } else {
-      image.style.visibility = 'hidden'
-      if (image.parentNode?.nodeName === 'BODY') image.hidden = true
-    }
-  }
-
   private _analyzeImage (image: HTMLImageElement): void {
-    this.hideImage(image)
+    this.hideElement(image)
 
+    // A verdict applies to the src it was asked about, on a page still being
+    // filtered. Filtering can be switched off and the src can change while the
+    // request is out, and hiding on a late verdict is not recoverable from.
+    const epoch = this.epoch
     const request = new PredictionRequest(image.src)
     this.requestToAnalyzeImage(request)
       .then(({ result, url }) => {
-        if (result) {
-          if (this.settings.filterEffect === 'blur') {
-            image.style.filter = 'blur(25px)'
-            this.showImage(image, url)
-          } else if (this.settings.filterEffect === 'grayscale') {
-            image.style.filter = 'grayscale(1)'
-            this.showImage(image, url)
-          }
+        if (this.epoch !== epoch || image.src !== url || this.unhidden.has(image)) return
 
+        if (result) {
           this.blockedItems++
           image.dataset.nsfwFilterStatus = 'nsfw'
+          this.applyEffect(image)
         } else {
-          this.showImage(image, url)
+          this.showImage(image)
         }
       }).catch(({ url }) => {
-        this.showImage(image, url)
+        if (this.epoch !== epoch || image.src !== url) return
+
+        this.showImage(image)
       })
   }
 
-  private hideImage (image: HTMLImageElement): void {
-    if (image.parentNode?.nodeName === 'BODY') image.hidden = true
-
-    image.style.visibility = 'hidden'
-  }
-
-  private showImage (image: HTMLImageElement, url: string): void {
-    if (image.src === url) {
-      if (image.parentNode?.nodeName === 'BODY') image.hidden = false
-
-      image.dataset.nsfwFilterStatus = 'sfw'
-      image.style.visibility = 'visible'
-    }
+  private showImage (image: HTMLImageElement): void {
+    image.dataset.nsfwFilterStatus = 'sfw'
+    this.revealElement(image)
   }
 }

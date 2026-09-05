@@ -9,13 +9,13 @@ import { TrainedModel } from '../utils/models'
 // `setSettings`), but every call is an RPC because a Manifest V3 service worker
 // can't touch the DOM or run the WebGL/WASM model itself.
 export type IOffscreenModel = {
-  predict: (url: string) => Promise<boolean>
+  predict: (url: string, label?: string) => Promise<boolean>
   setSettings: (filterStrictness: number, logging: boolean, trainedModel: TrainedModel) => void
 }
 
 export class OffscreenModel implements IOffscreenModel {
-  public async predict (url: string): Promise<boolean> {
-    const request: OffscreenRequest = { target: 'offscreen', type: 'CLASSIFY', url }
+  public async predict (url: string, label?: string): Promise<boolean> {
+    const request: OffscreenRequest = { target: 'offscreen', type: 'CLASSIFY', url, label }
 
     return await new Promise((resolve, reject) => {
       chrome.runtime.sendMessage(request, (response: OffscreenClassifyResponse | undefined) => {

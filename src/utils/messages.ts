@@ -2,12 +2,17 @@ import { TrainedModel } from './models'
 
 export class PredictionRequest {
   public readonly url: string
+  // What to classify, when that isn't the url itself. A video frame travels as a
+  // data url under a one-off key, so nothing downstream has to log, cache or map
+  // on megabytes of base64.
+  public readonly source?: string
   public readonly type?: string // @DOCS Chrome internal usage
   public reconectTimer?: number
   private _reconectCount: number
 
-  constructor (url: string) {
+  constructor (url: string, source?: string) {
     this.url = url
+    this.source = source
     this._reconectCount = 0
   }
 
@@ -41,6 +46,9 @@ export type OffscreenClassifyRequest = {
   target: 'offscreen'
   type: 'CLASSIFY'
   url: string
+  // What to call this image in logs and errors, when the url is a video frame
+  // megabytes of base64 long.
+  label?: string
 }
 
 export type OffscreenSettingsRequest = {
