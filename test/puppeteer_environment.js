@@ -25,6 +25,9 @@ class PuppeteerEnvironment extends NodeEnvironment {
     this.global.__BROWSER__ = await puppeteer.connect({
       browserWSEndpoint: wsEndpoint,
     });
+    this.global.__BROWSER_NO_GPU__ = await puppeteer.connect({
+      browserWSEndpoint: fs.readFileSync(path.join(DIR, 'wsEndpointNoGpu'), 'utf8'),
+    });
     this.global.__BASE_URL__ = fs.readFileSync(path.join(DIR, 'baseUrl'), 'utf8');
   }
 
