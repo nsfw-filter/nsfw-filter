@@ -11,6 +11,8 @@ import {
 } from '../../../utils/settingsLockStorage'
 import { normalizePassword, passwordLengthError, StoredSettingsPassword } from '../../../utils/settingsPassword'
 
+const LOCK_EVENT_KEY = `${SETTINGS_LOCK_KEY}-event`
+
 export type SettingsLock = {
   ready: boolean
   hasPassword: boolean
@@ -32,6 +34,7 @@ export const useSettingsLock = (): SettingsLock => {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const busyRef = useRef(false)
+  const lockVersion = useRef(0)
   // Authorization belongs to this page and the exact credential it verified.
   const [unlockedPassword, setUnlockedPassword] = useState<StoredSettingsPassword | null>(null)
 
@@ -44,7 +47,12 @@ export const useSettingsLock = (): SettingsLock => {
       setLoadError('Unable to load the settings lock. Try again.')
     }
     const onChanged = (changes: Record<string, chrome.storage.StorageChange>, area: string): void => {
-      if (area !== 'local' || !(SETTINGS_LOCK_KEY in changes)) return
+      if (area !== 'local') return
+      if (LOCK_EVENT_KEY in changes) {
+        lockVersion.current++
+        setUnlockedPassword(null)
+      }
+      if (!(SETTINGS_LOCK_KEY in changes)) return
       changed = true
       try {
         setState(parseSettingsLock(changes[SETTINGS_LOCK_KEY].newValue))
@@ -69,13 +77,20 @@ export const useSettingsLock = (): SettingsLock => {
     }
   }, [reloadVersion])
 
-  const run = async (operation: SettingsLockOperation): Promise<boolean> => {
+  const run = async (operation: SettingsLockOperation | { type: 'lock' }): Promise<boolean> => {
     if (busyRef.current || state === null) return false
+    const version = lockVersion.current
     busyRef.current = true
     setBusy(true)
     setError('')
     try {
+      if (operation.type === 'lock') {
+        await chrome.storage.local.set({ [LOCK_EVENT_KEY]: crypto.randomUUID() })
+        return true
+      }
       const result = await runSettingsLockOperation(state.password, operation)
+      // A lock in another page also cancels an unfinished password check.
+      if (version !== lockVersion.current) return false
       if (result.error !== null) {
         setError(result.error)
         return false
@@ -83,7 +98,9 @@ export const useSettingsLock = (): SettingsLock => {
       setUnlockedPassword(result.password)
       return true
     } catch {
-      setError('Something went wrong. Try again.')
+      setError(operation.type === 'lock'
+        ? 'Unable to lock other pages. Unlock and try again.'
+        : 'Something went wrong. Try again.')
       return false
     } finally {
       busyRef.current = false
@@ -123,7 +140,7 @@ export const useSettingsLock = (): SettingsLock => {
     lock: () => {
       if (busyRef.current) return
       setUnlockedPassword(null)
-      setError('')
+      void run({ type: 'lock' })
     },
     clearError: () => setError(''),
     setPassword,
