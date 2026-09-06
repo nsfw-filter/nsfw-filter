@@ -27,7 +27,11 @@ import { NsfwjsClassifier } from './classifiers/NsfwjsClassifier'
 import { readRestartState, saveRestartState } from './restartState'
 
 const IMAGE_SIZE = 224
-const LOADING_TIMEOUT = 1000
+// The offscreen document fetches the image again, CORS-anonymous so it can read
+// the pixels. 1s came from Manifest V2, where two loads ran at a time and a stuck
+// one starved the other slot; MV3 loads them in parallel, so a budget that tight
+// only turns a slow image into an unfiltered one.
+const LOADING_TIMEOUT = 10000
 const DEFAULT_FILTER_STRICTNESS = 55
 const MAX_LOAD_ATTEMPTS = 5
 
