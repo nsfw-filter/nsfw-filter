@@ -242,6 +242,36 @@ describe('content => ImageFilter => revealAll', () => {
     expect(image.style.visibility).toBe('visible')
     expect(image.dataset.nsfwFilterStatus).toBeUndefined()
   })
+
+  // Turning filtering off retires the user's unhide with everything else. Keeping
+  // it would discard the verdict for an image re-enabling has just hidden.
+  test('blocks an image the user unhid once filtering is turned off and on', async () => {
+    let answer = (): void => undefined
+    ;(global as unknown as { chrome: unknown }).chrome = {
+      runtime: {
+        lastError: undefined,
+        sendMessage: (message: { url: string }, respond: (response: unknown) => void) => {
+          answer = () => respond({ result: true, url: message.url })
+        }
+      }
+    }
+
+    const image = makeImage(200, 200)
+    document.body.appendChild(image)
+
+    const filter = new ImageFilter()
+    filter.setSettings({ filterEffect: 'blur' })
+    filter.revealImage(image)
+    filter.revealAll()
+
+    filter.analyzeImage(image)
+    answer()
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(image.dataset.nsfwFilterStatus).toBe('nsfw')
+    expect(image.style.filter).toBe('blur(25px)')
+  })
 })
 
 describe('content => ImageFilter => revealImage', () => {
@@ -260,15 +290,132 @@ describe('content => ImageFilter => revealImage', () => {
 
   test('unhides a BODY-child image blocked in hide mode', () => {
     const image = makeImage(200, 200)
-    image.dataset.nsfwFilterStatus = 'nsfw'
-    image.hidden = true
     document.body.appendChild(image)
+    image.dataset.nsfwFilterStatus = 'nsfw'
 
-    new ImageFilter().revealImage(image)
+    const filter = new ImageFilter()
+    filter.setSettings({ filterEffect: 'hide' })
+    filter.applyEffectToBlocked()
+    expect(image.hidden).toBe(true)
+
+    filter.revealImage(image)
 
     expect(image.hidden).toBe(false)
     expect(image.dataset.nsfwFilterStatus).toBe('sfw')
 
     image.remove()
+  })
+
+  // The page can reparent an image between hiding it and the verdict landing.
+  // Clearing `hidden` only for what is still a BODY child left it hidden forever.
+  test('unhides an image the page moved after it was hidden', () => {
+    const image = makeImage(200, 200)
+    document.body.appendChild(image)
+    image.dataset.nsfwFilterStatus = 'nsfw'
+
+    const filter = new ImageFilter()
+    filter.setSettings({ filterEffect: 'hide' })
+    filter.applyEffectToBlocked()
+
+    const wrapper = document.createElement('div')
+    document.body.appendChild(wrapper)
+    wrapper.appendChild(image)
+
+    filter.revealImage(image)
+
+    expect(image.hidden).toBe(false)
+    expect(image.style.visibility).toBe('visible')
+
+    wrapper.remove()
+  })
+})
+
+// A verdict can come back for a src the element no longer has, or for a page the
+// user has since asked us to leave alone. Applying it then hides an image nothing
+// will reveal again.
+describe('content => ImageFilter => late verdicts', () => {
+  const stubRuntime = (): { release: (result: boolean) => void } => {
+    const pending: Array<(result: boolean) => void> = []
+
+    ;(global as unknown as { chrome: unknown }).chrome = {
+      runtime: {
+        lastError: undefined,
+        sendMessage: (message: { url: string }, respond: (response: unknown) => void) => {
+          pending.push(result => respond({ result, url: message.url }))
+        }
+      }
+    }
+
+    // Oldest first, so a verdict can be answered while a newer request is out.
+    return { release: (result: boolean) => pending.shift()?.(result) }
+  }
+
+  const settle = async (): Promise<void> => { await Promise.resolve(); await Promise.resolve() }
+
+  afterEach(() => { document.body.innerHTML = '' })
+
+  test('does not hide an image whose src changed while it was being classified', async () => {
+    const runtime = stubRuntime()
+    const image = makeImage(200, 200)
+    document.body.appendChild(image)
+    const filter = new ImageFilter()
+
+    filter.analyzeImage(image)
+    image.src = 'http://example.com/b.jpg'
+    filter.analyzeImage(image, true)
+    runtime.release(true)
+    await settle()
+
+    expect(image.dataset.nsfwFilterStatus).toBe('processing')
+  })
+
+  test('does not hide an image after filtering was turned off', async () => {
+    const runtime = stubRuntime()
+    const image = makeImage(200, 200)
+    document.body.appendChild(image)
+    const filter = new ImageFilter()
+
+    filter.analyzeImage(image)
+    filter.revealAll()
+    runtime.release(true)
+    await settle()
+
+    expect(image.dataset.nsfwFilterStatus).toBeUndefined()
+    expect(image.style.visibility).toBe('visible')
+  })
+
+  test('does not hide an image the user unhid while it was being classified', async () => {
+    const runtime = stubRuntime()
+    const image = makeImage(200, 200)
+    document.body.appendChild(image)
+    const filter = new ImageFilter()
+
+    filter.analyzeImage(image)
+    filter.revealImage(image)
+    runtime.release(true)
+    await settle()
+
+    expect(image.dataset.nsfwFilterStatus).toBe('sfw')
+    expect(image.style.visibility).toBe('visible')
+  })
+
+  // An image the page reparents while its verdict is out still carries the hidden
+  // attribute we set, and its new parent is no longer BODY.
+  test('unhides a safe image the page moved while it was being classified', async () => {
+    const runtime = stubRuntime()
+    const image = makeImage(200, 200)
+    document.body.appendChild(image)
+    const filter = new ImageFilter()
+
+    filter.analyzeImage(image)
+    const wrapper = document.createElement('div')
+    document.body.appendChild(wrapper)
+    wrapper.appendChild(image)
+    runtime.release(false)
+    await settle()
+
+    expect(image.dataset.nsfwFilterStatus).toBe('sfw')
+    expect(image.hidden).toBe(false)
+    expect(image.style.visibility).toBe('visible')
   })
 })

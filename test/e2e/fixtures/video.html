@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>NSFW Filter video fixture</title>
+</head>
+<body>
+  <!-- No poster: nothing to judge until a frame decodes. -->
+  <video id="plain" src="/video.webm" width="320" height="240" muted playsinline></video>
+  <!-- A poster is an ordinary image, classified before playback starts. -->
+  <video id="postered" src="/video.webm" poster="/icon.png" width="320" height="240" muted playsinline></video>
+  <!-- Below MIN_VIDEO_SIZE: tagged and left alone. -->
+  <video id="tiny" src="/video.webm" width="20" height="20" muted playsinline></video>
+  <!-- Same bytes from another host, so the canvas is tainted and no frame can be
+       read back. Served without CORS headers on purpose. -->
+  <video id="foreign" width="320" height="240" muted playsinline></video>
+  <script>
+    document.getElementById('foreign').src =
+      `${location.origin.replace('localhost', '127.0.0.1')}/video.webm`
+  </script>
+</body>
+</html>

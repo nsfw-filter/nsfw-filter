@@ -4,6 +4,15 @@ type IFilter = {
   getBlockAmount: () => number
 }
 
+export type FilterEffect = 'blur' | 'hide' | 'grayscale'
+
+export type FilterSettings = {
+  filterEffect: FilterEffect
+}
+
+const BLUR = 'blur(25px)'
+const GRAYSCALE = 'grayscale(1)'
+
 type FilterRequestWaiter = {
   resolve: (value: PredictionResponse) => void
   reject: (error: PredictionRequest) => void
@@ -23,15 +32,66 @@ const ANALYSIS_DEADLINE = 60000
 
 export class Filter implements IFilter {
   protected blockedItems: number
+  protected settings: FilterSettings
   private readonly requestQueue: Map<string, FilterRequestQueueValue>
+  private readonly hiddenByUs: WeakSet<HTMLElement>
 
   constructor () {
     this.blockedItems = 0
+    this.settings = { filterEffect: 'hide' }
     this.requestQueue = new Map()
+    this.hiddenByUs = new WeakSet()
   }
 
   public getBlockAmount (): number {
     return this.blockedItems
+  }
+
+  public setSettings (settings: FilterSettings): void {
+    this.settings = settings
+  }
+
+  // `hidden` as well as the inline style: an image whose parent is BODY is
+  // rendered by Chrome's document-level image viewer, which ignores visibility.
+  // Track what we hid that way: the page can move the element out of BODY before
+  // the verdict lands, and clearing `hidden` only for what is still a BODY child
+  // would leave it hidden for good.
+  protected hideElement (element: HTMLElement): void {
+    if (element instanceof HTMLImageElement && element.parentNode?.nodeName === 'BODY') {
+      element.hidden = true
+      this.hiddenByUs.add(element)
+    }
+    element.style.visibility = 'hidden'
+  }
+
+  protected revealElement (element: HTMLElement): void {
+    this.unsetHidden(element)
+    element.style.filter = ''
+    element.style.visibility = 'visible'
+  }
+
+  protected applyEffect (element: HTMLElement): void {
+    if (this.settings.filterEffect === 'hide') {
+      this.hideElement(element)
+      return
+    }
+
+    element.style.filter = this.settings.filterEffect === 'blur' ? BLUR : GRAYSCALE
+    element.style.visibility = 'visible'
+    this.unsetHidden(element)
+  }
+
+  private unsetHidden (element: HTMLElement): void {
+    if (this.hiddenByUs.delete(element)) element.hidden = false
+  }
+
+  // Match our exact value, not a substring: a site setting its own weak
+  // `filter: blur(1px)` on a blocked element must still count as effect-gone so
+  // we re-apply the full blur, not leave it barely obscured.
+  protected isEffectApplied (element: HTMLElement): boolean {
+    if (this.settings.filterEffect === 'blur') return element.style.filter === BLUR
+    if (this.settings.filterEffect === 'grayscale') return element.style.filter === GRAYSCALE
+    return element.style.visibility === 'hidden'
   }
 
   protected async requestToAnalyzeImage (request: PredictionRequest): Promise<PredictionResponse> {

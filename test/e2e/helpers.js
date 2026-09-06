@@ -55,6 +55,12 @@ const launchOptions = ({ webgl = true } = {}) => ({
   ]
 })
 
+const CONTENT_TYPES = {
+  '.html': 'text/html',
+  '.png': 'image/png',
+  '.webm': 'video/webm'
+}
+
 // A small static server so tests run against local fixtures instead of remote
 // hosts. Local images load instantly, which keeps classification deterministic.
 const startFixtureServer = async () => {
@@ -74,8 +80,35 @@ const startFixtureServer = async () => {
       res.end()
       return
     }
-    res.writeHead(200, { 'Content-Type': 'text/html' })
-    res.end(fs.readFileSync(file))
+
+    const body = fs.readFileSync(file)
+    const type = CONTENT_TYPES[path.extname(file)] ?? 'application/octet-stream'
+    // Chrome asks for video by range and will not start playback on a server that
+    // answers 200 to every request.
+    const range = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range ?? '')
+    // An empty file has no satisfiable range; answering the whole of it is allowed.
+    if (range !== null && body.length > 0) {
+      // `bytes=-500` asks for the last 500 bytes, not the first 501.
+      const suffix = range[1] === ''
+      const start = suffix ? Math.max(body.length - Number(range[2]), 0) : Number(range[1])
+      const end = suffix || range[2] === '' ? body.length - 1 : Math.min(Number(range[2]), body.length - 1)
+      if (start > end) {
+        res.writeHead(416, { 'Content-Range': `bytes */${body.length}` })
+        res.end()
+        return
+      }
+      res.writeHead(206, {
+        'Content-Type': type,
+        'Content-Range': `bytes ${start}-${end}/${body.length}`,
+        'Accept-Ranges': 'bytes',
+        'Content-Length': end - start + 1
+      })
+      res.end(body.subarray(start, end + 1))
+      return
+    }
+
+    res.writeHead(200, { 'Content-Type': type, 'Content-Length': body.length, 'Accept-Ranges': 'bytes' })
+    res.end(body)
   })
 
   await new Promise(resolve => server.listen(0, resolve))

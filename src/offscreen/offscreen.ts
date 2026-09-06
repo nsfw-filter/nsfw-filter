@@ -250,11 +250,11 @@ const switchTo = async (id: TrainedModel): Promise<void> => {
   }
 }
 
-const loadImage = async (url: string): Promise<HTMLImageElement> => {
+const loadImage = async (url: string, label: string): Promise<HTMLImageElement> => {
   const image: HTMLImageElement = new Image(IMAGE_SIZE, IMAGE_SIZE)
 
   return await new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(`Image load timeout ${url}`)), LOADING_TIMEOUT)
+    const timer = setTimeout(() => reject(new Error(`Image load timeout ${label}`)), LOADING_TIMEOUT)
     image.crossOrigin = 'anonymous'
     image.onload = () => { clearTimeout(timer); resolve(image) }
     image.onerror = (err) => { clearTimeout(timer); reject(err) }
@@ -262,13 +262,13 @@ const loadImage = async (url: string): Promise<HTMLImageElement> => {
   })
 }
 
-const classify = async (url: string): Promise<boolean> => {
+const classify = async (url: string, label: string): Promise<boolean> => {
   ensureUp()
-  const image = await loadImage(url)
+  const image = await loadImage(url, label)
 
   return await enqueue(async () => {
     if (activeClassifier === null) throw new Error('Model is not loaded')
-    const prediction = activeClassifier.predict(image, url)
+    const prediction = activeClassifier.predict(image, label)
     inFlightPredict = prediction.catch(() => undefined)
     return await withTimeout(prediction, PREDICTION_TIMEOUT, 'Prediction')
   })
@@ -298,7 +298,7 @@ chrome.runtime.onMessage.addListener((
   }
 
   if (message.type === 'CLASSIFY') {
-    classify(message.url)
+    classify(message.url, message.label ?? message.url)
       .then(result => sendResponse({ result }))
       .catch((error: Error) => sendResponse({ result: false, error: error?.message ?? String(error) }))
 

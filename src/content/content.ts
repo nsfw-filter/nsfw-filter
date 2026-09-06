@@ -8,6 +8,7 @@ import { CONTEXT_TARGET, UNHIDE_IMAGE, UnhideImageMessage } from '../utils/messa
 
 import { DOMWatcher } from './DOMWatcher/DOMWatcher'
 import { ImageFilter } from './Filter/ImageFilter'
+import { VideoFilter } from './Filter/VideoFilter'
 
 // chrome.storage reads are async, so there is a gap between document_start (when
 // this script runs) and the store resolving and the observer attaching. Images
@@ -24,7 +25,8 @@ const HIDE_STYLE_SAFETY_TIMEOUT = 4000
 const injectPendingHide = (): void => {
   const style = document.createElement('style')
   style.id = HIDE_STYLE_ID
-  style.textContent = 'img:not([data-nsfw-filter-status]){visibility:hidden !important}'
+  style.textContent =
+    'img:not([data-nsfw-filter-status]),video:not([data-nsfw-filter-status]){visibility:hidden !important}'
   document.documentElement.appendChild(style)
 }
 
@@ -36,39 +38,42 @@ const removePendingHide = (): void => {
 // service worker whether the cursor is over an image we filtered, so it can show
 // the menu item only then; if the user picks it, the worker messages this frame
 // to reveal the element we last reported.
-const wireContextMenuUnhide = (imageFilter: ImageFilter): void => {
-  let lastTarget: HTMLImageElement | null = null
+const wireContextMenuUnhide = (imageFilter: ImageFilter, videoFilter: VideoFilter): void => {
+  let lastTarget: HTMLImageElement | HTMLVideoElement | null = null
 
   document.addEventListener('contextmenu', event => {
     const target = event.target
-    const filtered = target instanceof HTMLImageElement && target.dataset.nsfwFilterStatus === 'nsfw'
+    const media = target instanceof HTMLImageElement || target instanceof HTMLVideoElement
+    const filtered = media && target.dataset.nsfwFilterStatus === 'nsfw'
     lastTarget = filtered ? target : null
     chrome.runtime.sendMessage({ type: CONTEXT_TARGET, filtered }).catch(() => undefined)
   }, true)
 
   chrome.runtime.onMessage.addListener((message: UnhideImageMessage) => {
     if (message?.type !== UNHIDE_IMAGE) return
-    if (lastTarget !== null) {
-      imageFilter.revealImage(lastTarget)
-      lastTarget = null
-    }
+    if (lastTarget === null) return
+
+    if (lastTarget instanceof HTMLVideoElement) videoFilter.revealVideo(lastTarget)
+    else imageFilter.revealImage(lastTarget)
+    lastTarget = null
   })
 }
 
 const init = (): void => {
   const imageFilter = new ImageFilter()
+  const videoFilter = new VideoFilter()
 
   // The unhide menu must work per-frame: contextmenu events don't cross the
   // iframe boundary, and the background targets the UNHIDE reply to the exact
   // frame that reported the image. So wire reporting/unhide in every frame, but
   // keep the actual filtering (DOMWatcher, pending-hide, store) top-frame only.
   // Without this, the menu's global visibility goes stale over iframe images.
-  wireContextMenuUnhide(imageFilter)
+  wireContextMenuUnhide(imageFilter, videoFilter)
 
   // Ignore iframes for filtering, https://stackoverflow.com/a/326076/10432429
   if (window.self !== window.top) return
 
-  const domWatcher = new DOMWatcher(imageFilter)
+  const domWatcher = new DOMWatcher(imageFilter, videoFilter)
 
   injectPendingHide()
   const safety = setTimeout(removePendingHide, HIDE_STYLE_SAFETY_TIMEOUT)
@@ -83,6 +88,7 @@ const init = (): void => {
 
       let previous = store.getState().settings
       imageFilter.setSettings({ filterEffect: previous.filterEffect })
+      videoFilter.setSettings({ filterEffect: previous.filterEffect })
 
       let filtering = shouldFilter(previous)
       if (filtering) {
@@ -106,7 +112,11 @@ const init = (): void => {
 
         if (next.filterEffect !== prev.filterEffect) {
           imageFilter.setSettings({ filterEffect: next.filterEffect })
-          if (filtering) imageFilter.applyEffectToBlocked()
+          videoFilter.setSettings({ filterEffect: next.filterEffect })
+          if (filtering) {
+            imageFilter.applyEffectToBlocked()
+            videoFilter.applyEffectToBlocked()
+          }
         }
 
         const nextFiltering = shouldFilter(next)
@@ -114,17 +124,21 @@ const init = (): void => {
         filtering = nextFiltering
 
         if (filtering) {
+          videoFilter.start()
           domWatcher.watch()
         } else {
           domWatcher.unwatch()
           removePendingHide()
           imageFilter.revealAll()
+          videoFilter.revealAll()
+          videoFilter.stop()
         }
       })
     })
     .catch(error => {
       console.warn(error)
       imageFilter.setSettings({ filterEffect: 'blur' })
+      videoFilter.setSettings({ filterEffect: 'blur' })
       clearTimeout(safety)
       removePendingHide()
     })

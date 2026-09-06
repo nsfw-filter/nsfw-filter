@@ -8,13 +8,14 @@ import { QueueBase, requestQueueValue, TabIdUrl } from './QueueBase'
 
 type HandlerParams = {
   url: string
+  source?: string
   tabIdUrl: TabIdUrl
   result: boolean
   error: Error
 }
 
-type OnProcessParam = Pick<HandlerParams, 'url' | 'tabIdUrl'>
-export type OnSuccessParam = Pick<HandlerParams, 'url' | 'result'>
+type OnProcessParam = Pick<HandlerParams, 'url' | 'tabIdUrl' | 'source'>
+export type OnSuccessParam = Pick<HandlerParams, 'url' | 'result' | 'source'>
 export type OnFailureParam = Pick<HandlerParams, 'url' | 'error'>
 type OnDoneParam = Pick<HandlerParams, 'url'>
 
@@ -42,22 +43,25 @@ export class PredictionQueue extends QueueBase {
     })
   }
 
-  private onProcess ({ url, tabIdUrl }: OnProcessParam, callback: CallbackFunction): void {
+  private onProcess ({ url, source, tabIdUrl }: OnProcessParam, callback: CallbackFunction): void {
     if (!this._checkCurrentTabIdUrlStatus(tabIdUrl)) {
       callback({ url, error: new Error('User closed tab or page where this url located') }, undefined)
       return
     }
 
-    this.model.predict(url)
-      .then(result => callback(undefined, { url, result }))
+    this.model.predict(source ?? url, url)
+      .then(result => callback(undefined, { url, source, result }))
       .catch((error: Error) => callback({ url, error }, undefined))
   }
 
-  private onSuccess ({ url, result }: OnSuccessParam): void {
+  private onSuccess ({ url, source, result }: OnSuccessParam): void {
     if (!this._checkUrlStatus(url)) return
 
     if (result) this.totalBlocked++
-    this.cache.set(url, result)
+    // A request carrying its own source is a video frame under a one-off key.
+    // Caching a verdict under a key nothing will ask for again only evicts
+    // entries that are still worth keeping.
+    if (source === undefined) this.cache.set(url, result)
 
     for (const [{ resolve }] of this.requestMap.get(url) as requestQueueValue) {
       resolve(result)

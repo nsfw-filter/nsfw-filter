@@ -179,13 +179,13 @@ const refreshActionBadge = (enabled: boolean): void => {
 const UNHIDE_MENU_ID = 'nsfw-filter-unhide'
 
 // Created hidden; the content script flips it visible only while the cursor is
-// over an image this extension filtered (see CONTEXT_TARGET below).
+// over media this extension filtered (see CONTEXT_TARGET below).
 const createUnhideMenu = (): void => {
   chrome.contextMenus.removeAll(() => {
     chrome.contextMenus.create({
       id: UNHIDE_MENU_ID,
-      title: 'Unhide this image (NSFW Filter)',
-      contexts: ['image'],
+      title: 'Unhide this (NSFW Filter)',
+      contexts: ['image', 'video'],
       visible: false
     })
   })
@@ -212,6 +212,7 @@ type IncomingMessage = {
   target?: string
   type?: string
   url?: unknown
+  source?: unknown
 }
 
 // Image classification requests coming from content scripts.
@@ -222,6 +223,7 @@ chrome.runtime.onMessage.addListener((request: IncomingMessage, sender, sendResp
   if (typeof request?.url !== 'string') return
 
   const { url } = request
+  const source = typeof request.source === 'string' ? request.source : undefined
 
   getRuntime()
     .then(({ queue }) => {
@@ -229,7 +231,7 @@ chrome.runtime.onMessage.addListener((request: IncomingMessage, sender, sendResp
       // Guarantee the requesting tab is known even after a worker restart.
       queue.addTabIdUrl(tabIdUrl)
 
-      queue.predict(url, tabIdUrl)
+      queue.predict(url, tabIdUrl, source)
         .then(result => sendResponse(new PredictionResponse(result, url)))
         .catch(err => sendResponse(new PredictionResponse(false, url, err.message)))
     })
