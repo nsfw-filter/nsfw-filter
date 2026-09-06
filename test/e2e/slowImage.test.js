@@ -7,7 +7,25 @@
 
 const SETTLE_TIMEOUT = 40000
 
+// The offscreen document answers this and then reloads itself onto WASM, taking
+// every classification in flight with it. `OffscreenModel` sends those again; this
+// test speaks to the document directly, so it has to do the same.
+const RESTARTING = 'Restarting the offscreen document on WASM'
+
+const sleep = async (ms) => await new Promise(resolve => setTimeout(resolve, ms))
+
 const classify = async (url) => {
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const response = await sendClassify(url)
+    // No response at all means the reload already closed the port.
+    if (response !== undefined && response.error !== RESTARTING) return response
+    await sleep(1000)
+  }
+
+  throw new Error('The offscreen document never came back from its restart')
+}
+
+const sendClassify = async (url) => {
   const worker = await global.__BROWSER__.waitForTarget(
     target => target.type() === 'service_worker',
     { timeout: SETTLE_TIMEOUT }
@@ -27,9 +45,11 @@ const classify = async (url) => {
 }
 
 describe('Slow images', () => {
+  // Long enough to cover a restart onto WASM, where the model has to load again
+  // before anything can be classified.
   test('classifies an image the server is slow to answer for', async () => {
     expect(await classify(`${global.__BASE_URL__}slow-icon.png`)).toEqual({ result: false })
-  }, SETTLE_TIMEOUT)
+  }, 90000)
 
   // Guards the test above: if the fixture ever served instantly, it would pass
   // without exercising anything.

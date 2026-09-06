@@ -1,6 +1,7 @@
 import {
   OffscreenClassifyResponse,
-  OffscreenRequest
+  OffscreenRequest,
+  RESTARTING_MESSAGE
 } from '../utils/messages'
 import { TrainedModel } from '../utils/models'
 
@@ -13,24 +14,56 @@ export type IOffscreenModel = {
   setSettings: (filterStrictness: number, logging: boolean, trainedModel: TrainedModel) => void
 }
 
+// A classification that dies with the offscreen realm, as opposed to one the model
+// answered. Only these are worth sending again.
+class RealmGoneError extends Error {}
+
+// Coming up on WASM means reloading the offscreen document, which kills every
+// classification in flight. The service worker sees a closed port, which is
+// indistinguishable from a real failure, and a failure reaches the page as "safe",
+// so the first page open on a machine without a usable GPU had every image waved
+// through. Send those again until the new realm answers. The budget covers a
+// reload plus a model load and still leaves room under the content script's 60s
+// deadline. Bounded by wall clock rather than by a count, so a realm that answers
+// slowly can't stretch it.
+const REALM_RETRY_DELAY = 1000
+const REALM_RETRY_BUDGET = 30000
+
 export class OffscreenModel implements IOffscreenModel {
   public async predict (url: string, label?: string): Promise<boolean> {
     const request: OffscreenRequest = { target: 'offscreen', type: 'CLASSIFY', url, label }
 
+    const deadline = Date.now() + REALM_RETRY_BUDGET
+
+    for (;;) {
+      try {
+        return await this.classify(request)
+      } catch (error) {
+        if (!(error instanceof RealmGoneError) || Date.now() >= deadline) throw error
+        await new Promise(resolve => setTimeout(resolve, REALM_RETRY_DELAY))
+      }
+    }
+  }
+
+  private async classify (request: OffscreenRequest): Promise<boolean> {
     return await new Promise((resolve, reject) => {
       chrome.runtime.sendMessage(request, (response: OffscreenClassifyResponse | undefined) => {
-        if (chrome.runtime.lastError !== null && chrome.runtime.lastError !== undefined) {
-          reject(new Error(chrome.runtime.lastError.message))
+        if (chrome.runtime.lastError !== undefined) {
+          reject(new RealmGoneError(chrome.runtime.lastError.message))
           return
         }
 
         if (response === undefined) {
-          reject(new Error('No response from offscreen document'))
+          reject(new RealmGoneError('No response from offscreen document'))
           return
         }
 
         if (typeof response.error === 'string' && response.error.length > 0) {
-          reject(new Error(response.error))
+          // The document answers this one before it navigates away, so it is the
+          // same loss as a closed port, just reported a moment earlier.
+          reject(response.error === RESTARTING_MESSAGE
+            ? new RealmGoneError(response.error)
+            : new Error(response.error))
           return
         }
 
