@@ -167,6 +167,24 @@ describe('content => DOMWatcher => stylesheet registrations', () => {
     expect(background.checkElement).toHaveBeenCalledWith(card)
   })
 
+  // A page that mounts a style per render leaves one observer per unmount unless
+  // the removal takes it with it.
+  test('stops watching a stylesheet the page removed', async () => {
+    document.body.innerHTML = '<style id="sheet"></style>'
+    const background = makeBackgroundFilter()
+    new DOMWatcher(makeFilter(), background).watch()
+
+    const sheet = document.getElementById('sheet') as HTMLElement
+    sheet.remove()
+    await flushMutations()
+    ;(background.recheckVisible as jest.Mock).mockClear()
+
+    sheet.textContent = '.card { background-image: url("http://example.com/a.jpg") }'
+    await flushMutations()
+
+    expect(background.recheckVisible).not.toHaveBeenCalled()
+  })
+
   // Each <style> carries its own observer, so a pause that left them running
   // would keep answering for a filter that is meant to be idle.
   test('stops watching stylesheets when watching stops', async () => {

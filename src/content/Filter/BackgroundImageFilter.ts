@@ -26,7 +26,14 @@ type BackgroundState = {
   pending: boolean
   // The inline declaration as the page left it, so the cascade comes back exactly
   // as it was rather than as a serialized computed value.
-  inline: { value: string, priority: string, shorthand: { value: string, priority: string } | null } | null
+  inline: {
+    value: string
+    priority: string
+    shorthand: { value: string, priority: string } | null
+    // Whether the page had a style attribute at all: `.card[style]` rules make an
+    // empty one we left behind a background of its own.
+    attribute: boolean
+  } | null
 }
 
 const MIN_ELEMENT_SIZE = 41
@@ -245,9 +252,12 @@ export class BackgroundImageFilter extends Filter implements IBackgroundImageFil
 
   private analyze (element: HTMLElement): void {
     if (!this.active || !element.isConnected) return
-    // Icons, sprites and spacers: too small to be worth a round trip.
+    // Icons, sprites and spacers: too small to be worth a round trip. The root
+    // and the body are exempt: their background paints the whole canvas whatever
+    // box they happen to have.
     const { width, height } = element.getBoundingClientRect()
-    if (width <= MIN_ELEMENT_SIZE || height <= MIN_ELEMENT_SIZE) return
+    const canvas = element === document.body || element === document.documentElement
+    if (!canvas && (width <= MIN_ELEMENT_SIZE || height <= MIN_ELEMENT_SIZE)) return
 
     const state = this.states.get(element)
     // Our own override masks the author's value, so the page's current background
@@ -325,10 +335,18 @@ export class BackgroundImageFilter extends Filter implements IBackgroundImageFil
           }
         : null
 
-      state.inline = { value, priority: element.style.getPropertyPriority('background-image'), shorthand }
+      state.inline = {
+        value,
+        priority: element.style.getPropertyPriority('background-image'),
+        shorthand,
+        attribute: element.hasAttribute('style')
+      }
     }
 
-    this.write(element, () => element.style.setProperty('background-image', 'none', 'important'))
+    this.write(element, () => {
+      element.style.setProperty('background-image', 'none', 'important')
+      return 1
+    })
   }
 
   private overridden (element: HTMLElement): boolean {
@@ -340,7 +358,7 @@ export class BackgroundImageFilter extends Filter implements IBackgroundImageFil
     const state = this.states.get(element)
     if (state?.inline == null) return
 
-    const { value, priority, shorthand } = state.inline
+    const { value, priority, shorthand, attribute } = state.inline
     state.inline = null
     // The page overwrote the whole declaration; whatever it wants there now is
     // newer than what we saved.
@@ -348,17 +366,33 @@ export class BackgroundImageFilter extends Filter implements IBackgroundImageFil
 
     this.write(element, () => {
       element.style.removeProperty('background-image')
-      if (shorthand !== null) element.style.setProperty('background', shorthand.value, shorthand.priority)
-      else if (value !== '') element.style.setProperty('background-image', value, priority)
+      let mutations = 1
+
+      if (shorthand !== null) {
+        element.style.setProperty('background', shorthand.value, shorthand.priority)
+        mutations++
+      } else if (value !== '') {
+        element.style.setProperty('background-image', value, priority)
+        mutations++
+      }
+
+      if (!attribute && element.style.length === 0) {
+        element.removeAttribute('style')
+        mutations++
+      }
+
+      return mutations
     })
   }
 
   // The mutations for a write are delivered to the observer as a microtask, so the
   // credit has to outlive this task and be dropped behind that delivery: a write
   // made while nothing is observing would otherwise eat a later page mutation.
-  private write (element: HTMLElement, apply: () => void): void {
-    this.writes.set(element, (this.writes.get(element) ?? 0) + 1)
-    apply()
+  // One write can touch the declaration more than once, and every touch is a
+  // record of its own: crediting one of them leaves us chasing our own writes.
+  private write (element: HTMLElement, apply: () => number): void {
+    const made = apply()
+    this.writes.set(element, (this.writes.get(element) ?? 0) + made)
     queueMicrotask(() => this.writes.delete(element))
   }
 

@@ -361,6 +361,80 @@ describe('content => BackgroundImageFilter => rechecks', () => {
     read.mockRestore()
   })
 
+  // A recheck restores the declaration and puts the override back, which is more
+  // than one write to it. Crediting one leaves the rest looking like the page,
+  // and the filter chasing its own writes for the life of the tab.
+  test('settles instead of chasing the writes a recheck makes', async () => {
+    const runtime = stubRuntime()
+    const { intersect } = stubIntersectionObserver()
+    const element = makeElement()
+    const filter = new BackgroundImageFilter()
+
+    filter.observe(element)
+    intersect(element, true)
+    runtime.release(true)
+    await flush()
+    expect(element.dataset.nsfwFilterBackgroundStatus).toBe('nsfw')
+
+    let records = 0
+    const observer = new MutationObserver(list => {
+      records += list.length
+      list.forEach(() => filter.checkStyleMutation(element))
+    })
+    observer.observe(element, { attributes: true, attributeFilter: ['style'] })
+
+    filter.recheckVisible()
+    await flush()
+    await flush()
+    const settled = records
+
+    await flush()
+    await flush()
+    observer.disconnect()
+
+    expect(records).toBe(settled)
+  })
+
+  // `.card[style]` is a selector like any other: an empty attribute left behind
+  // is a background of its own.
+  test('leaves no style attribute behind on an element that had none', async () => {
+    const runtime = stubRuntime()
+    const { intersect } = stubIntersectionObserver()
+
+    const element = document.createElement('div')
+    element.getBoundingClientRect = () => ({ width: 200, height: 200 } as DOMRect)
+    document.body.appendChild(element)
+    const read = jest.spyOn(window, 'getComputedStyle')
+      .mockImplementation(() => ({ backgroundImage: `url("${IMAGE}")` }) as unknown as CSSStyleDeclaration)
+
+    const filter = new BackgroundImageFilter()
+    filter.observe(element)
+    intersect(element, true)
+    expect(element.style.getPropertyValue('background-image')).toBe('none')
+
+    runtime.release(false)
+    await flush()
+    read.mockRestore()
+
+    expect(element.hasAttribute('style')).toBe(false)
+  })
+
+  // A short body still paints its background across the whole viewport.
+  test('classifies a body background whatever box the body has', () => {
+    stubRuntime()
+    const { intersect } = stubIntersectionObserver()
+    document.body.setAttribute('style', `background-image: url("${IMAGE}")`)
+    document.body.getBoundingClientRect = () => ({ width: 1000, height: 8 } as DOMRect)
+
+    const filter = new BackgroundImageFilter()
+    filter.observe(document.body)
+    intersect(document.body, true)
+
+    expect(document.body.dataset.nsfwFilterBackgroundStatus).toBe('processing')
+    document.body.removeAttribute('style')
+    delete document.body.dataset.nsfwFilterBackgroundStatus
+  })
+
   // `.selected + .card` puts the affected element beside the changed one.
   test('re-reads a visible sibling of a changed element', async () => {
     stubRuntime()

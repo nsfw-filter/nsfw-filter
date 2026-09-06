@@ -19,7 +19,7 @@ export class DOMWatcher implements IDOMWatcher {
   private readonly imageFilter: IImageFilter
   private readonly videoFilter: IVideoFilter
   private readonly backgroundFilter: IBackgroundImageFilter
-  private sheetObservers: MutationObserver[]
+  private sheetObservers: Map<Element, MutationObserver>
   private sheetLoads: AbortController
   private registered: WeakSet<Element>
   private watching: boolean
@@ -33,7 +33,7 @@ export class DOMWatcher implements IDOMWatcher {
     this.videoFilter = videoFilter
     this.backgroundFilter = backgroundFilter
     this.observer = new MutationObserver(this.callback.bind(this))
-    this.sheetObservers = []
+    this.sheetObservers = new Map()
     this.sheetLoads = new AbortController()
     this.registered = new WeakSet()
     this.watching = false
@@ -63,7 +63,7 @@ export class DOMWatcher implements IDOMWatcher {
     // Every stylesheet gets its own observer, so a stop that left them running
     // would keep both the callbacks and the removed <style> elements alive.
     this.sheetObservers.forEach(observer => observer.disconnect())
-    this.sheetObservers = []
+    this.sheetObservers.clear()
     this.sheetLoads.abort()
     this.sheetLoads = new AbortController()
     this.registered = new WeakSet()
@@ -80,7 +80,9 @@ export class DOMWatcher implements IDOMWatcher {
           this.backgroundFilter.release(node)
           // Dropping a sheet takes its rules with it, which can expose a
           // background an earlier sheet was overriding.
-          if (this.isStyleSheet(node)) this.backgroundFilter.recheckVisible()
+          if (!this.isStyleSheet(node)) return
+          this.backgroundFilter.recheckVisible()
+          this.dropStyleSheets(node)
         })
         // A sibling arriving or leaving decides `+`, `~` and `:first-child`, so the
         // element being changed is dirty even when nothing about it moved.
@@ -127,7 +129,20 @@ export class DOMWatcher implements IDOMWatcher {
       // are text: nothing about that reaches the document-level observer.
       const observer = new MutationObserver(() => this.backgroundFilter.recheckVisible())
       observer.observe(sheet, { characterData: true, childList: true, subtree: true })
-      this.sheetObservers.push(observer)
+      this.sheetObservers.set(sheet, observer)
+    })
+  }
+
+  // A page that mounts and unmounts styles for every render would otherwise leave
+  // an observer, and the detached <style> it holds, behind on each one.
+  private dropStyleSheets (root: Element): void {
+    const sheets = [...root.querySelectorAll(STYLE_SHEET)]
+    if (root.matches(STYLE_SHEET)) sheets.push(root)
+
+    sheets.forEach(sheet => {
+      this.sheetObservers.get(sheet)?.disconnect()
+      this.sheetObservers.delete(sheet)
+      this.registered.delete(sheet)
     })
   }
 
