@@ -291,6 +291,71 @@ describe('content => VideoFilter', () => {
     expect(video.paused).toBe(true)
   })
 
+  // The other order: the poster comes back safe while the frame it is displayed
+  // over is still being judged. Revealing then puts unjudged footage on screen.
+  test('keeps a video hidden when a safe poster beats its first frame', async () => {
+    const runtime = stubRuntime(sent => sent.source !== undefined)
+    const video = makeVideo({ poster: 'http://example.com/poster.jpg' })
+
+    runtime.hold()
+    watch(new VideoFilter(), video)
+    await settle()
+
+    runtime.release(sent => sent.source === undefined)
+    await settle()
+    expect(video.dataset.nsfwFilterStatus).toBe('processing')
+    expect(video.style.visibility).toBe('hidden')
+
+    runtime.release()
+    await settle()
+
+    expect(video.dataset.nsfwFilterStatus).toBe('nsfw')
+  })
+
+  // A site that drops the poster when playback starts must not take the hide for
+  // the frame with it.
+  test('keeps a video hidden when its poster is removed mid-frame', async () => {
+    const runtime = stubRuntime(sent => sent.source !== undefined)
+    const filter = new VideoFilter()
+    const video = makeVideo({ poster: 'http://example.com/poster.jpg' })
+
+    runtime.hold()
+    watch(filter, video)
+    await settle()
+
+    video.removeAttribute('poster')
+    filter.checkPoster(video)
+    await settle()
+    expect(video.dataset.nsfwFilterStatus).toBe('processing')
+    expect(video.style.visibility).toBe('hidden')
+
+    runtime.release()
+    await settle()
+
+    expect(video.dataset.nsfwFilterStatus).toBe('nsfw')
+  })
+
+  // revealAll() only reaches what is in the document, so a video the page had
+  // parked elsewhere comes back still filtered.
+  test('unfilters a blocked video reinserted while filtering is off', async () => {
+    stubRuntime(() => true)
+    const filter = new VideoFilter()
+    const video = makeVideo()
+
+    watch(filter, video)
+    await settle()
+    expect(video.dataset.nsfwFilterStatus).toBe('nsfw')
+
+    video.remove()
+    filter.stop()
+    filter.revealAll()
+    document.body.appendChild(video)
+    filter.analyzeVideo(video)
+
+    expect(video.dataset.nsfwFilterStatus).toBeUndefined()
+    expect(video.style.visibility).toBe('visible')
+  })
+
   // A paused video still shows its first decoded frame.
   test('samples a paused video that already has a frame', async () => {
     const { sent } = stubRuntime()

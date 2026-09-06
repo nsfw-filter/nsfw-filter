@@ -23,6 +23,9 @@ type VideoState = {
   approved: number
   lastSampleTime: number
   unsampleable: boolean
+  // A verdict is out for footage that has decoded, so the element is hidden for
+  // the frame, not for the poster: nothing about the poster may reveal it.
+  framePending: boolean
   // The user unhid this element. Verdicts still in flight no longer apply.
   overridden: boolean
   observed: boolean
@@ -76,7 +79,12 @@ export class VideoFilter extends Filter implements IVideoFilter {
   }
 
   public analyzeVideo (video: HTMLVideoElement, sourceChanged: boolean = false): void {
-    if (!this.active) return
+    if (!this.active) {
+      // Filtering was turned off while this video was out of the document, so
+      // revealAll() never reached it. It comes back filtered otherwise.
+      if (video.dataset.nsfwFilterStatus !== undefined) this.retire(video)
+      return
+    }
 
     const state = this.stateOf(video)
     if (sourceChanged) this.reset(video, state)
@@ -123,7 +131,7 @@ export class VideoFilter extends Filter implements IVideoFilter {
       // The preview is gone, and with it the reason this element is hidden. The
       // reply for it is dropped, so nothing else would settle the hide.
       state.posterGeneration++
-      if (video.dataset.nsfwFilterStatus === 'processing') {
+      if (video.dataset.nsfwFilterStatus === 'processing' && !state.framePending) {
         this.reveal(video)
         this.schedule(video)
       }
@@ -172,19 +180,23 @@ export class VideoFilter extends Filter implements IVideoFilter {
 
   public revealAll (): void {
     const filtered = document.querySelectorAll<HTMLVideoElement>('video[data-nsfw-filter-status]')
-    filtered.forEach(video => {
-      this.revealElement(video)
-      delete video.dataset.nsfwFilterStatus
-      this.due.delete(video)
-      // A verdict reached while filtering was on does not survive being turned
-      // off and on again, the same way images are reclassified rather than
-      // trusted. The user's unhide goes with it, or the next verdict is dropped
-      // and the video stays hidden.
-      const state = this.stateOf(video)
-      state.generation++
-      state.unsampleable = false
-      state.overridden = false
-    })
+    filtered.forEach(video => this.retire(video))
+  }
+
+  // A verdict reached while filtering was on does not survive being turned off
+  // and on again, the same way images are reclassified rather than trusted. The
+  // user's unhide goes with it, or the next verdict is dropped and the video
+  // stays hidden.
+  private retire (video: HTMLVideoElement): void {
+    this.revealElement(video)
+    delete video.dataset.nsfwFilterStatus
+    this.due.delete(video)
+
+    const state = this.stateOf(video)
+    state.generation++
+    state.unsampleable = false
+    state.framePending = false
+    state.overridden = false
   }
 
   // Filtering was turned off for this page. The elements stay wired, so turning
@@ -208,6 +220,7 @@ export class VideoFilter extends Filter implements IVideoFilter {
       approved: -1,
       lastSampleTime: Number.NEGATIVE_INFINITY,
       unsampleable: false,
+      framePending: false,
       overridden: false,
       observed: false,
       wired: false
@@ -223,6 +236,7 @@ export class VideoFilter extends Filter implements IVideoFilter {
     state.approved = -1
     state.lastSampleTime = Number.NEGATIVE_INFINITY
     state.unsampleable = false
+    state.framePending = false
     state.overridden = false
     this.due.delete(video)
     delete video.dataset.nsfwFilterStatus
@@ -370,11 +384,15 @@ export class VideoFilter extends Filter implements IVideoFilter {
       if (first) this.markUnavailable(video)
       return
     }
+    // From here there is decoded footage on screen behind the hide, so nothing
+    // the poster says may put the element back until this verdict lands.
+    if (first) state.framePending = true
 
     state.lastSampleTime = video.currentTime
 
     try {
       const { result } = await this.requestToAnalyzeImage(new PredictionRequest(frameKey(), frame))
+      if (first) state.framePending = false
       if (!this.stillCurrent(state, generation)) return
 
       if (result) {
@@ -384,6 +402,7 @@ export class VideoFilter extends Filter implements IVideoFilter {
         if (first) this.reveal(video)
       }
     } catch {
+      if (first) state.framePending = false
       if (this.stillCurrent(state, generation) && first) this.markUnavailable(video)
     }
   }
@@ -450,12 +469,13 @@ export class VideoFilter extends Filter implements IVideoFilter {
         if (!current()) return
 
         // A safe poster only clears the preview, never the footage behind it, so
-        // it does not count as an approved frame.
+        // it does not count as an approved frame, and it cannot reveal footage a
+        // frame is still being judged for.
         if (result) this.block(video)
-        else this.reveal(video)
+        else if (!state.framePending) this.reveal(video)
       })
       .catch(() => {
-        if (current()) this.reveal(video)
+        if (current() && !state.framePending) this.reveal(video)
       })
   }
 

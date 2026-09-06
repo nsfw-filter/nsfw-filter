@@ -45,16 +45,25 @@ const classified = async (page, id) => await page.waitForFunction(
   id
 )
 
-// A playing video is sampled again every ten seconds of media time, so its status
-// passes back through 'processing' on its own. Any assertion about a video that
-// is still playing has to wait for a settled moment rather than read one.
+// A posterless video is tagged 'sfw' before it is sampled, and reloading its
+// media starts that over, so the status alone says nothing about where a video
+// is: only a status that is not 'processing' with the element back on screen
+// means a round finished. Waiting for that also rides out the sample a playing
+// video takes every ten seconds of media time.
+// The snapshot comes back from the same evaluation that accepted it: a playing
+// video samples again every ten seconds of media time, so reading it over a
+// second round trip can land in the next hide.
 const settledStatus = async (page, id) => {
-  await page.waitForFunction((id) => {
-    const status = document.getElementById(id).getAttribute('data-nsfw-filter-status')
-    return status !== null && status !== 'processing'
+  const settled = await page.waitForFunction((id) => {
+    const video = document.getElementById(id)
+    const status = video.getAttribute('data-nsfw-filter-status')
+    const visibility = getComputedStyle(video).visibility
+    if (status === null || status === 'processing' || visibility !== 'visible') return false
+
+    return { status, visibility }
   }, { timeout: SETTLE_TIMEOUT, polling: 250 }, id)
 
-  return await read(page, id)
+  return await settled.jsonValue()
 }
 
 const waitForStatus = async (page, id, status) => await page.waitForFunction(
@@ -87,7 +96,7 @@ describe('Videos on the page', () => {
 
   test('classifies a video from a sampled frame', async () => {
     await classified(page, 'plain')
-    const plain = await read(page, 'plain')
+    const plain = await settledStatus(page, 'plain')
 
     expect(plain.status).toBe('sfw')
     expect(plain.visibility).toBe('visible')
@@ -95,7 +104,7 @@ describe('Videos on the page', () => {
 
   test('settles a video that has a poster', async () => {
     await classified(page, 'postered')
-    const postered = await read(page, 'postered')
+    const postered = await settledStatus(page, 'postered')
     expect(postered.status).toBe('sfw')
     expect(postered.visibility).toBe('visible')
   })
@@ -130,17 +139,21 @@ describe('Videos on the page', () => {
     }, global.__BASE_URL__)
 
     await classified(page, 'added')
-    await waitForStatus(page, 'added', 'sfw')
+    const added = await settledStatus(page, 'added')
 
-    expect((await read(page, 'added')).visibility).toBe('visible')
+    expect(added.status).toBe('sfw')
+    expect(added.visibility).toBe('visible')
   })
 
   // Once a frame of the current footage has been judged, the poster is no longer
   // what the element shows. Swapping it must not hide the video again.
   test('ignores a poster swapped in after a frame was judged', async () => {
     await settledStatus(page, 'postered')
+    // Paused, so the periodic resample cannot be mistaken for the poster hiding it.
     await page.evaluate(() => {
-      document.getElementById('postered').poster = '/icon.png?revision=2'
+      const video = document.getElementById('postered')
+      video.pause()
+      video.poster = '/icon.png?revision=2'
     })
     await new Promise(resolve => setTimeout(resolve, 2000))
 
@@ -197,13 +210,17 @@ describe('Videos on the page', () => {
   })
 
   test('leaves no video stuck hidden or unprocessed', async () => {
-    await settled(page)
-    const leftovers = await page.evaluate(() =>
-      [...document.querySelectorAll('video')].filter(video =>
-        video.getAttribute('data-nsfw-filter-status') === null ||
-        getComputedStyle(video).visibility === 'hidden'
-      ).length
-    )
-    expect(leftovers).toBe(0)
+    const stuck = await page.waitForFunction(() => {
+      const videos = [...document.querySelectorAll('video')]
+      const pending = videos.some(video => {
+        const status = video.getAttribute('data-nsfw-filter-status')
+        return status === null || status === 'processing'
+      })
+      if (pending) return false
+
+      return videos.filter(video => getComputedStyle(video).visibility === 'hidden').map(video => video.id)
+    }, { timeout: SETTLE_TIMEOUT, polling: 250 })
+
+    expect(await stuck.jsonValue()).toEqual([])
   })
 })
