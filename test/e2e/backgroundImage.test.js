@@ -169,6 +169,11 @@ describe('CSS background images', () => {
     const variable = await read(page, 'variable')
     expect(variable.status).toBe('sfw')
     expect(variable.backgroundImage).toContain('variable=1')
+    // The declaration the page wrote, not a resolved url standing in for it.
+    const shorthand = await page.evaluate(() =>
+      document.getElementById('variable').style.getPropertyValue('background')
+    )
+    expect(shorthand).toContain('var(--photo)')
   })
 
   test('leaves no background stuck missing or unprocessed', async () => {
