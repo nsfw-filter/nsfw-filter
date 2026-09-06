@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Browser policy setup — NSFW Filter</title>
+        <link rel="icon" href="../images/icon32.png" />
+        <style>
+            html {
+                background: #ffffff;
+                color: #1d1d22;
+                color-scheme: light dark;
+            }
+
+            body {
+                box-sizing: border-box;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+                    Helvetica, Arial, sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+                margin: 0 auto;
+                max-width: 560px;
+                padding: 48px 24px;
+            }
+
+            h1 {
+                font-size: 22px;
+                line-height: 1.3;
+                margin: 0 0 24px;
+            }
+
+            p {
+                margin: 0 0 16px;
+            }
+
+            a {
+                color: #6366f1;
+            }
+
+            @media (prefers-color-scheme: dark) {
+                html {
+                    background: #1e262c;
+                    color: #ffffff;
+                }
+
+                a {
+                    color: #818cf8;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <main>
+            <h1>Browser policy setup</h1>
+            <p>
+                Setting a password protects NSFW Filter's settings. It does not
+                prevent the extension from being disabled or removed.
+            </p>
+            <p>
+                A browser policy is a setting controlled by the device administrator.
+                Chrome's
+                <a href="https://chromeenterprise.google/policies/extension-install-forcelist/">
+                    ExtensionInstallForcelist policy
+                </a>
+                keeps NSFW Filter installed and prevents users from disabling or
+                removing it through Chrome.
+            </p>
+            <p>
+                This may help when setting up NSFW Filter for a child. If you only
+                want an extra step before changing settings, a password alone may be enough.
+            </p>
+            <p>
+                See
+                <a href="https://support.google.com/chrome/a/answer/7666985?hl=en">
+                    Chrome's official setup guidance
+                </a>
+                for configuration instructions.
+            </p>
+            <p>
+                The warning is hidden when the browser confirms force-install protection.
+            </p>
+        </main>
+    </body>
+</html>

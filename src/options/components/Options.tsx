@@ -46,6 +46,11 @@ export const Options: React.FC = () => {
           <UnlockForm lock={lock} />
         </LockWrap>
       )}
+      {lock.hasPassword && !lock.isLocked && (
+        <LockWrap>
+          <Button onClick={lock.lock} disabled={lock.busy}>Lock now</Button>
+        </LockWrap>
+      )}
 
       <AddRow onSubmit={add}>
         <Input
@@ -63,11 +68,13 @@ export const Options: React.FC = () => {
           : websites.map(entry => (
             <Row key={entry}>
               <Host>{entry}</Host>
-              {!lock.isLocked && (
-                <Remove onClick={() => remove(entry)} aria-label={`Remove ${entry}`}>
-                  <Trash2 size={16} />
-                </Remove>
-              )}
+              <Remove
+                onClick={() => remove(entry)}
+                disabled={lock.isLocked}
+                aria-label={`Remove ${entry}`}
+              >
+                <Trash2 size={16} />
+              </Remove>
             </Row>
           ))}
       </ListCard>

@@ -56,6 +56,7 @@ const light = {
     secondary: '#71717f'
   },
   accent: '#6366f1',
+  error: '#b42318',
   border: '#ececf3',
   scrollbar: {
     thumb: '#d4d4e0',
@@ -81,6 +82,7 @@ const dark = {
   },
   // Lighter indigo so the accent keeps contrast on the dark background.
   accent: '#818cf8',
+  error: '#ff9b91',
   border: '#2c3742',
   scrollbar: {
     thumb: '#3a4651',

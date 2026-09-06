@@ -14,6 +14,7 @@ declare module 'styled-components' {
       secondary: string
     }
     accent: string
+    error: string
     border: string
     scrollbar: {
       thumb: string

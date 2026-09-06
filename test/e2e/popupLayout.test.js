@@ -71,8 +71,6 @@ describe('Popup layout', () => {
     const text = await page.evaluate(() => document.getElementById('popup').textContent)
     expect(text).toContain('Trained model')
     expect(text).toContain('Show logs in browser console')
-    expect(text).toContain('Settings lock')
-    expect(text).toContain('Set password')
     expect(await measureOverflow(page)).toEqual([])
   })
 

@@ -1,14 +1,21 @@
 import styled from 'styled-components'
 
-export const LockCard = styled.form`
-  background-color: ${props => props.theme.bg.surface};
-  border: 1px solid ${props => props.theme.border};
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+import { Card, ManageLink } from '../Production/styles'
+
+export { AdvancedRow as LockRow, FieldLabel as LockLabel } from '../Production/styles'
+
+export const LockCard = styled(Card)`
   margin: 0;
-  padding: 14px;
+`
+
+export const LockLink = styled(ManageLink)`
+  margin-top: 0;
+  white-space: nowrap;
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.5;
+  }
 `
 
 export const LockTitle = styled.span`
@@ -27,7 +34,7 @@ export const LockHint = styled.span`
 `
 
 export const LockError = styled.span`
-  color: #d4534a;
+  color: ${props => props.theme.error};
   font-size: 12px;
 `
 
@@ -38,26 +45,10 @@ export const LockFields = styled.div`
   margin: 0;
 `
 
-export const LockForm = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 0;
-`
+export const LockForm = styled(LockFields).attrs({ as: 'form' })``
 
-export const LockTextButton = styled.button`
-  align-self: flex-start;
-  background: none;
-  border: none;
-  color: ${props => props.theme.text.secondary};
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 12px;
-  padding: 2px;
-
-  &:hover {
-    color: ${props => props.theme.text.primary};
-  }
+export const LockField = styled(LockFields).attrs({ as: 'label' })`
+  gap: 4px;
 `
 
 export const LockActions = styled.div`
@@ -66,14 +57,12 @@ export const LockActions = styled.div`
   gap: 8px;
 `
 
-export const LockRow = styled.div`
-  align-items: center;
+export const LockWarning = styled(LockHint)`
   display: flex;
-  justify-content: space-between;
-`
+  gap: 8px;
 
-export const LockLabel = styled.span`
-  color: ${props => props.theme.text.primary};
-  font-size: 13px;
-  font-weight: 500;
+  svg {
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
 `

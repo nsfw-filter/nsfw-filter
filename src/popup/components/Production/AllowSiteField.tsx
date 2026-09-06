@@ -32,7 +32,7 @@ const useCurrentHost = (): string | null => {
   return host
 }
 
-export const AllowSiteField: React.FC<{ disabled?: boolean }> = ({ disabled = false }) => {
+export const AllowSiteField: React.FC<{ disabled: boolean }> = ({ disabled }) => {
   const dispatch = useDispatch()
   const { websites } = useSelector<RootState>((state) => state.settings) as SettingsState
   const host = useCurrentHost()

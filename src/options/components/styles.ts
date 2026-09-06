@@ -67,8 +67,13 @@ export const Remove = styled.button`
   display: flex;
   padding: 4px;
 
-  &:hover {
+  &:hover:not(:disabled) {
     color: ${props => props.theme.accent};
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
   }
 `
 

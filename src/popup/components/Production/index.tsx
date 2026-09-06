@@ -65,6 +65,7 @@ export const Production: React.FC = () => {
           <PowerHint>{enabled ? 'On' : 'Paused'}</PowerHint>
         </PowerText>
         <Switch
+          aria-label="Protection"
           checked={enabled}
           disabled={lock.isLocked}
           onChange={() => dispatch(toggleEnabled())}

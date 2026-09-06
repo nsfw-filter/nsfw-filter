@@ -1,24 +1,23 @@
-import { useRef, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useEffect, useRef, useState } from 'react'
 
 import {
-  createSettingsPassword,
-  isStoredSettingsPassword,
-  MAX_UNLOCK_ATTEMPTS,
-  normalizePassword,
-  passwordLengthError,
-  UNLOCK_COOLDOWN_MS,
-  verifySettingsPassword
-} from '../../../utils/settingsPassword'
-import { clearSettingsPassword, setSettingsPassword } from '../../redux/actions/settings'
-import { RootState } from '../../redux/reducers'
-import { SettingsState } from '../../redux/reducers/settings'
+  loadSettingsLock,
+  parseSettingsLock,
+  runSettingsLockOperation,
+  samePassword,
+  SETTINGS_LOCK_KEY,
+  SettingsLockOperation,
+  SettingsLockState
+} from '../../../utils/settingsLockStorage'
+import { normalizePassword, passwordLengthError, StoredSettingsPassword } from '../../../utils/settingsPassword'
 
 export type SettingsLock = {
+  ready: boolean
   hasPassword: boolean
   isLocked: boolean
   busy: boolean
   error: string
+  reload: () => void
   unlock: (password: string) => Promise<boolean>
   lock: () => void
   clearError: () => void
@@ -26,49 +25,62 @@ export type SettingsLock = {
   removePassword: (current: string) => Promise<boolean>
 }
 
-// Session-only UI lock. The reducer still applies settings writes; closing
-// this page forgets `unlocked`. A careful user can still edit chrome.storage.
 export const useSettingsLock = (): SettingsLock => {
-  const dispatch = useDispatch()
-  const { settingsPassword } = useSelector<RootState>((state) => state.settings) as SettingsState
-  const hasPassword = isStoredSettingsPassword(settingsPassword)
-
-  const [unlocked, setUnlocked] = useState(false)
+  const [state, setState] = useState<SettingsLockState | null>(null)
+  const [loadError, setLoadError] = useState('')
+  const [reloadVersion, setReloadVersion] = useState(0)
+  const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const busyRef = useRef(false)
-  const [error, setError] = useState('')
-  const [failures, setFailures] = useState(0)
-  const [blockedUntil, setBlockedUntil] = useState(0)
+  // Authorization belongs to this page and the exact credential it verified.
+  const [unlockedPassword, setUnlockedPassword] = useState<StoredSettingsPassword | null>(null)
 
-  const fail = (): string => {
-    const next = failures + 1
-    if (next >= MAX_UNLOCK_ATTEMPTS) {
-      setFailures(0)
-      setBlockedUntil(Date.now() + UNLOCK_COOLDOWN_MS)
-      return `Too many attempts. Try again in ${UNLOCK_COOLDOWN_MS / 1000}s`
+  useEffect(() => {
+    let active = true
+    let changed = false
+    const failed = (): void => {
+      setState(null)
+      setUnlockedPassword(null)
+      setLoadError('Unable to load the settings lock. Try again.')
     }
-    setFailures(next)
-    return 'Wrong password'
-  }
-
-  const run = async (work: () => Promise<string | null>): Promise<boolean> => {
-    if (busyRef.current) return false
-    const waitMs = blockedUntil - Date.now()
-    if (waitMs > 0) {
-      setError(`Too many attempts. Try again in ${Math.max(1, Math.ceil(waitMs / 1000))}s`)
-      return false
+    const onChanged = (changes: Record<string, chrome.storage.StorageChange>, area: string): void => {
+      if (area !== 'local' || !(SETTINGS_LOCK_KEY in changes)) return
+      changed = true
+      try {
+        setState(parseSettingsLock(changes[SETTINGS_LOCK_KEY].newValue))
+        setLoadError('')
+      } catch {
+        failed()
+      }
     }
+    chrome.storage.onChanged.addListener(onChanged)
+    void loadSettingsLock().then(loaded => {
+      // A storage event received during loading is newer than the initial read.
+      if (active && !changed) {
+        setState(loaded)
+        setLoadError('')
+      }
+    }).catch(() => {
+      if (active && !changed) failed()
+    })
+    return () => {
+      active = false
+      chrome.storage.onChanged.removeListener(onChanged)
+    }
+  }, [reloadVersion])
 
+  const run = async (operation: SettingsLockOperation): Promise<boolean> => {
+    if (busyRef.current || state === null) return false
     busyRef.current = true
     setBusy(true)
     setError('')
     try {
-      const message = await work()
-      if (message !== null) {
-        setError(message)
+      const result = await runSettingsLockOperation(state.password, operation)
+      if (result.error !== null) {
+        setError(result.error)
         return false
       }
-      setFailures(0)
+      setUnlockedPassword(result.password)
       return true
     } catch {
       setError('Something went wrong. Try again.')
@@ -77,15 +89,6 @@ export const useSettingsLock = (): SettingsLock => {
       busyRef.current = false
       setBusy(false)
     }
-  }
-
-  const unlock = async (password: string): Promise<boolean> => {
-    if (!hasPassword) return true
-    const ok = await run(async () => (
-      await verifySettingsPassword(password, settingsPassword) ? null : fail()
-    ))
-    if (ok) setUnlocked(true)
-    return ok
   }
 
   const setPassword = async ({ password, confirm, current = '' }: {
@@ -102,46 +105,28 @@ export const useSettingsLock = (): SettingsLock => {
       setError('Passwords do not match')
       return false
     }
-
-    const ok = await run(async () => {
-      if (hasPassword) {
-        if (normalizePassword(current) === '') return 'Enter the current password'
-        if (!await verifySettingsPassword(current, settingsPassword)) return fail()
-      }
-      dispatch(setSettingsPassword(await createSettingsPassword(password)))
-      return null
-    })
-    if (ok) setUnlocked(true)
-    return ok
+    return run({ type: 'set', current, password })
   }
 
-  const removePassword = async (current: string): Promise<boolean> => {
-    if (!hasPassword) {
-      dispatch(clearSettingsPassword())
-      return true
-    }
-    const ok = await run(async () => {
-      if (normalizePassword(current) === '') return 'Enter the current password'
-      if (!await verifySettingsPassword(current, settingsPassword)) return fail()
-      dispatch(clearSettingsPassword())
-      return null
-    })
-    if (ok) setUnlocked(false)
-    return ok
-  }
-
+  const hasPassword = state !== null && state.password !== null
   return {
+    ready: state !== null,
     hasPassword,
-    isLocked: hasPassword && !unlocked,
+    isLocked: state === null || (hasPassword && !samePassword(state.password, unlockedPassword)),
     busy,
-    error,
-    unlock,
+    error: loadError || error,
+    reload: () => {
+      setLoadError('')
+      setReloadVersion(value => value + 1)
+    },
+    unlock: current => run({ type: 'unlock', current }),
     lock: () => {
-      setUnlocked(false)
+      if (busyRef.current) return
+      setUnlockedPassword(null)
       setError('')
     },
     clearError: () => setError(''),
     setPassword,
-    removePassword
+    removePassword: current => run({ type: 'remove', current })
   }
 }

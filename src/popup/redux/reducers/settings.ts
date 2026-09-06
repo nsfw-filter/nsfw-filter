@@ -1,5 +1,5 @@
+
 import { DEFAULT_TRAINED_MODEL, isTrainedModel, TrainedModel } from '../../../utils/models'
-import { isStoredSettingsPassword, StoredSettingsPassword } from '../../../utils/settingsPassword'
 import { SettingsActionTypes } from '../actions/settings'
 import {
   TOGGLE_LOGGING,
@@ -7,9 +7,7 @@ import {
   SET_FILTER_EFFECT,
   SET_TRAINED_MODEL,
   SET_FILTER_STRICTNESS,
-  SET_WEBSITE_LIST,
-  SET_SETTINGS_PASSWORD,
-  CLEAR_SETTINGS_PASSWORD
+  SET_WEBSITE_LIST
 } from '../actions/settings/settingsTypes'
 
 export type SettingsState = {
@@ -19,7 +17,6 @@ export type SettingsState = {
   trainedModel: TrainedModel
   filterStrictness: number
   websites: string[]
-  settingsPassword: StoredSettingsPassword | null
 }
 
 const initialState: SettingsState = {
@@ -28,8 +25,7 @@ const initialState: SettingsState = {
   filterEffect: 'blur',
   trainedModel: DEFAULT_TRAINED_MODEL,
   filterStrictness: 55,
-  websites: [],
-  settingsPassword: null
+  websites: []
 }
 
 export function settings (state = initialState, action: SettingsActionTypes): SettingsState {
@@ -38,17 +34,11 @@ export function settings (state = initialState, action: SettingsActionTypes): Se
   // defaults; otherwise a missing `enabled` reads as undefined and silently
   // disables filtering after an upgrade. Only allocate when a key is actually
   // missing, so unrelated actions keep the same `settings` reference.
-  const partial = state as Partial<SettingsState>
-  const hydrated = partial.enabled !== undefined && 'settingsPassword' in state
+  const hydrated = (state as Partial<SettingsState>).enabled !== undefined
   let s = hydrated ? state : { ...initialState, ...state }
   // A model removed in a later version (or a downgrade) would leave an id the
   // offscreen document can't load; reset it so classification never wedges.
   if (!isTrainedModel(s.trainedModel)) s = { ...s, trainedModel: DEFAULT_TRAINED_MODEL }
-  // Garbage or a partial write in storage should fail open (no lock) rather
-  // than wedge the popup on a record we cannot verify.
-  if (s.settingsPassword !== null && !isStoredSettingsPassword(s.settingsPassword)) {
-    s = { ...s, settingsPassword: null }
-  }
   switch (action.type) {
     case TOGGLE_ENABLED:
       return { ...s, enabled: !s.enabled }
@@ -62,15 +52,6 @@ export function settings (state = initialState, action: SettingsActionTypes): Se
       return { ...s, filterStrictness: action.payload.filterStrictness }
     case SET_WEBSITE_LIST:
       return { ...s, websites: action.payload.websites }
-    case SET_SETTINGS_PASSWORD:
-      return {
-        ...s,
-        settingsPassword: isStoredSettingsPassword(action.payload.settingsPassword)
-          ? action.payload.settingsPassword
-          : null
-      }
-    case CLEAR_SETTINGS_PASSWORD:
-      return { ...s, settingsPassword: null }
     default:
       return s
   }
