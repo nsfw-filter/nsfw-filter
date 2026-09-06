@@ -16,7 +16,8 @@ import { setWasmPaths } from '@tensorflow/tfjs-backend-wasm'
 import { Logger } from '../utils/Logger'
 import {
   OffscreenClassifyResponse,
-  OffscreenRequest
+  OffscreenRequest,
+  RESTARTING_MESSAGE
 } from '../utils/messages'
 import { DEFAULT_TRAINED_MODEL, TrainedModel } from '../utils/models'
 import { withTimeout } from '../utils/withTimeout'
@@ -43,8 +44,12 @@ const WEBGL_PROBE_TIMEOUT = 3000
 // Cap a single classification. Predictions are serialised through `enqueue`, so
 // one stuck predict would wedge every queued image behind it (and the content
 // script's pending-hide stylesheet would leave them hidden). On timeout the
-// prediction rejects, the image is revealed, and the chain is freed.
-const PREDICTION_TIMEOUT = 10000
+// prediction rejects, the image is revealed, and the chain is freed -- which makes
+// this a budget for a wedged prediction, not a slow one. ViT on WASM takes about
+// three seconds per image on an idle machine and several times that on a busy one,
+// and a prediction cut short is an unfiltered image, so keep well clear of both
+// while staying under the content script's 60s deadline.
+const PREDICTION_TIMEOUT = 30000
 // Fetching and compiling the .wasm binary is slower than probing WebGL.
 const WASM_INIT_TIMEOUT = 15000
 
@@ -131,7 +136,7 @@ const restartOnWasm = (): never => {
   })
   location.reload()
 
-  throw new Error('Restarting the offscreen document on WASM')
+  throw new Error(RESTARTING_MESSAGE)
 }
 
 // --- The active model and the work queue ----------------------------------
@@ -157,9 +162,17 @@ const enqueue = async <T>(op: () => Promise<T>): Promise<T> => {
 
 // A prediction that exceeds PREDICTION_TIMEOUT rejects and frees the chain (so
 // one stuck image can't wedge the rest), but the underlying predict() may still
-// be running against the model. Track it so switchTo() can wait for it to settle
-// before disposing — otherwise a queued switch would dispose tensors mid-inference.
-let inFlightPredict: Promise<unknown> = Promise.resolve()
+// be running against the model. Hold every one that hasn't settled so switchTo()
+// can wait them all out before disposing — otherwise a queued switch would dispose
+// tensors mid-inference. Keeping only the newest would miss an older one that is
+// still running behind it.
+const inFlightPredictions = new Set<Promise<unknown>>()
+
+const trackPrediction = (prediction: Promise<unknown>): void => {
+  const settled = prediction.catch(() => undefined)
+  inFlightPredictions.add(settled)
+  void settled.finally(() => inFlightPredictions.delete(settled))
+}
 
 const createClassifier = (id: TrainedModel): Classifier => {
   const settings = { filterStrictness: pendingStrictness }
@@ -242,9 +255,9 @@ const ensureUp = (): void => {
 const switchTo = async (id: TrainedModel): Promise<void> => {
   const previous = activeClassifier
   activeClassifier = null
-  // A timed-out prediction may still be running on `previous`; let it settle so
-  // we never dispose the model out from under an in-flight inference.
-  await inFlightPredict
+  // A timed-out prediction may still be running on `previous`; let them all settle
+  // so we never dispose the model out from under an in-flight inference.
+  await Promise.all(inFlightPredictions)
   previous?.dispose()
   try {
     activeClassifier = await bringUpOrFallback(id)
@@ -271,9 +284,14 @@ const classify = async (url: string, label: string): Promise<boolean> => {
   const image = await loadImage(url, label)
 
   return await enqueue(async () => {
+    // ensureUp() swallows the restart so it can't reject an unrelated caller, which
+    // leaves the model null here. Say which it is: the service worker sends a lost
+    // classification again once the new realm is up, but only this one is worth
+    // sending again.
+    if (restarting) throw new Error(RESTARTING_MESSAGE)
     if (activeClassifier === null) throw new Error('Model is not loaded')
     const prediction = activeClassifier.predict(image, label)
-    inFlightPredict = prediction.catch(() => undefined)
+    trackPrediction(prediction)
     return await withTimeout(prediction, PREDICTION_TIMEOUT, 'Prediction')
   })
 }

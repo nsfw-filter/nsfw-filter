@@ -81,3 +81,8 @@ export class PredictionResponse {
     this.message = message
   }
 }
+
+// A classification lost to the offscreen document reloading itself onto WASM,
+// rather than one the model answered. The service worker matches on it to decide
+// whether sending the image again is worth anything.
+export const RESTARTING_MESSAGE = 'Restarting the offscreen document on WASM'
