@@ -62,6 +62,10 @@ const CONTENT_TYPES = {
   '.css': 'text/css'
 }
 
+// Long enough that the Manifest V2 budget of 1s would have given up on it, short
+// enough to stay well inside the current one.
+const SLOW_IMAGE_DELAY = 2500
+
 // A small static server so tests run against local fixtures instead of remote
 // hosts. Local images load instantly, which keeps classification deterministic.
 const startFixtureServer = async () => {
@@ -72,6 +76,18 @@ const startFixtureServer = async () => {
     if (url === '/icon.png') {
       res.writeHead(200, { 'Content-Type': 'image/png' })
       res.end(icon)
+      return
+    }
+
+    // The same icon, answered slower than a fast local file but well inside the
+    // offscreen document's load budget. slowImage.test.js uses it to prove a
+    // sluggish image is still classified rather than waved through.
+    if (url === '/slow-icon.png') {
+      // unref so the pending delay can't hold the test runner open past the suite.
+      setTimeout(() => {
+        res.writeHead(200, { 'Content-Type': 'image/png' })
+        res.end(icon)
+      }, SLOW_IMAGE_DELAY).unref()
       return
     }
 
@@ -116,4 +132,4 @@ const startFixtureServer = async () => {
   return { server, baseUrl: `http://localhost:${server.address().port}/` }
 }
 
-module.exports = { launchOptions, startFixtureServer }
+module.exports = { launchOptions, startFixtureServer, SLOW_IMAGE_DELAY }
