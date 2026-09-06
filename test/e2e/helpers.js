@@ -58,7 +58,8 @@ const launchOptions = ({ webgl = true } = {}) => ({
 const CONTENT_TYPES = {
   '.html': 'text/html',
   '.png': 'image/png',
-  '.webm': 'video/webm'
+  '.webm': 'video/webm',
+  '.css': 'text/css'
 }
 
 // A small static server so tests run against local fixtures instead of remote
