@@ -22,25 +22,30 @@ class RealmGoneError extends Error {}
 // classification in flight. The service worker sees a closed port, which is
 // indistinguishable from a real failure, and a failure reaches the page as "safe",
 // so the first page open on a machine without a usable GPU had every image waved
-// through. Send those again until the new realm answers. The budget covers a
-// reload plus a model load and still leaves room under the content script's 60s
-// deadline. Bounded by wall clock rather than by a count, so a realm that answers
-// slowly can't stretch it.
+// through. Send those again until the new realm answers. The budget is how long
+// resends stay admissible, not a deadline on the answer: a reload plus a model
+// load has to fit inside it. The clock starts when the loss is first seen, not when
+// the classification was sent, because a slow bring-up can burn a request-relative
+// budget before the restart it is meant to cover has even happened.
 const REALM_RETRY_DELAY = 1000
-const REALM_RETRY_BUDGET = 30000
+const REALM_RETRY_WINDOW = 30000
 
 export class OffscreenModel implements IOffscreenModel {
   public async predict (url: string, label?: string): Promise<boolean> {
     const request: OffscreenRequest = { target: 'offscreen', type: 'CLASSIFY', url, label }
 
-    const deadline = Date.now() + REALM_RETRY_BUDGET
+    let deadline = 0
 
     for (;;) {
       try {
         return await this.classify(request)
       } catch (error) {
-        if (!(error instanceof RealmGoneError) || Date.now() >= deadline) throw error
+        if (!(error instanceof RealmGoneError)) throw error
+        if (deadline === 0) deadline = Date.now() + REALM_RETRY_WINDOW
+
         await new Promise(resolve => setTimeout(resolve, REALM_RETRY_DELAY))
+        // Checked after the wait as well: the window can close while sleeping.
+        if (Date.now() >= deadline) throw error
       }
     }
   }

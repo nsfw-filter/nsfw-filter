@@ -4,7 +4,7 @@
 // return a boolean. We prefer the WebGL (GPU) backend, the one the MV2 background
 // page used, and fall back to single-threaded WASM (CPU) when no usable GPU is
 // available. trySetWebglBackend() and setWasmBackend() cover the CSP details, and
-// restartOnWasm() covers why the fallback reloads the document.
+// restartRealm() covers why the fallback reloads the document.
 //
 // This file owns the shared tfjs backend and serializes work; the actual model
 // (weights, preprocessing, decision) lives behind a Classifier so the user can
@@ -44,12 +44,11 @@ const WEBGL_PROBE_TIMEOUT = 3000
 // Cap a single classification. Predictions are serialised through `enqueue`, so
 // one stuck predict would wedge every queued image behind it (and the content
 // script's pending-hide stylesheet would leave them hidden). On timeout the
-// prediction rejects, the image is revealed, and the chain is freed -- which makes
-// this a budget for a wedged prediction, not a slow one. ViT on WASM takes about
-// three seconds per image on an idle machine and several times that on a busy one,
-// and a prediction cut short is an unfiltered image, so keep well clear of both
-// while staying under the content script's 60s deadline.
-const PREDICTION_TIMEOUT = 30000
+// prediction rejects, the image is revealed, and the chain is freed. It covers less
+// than it looks like: predict() runs its graph synchronously and only then returns
+// a promise, so on WASM most of the inference is already over before this timer is
+// armed.
+const PREDICTION_TIMEOUT = 10000
 // Fetching and compiling the .wasm binary is slower than probing WebGL.
 const WASM_INIT_TIMEOUT = 15000
 
@@ -97,7 +96,7 @@ const setWasmBackend = async (): Promise<boolean> => {
 }
 
 // The tfjs backend is global and picked once per document: WebGL, or WASM after a
-// restart. It is never switched in place; see restartOnWasm.
+// restart. It is never switched in place; see restartRealm.
 let currentBackend: 'webgl' | 'wasm' | null = null
 let restarting = false
 
@@ -112,7 +111,7 @@ const ensureBackend = async (): Promise<void> => {
       currentBackend = 'webgl'
       return
     }
-    restartOnWasm()
+    restartRealm()
   }
 
   // Throw rather than leave currentBackend claiming a backend that isn't active.
@@ -122,12 +121,12 @@ const ensureBackend = async (): Promise<void> => {
   currentBackend = 'wasm'
 }
 
-// A WebGL probe or warm-up that timed out is still running on the GPU, and
-// switching the live tfjs engine to WASM waits on it forever, so come back up in a
-// clean realm instead. reload() only schedules the navigation, so throw as well
-// rather than carry on in a realm about to go away. In-flight classifications are
-// dropped and the content script reveals those images.
-const restartOnWasm = (): never => {
+// Work that timed out may still be running underneath, and switching the live
+// tfjs engine can wait on it indefinitely, so come back up in a clean realm
+// instead, carrying the settings the service worker already pushed. Callers must
+// not carry on afterwards: reload() only schedules the navigation, hence the
+// throw. In-flight classifications are dropped; the service worker sends them again.
+const restartRealm = (): never => {
   restarting = true
   saveRestartState(sessionStorage, {
     filterStrictness: pendingStrictness,
@@ -150,8 +149,10 @@ let pendingLogging = restartState?.logging ?? false
 if (pendingLogging) logger.enable()
 
 // Serialise predictions AND model switches on one chain so a switch never
-// disposes a model out from under an in-flight prediction (model concurrency =
-// 1). Image *loading* still runs in parallel; it happens before joining here.
+// disposes a model out from under an in-flight prediction. The chain orders the
+// queued operations, not the inference underneath one that has already timed
+// out; switchTo waits that out separately. Image *loading* still runs in
+// parallel; it happens before joining here.
 let opChain: Promise<unknown> = Promise.resolve()
 
 const enqueue = async <T>(op: () => Promise<T>): Promise<T> => {
@@ -162,16 +163,21 @@ const enqueue = async <T>(op: () => Promise<T>): Promise<T> => {
 
 // A prediction that exceeds PREDICTION_TIMEOUT rejects and frees the chain (so
 // one stuck image can't wedge the rest), but the underlying predict() may still
-// be running against the model. Hold every one that hasn't settled so switchTo()
-// can wait them all out before disposing — otherwise a queued switch would dispose
-// tensors mid-inference. Keeping only the newest would miss an older one that is
-// still running behind it.
-const inFlightPredictions = new Set<Promise<unknown>>()
+// be running against the model. Hold every one that hasn't settled, per classifier,
+// so a switch waits out the model it is about to dispose and no other. Keeping only
+// the newest would miss an older one still running behind it; keeping one set for
+// the whole realm would make a single stalled prediction delay every later switch.
+const inFlightPredictions = new WeakMap<Classifier, Set<Promise<unknown>>>()
 
-const trackPrediction = (prediction: Promise<unknown>): void => {
+// How long a switch waits for the model it is replacing to go quiet.
+const DISPOSE_WAIT_TIMEOUT = 30000
+
+const trackPrediction = (classifier: Classifier, prediction: Promise<unknown>): void => {
   const settled = prediction.catch(() => undefined)
-  inFlightPredictions.add(settled)
-  void settled.finally(() => inFlightPredictions.delete(settled))
+  const pending = inFlightPredictions.get(classifier) ?? new Set<Promise<unknown>>()
+  inFlightPredictions.set(classifier, pending)
+  pending.add(settled)
+  void settled.finally(() => pending.delete(settled))
 }
 
 const createClassifier = (id: TrainedModel): Classifier => {
@@ -195,7 +201,7 @@ const bringUpClassifier = async (id: TrainedModel): Promise<Classifier> => {
       const ok = await classifier.load(true)
       if (!ok && currentBackend === 'webgl') {
         logger.log('WebGL cannot run the model; restarting the offscreen document on WASM')
-        restartOnWasm()
+        restartRealm()
       }
       if (!ok) {
         classifier.dispose()
@@ -213,7 +219,7 @@ const bringUpClassifier = async (id: TrainedModel): Promise<Classifier> => {
       // Out of retries on WebGL. A load that keeps failing there may be waiting on
       // GPU work we can't cancel, so drop the realm rather than report no model.
       if (attempts >= MAX_LOAD_ATTEMPTS) {
-        if (currentBackend === 'webgl') restartOnWasm()
+        if (currentBackend === 'webgl') restartRealm()
         throw error
       }
       await new Promise(resolve => setTimeout(resolve, 200))
@@ -250,14 +256,26 @@ const ensureUp = (): void => {
   }).catch(() => undefined)
 }
 
-// Dispose the old model BEFORE loading the new one (never both resident). Safe
-// because this runs on the same chain as predictions, so nothing is mid-predict.
+// Dispose the old model before loading the new one, so the two are never both
+// resident.
 const switchTo = async (id: TrainedModel): Promise<void> => {
   const previous = activeClassifier
   activeClassifier = null
-  // A timed-out prediction may still be running on `previous`; let them all settle
-  // so we never dispose the model out from under an in-flight inference.
-  await Promise.all(inFlightPredictions)
+  // A timed-out prediction may still be running on `previous`; let it settle so we
+  // never free tensors an inference is still reading.
+  const pending = previous === null ? [] : inFlightPredictions.get(previous) ?? []
+  const quiet = await withTimeout(Promise.all(pending), DISPOSE_WAIT_TIMEOUT, 'Pending predictions')
+    .then(() => true)
+    .catch(() => false)
+
+  // Neither option is safe here: disposing frees tensors an inference may still be
+  // reading, and keeping the model leaves one nothing will ever dispose. Drop the
+  // realm instead, which releases both, and let the service worker send the
+  // classifications lost with it again.
+  if (!quiet) {
+    logger.log('A prediction is still running long after its timeout; restarting the offscreen document')
+    restartRealm()
+  }
   previous?.dispose()
   try {
     activeClassifier = await bringUpOrFallback(id)
@@ -291,7 +309,7 @@ const classify = async (url: string, label: string): Promise<boolean> => {
     if (restarting) throw new Error(RESTARTING_MESSAGE)
     if (activeClassifier === null) throw new Error('Model is not loaded')
     const prediction = activeClassifier.predict(image, label)
-    trackPrediction(prediction)
+    trackPrediction(activeClassifier, prediction)
     return await withTimeout(prediction, PREDICTION_TIMEOUT, 'Prediction')
   })
 }
