@@ -1,7 +1,7 @@
 import { PredictionRequest } from '../../utils/messages'
 import { mediaElements } from '../mediaRoots'
 
-import { Filter } from './Filter'
+import { Filter, OFFSCREEN_MARGIN } from './Filter'
 
 export type IVideoFilter = {
   analyzeVideo: (video: HTMLVideoElement, sourceChanged: boolean) => void
@@ -39,7 +39,6 @@ const FRAME_PRESENTATION_TIMEOUT = 250
 // Sampling follows media time, not wall time: a paused or buffering video is not
 // showing anything new, and a 2x playback is showing it twice as fast.
 const SAMPLE_INTERVAL = 1
-const OFFSCREEN_MARGIN = '300px'
 
 // Frames are keyed, not addressed, and the background deduplicates by key across
 // every tab. A counter alone would hand tab B the verdict for tab A's frame, so
@@ -303,7 +302,7 @@ export class VideoFilter extends Filter implements IVideoFilter {
   private schedule (video: HTMLVideoElement): void {
     const state = this.stateOf(video)
     if (!this.active || state.overridden || state.unsampleable) return
-    if (video.dataset.nsfwFilterStatus === 'nsfw') return
+    if (this.isBlocked(video)) return
 
     // Hide decoded footage before checking viewport eligibility: intersection
     // callbacks may arrive after its first paint, including behind a safe poster.
@@ -320,7 +319,7 @@ export class VideoFilter extends Filter implements IVideoFilter {
 
   private eligible (video: HTMLVideoElement, state: VideoState): boolean {
     if (!this.active || state.unsampleable || state.overridden) return false
-    if (video.dataset.nsfwFilterStatus === 'nsfw') return false
+    if (this.isBlocked(video)) return false
     const pictureInPicture = document.pictureInPictureElement === video
     if (!pictureInPicture && (!this.visible.has(video) || document.visibilityState !== 'visible')) return false
     // Empty placeholders must not delay videos that already have pixels to read.
@@ -378,7 +377,7 @@ export class VideoFilter extends Filter implements IVideoFilter {
   private async sample (video: HTMLVideoElement): Promise<void> {
     const state = this.stateOf(video)
     const generation = state.generation
-    if (state.unsampleable || video.dataset.nsfwFilterStatus === 'nsfw') return
+    if (state.unsampleable || this.isBlocked(video)) return
 
     // Until a frame of this media has been cleared, the element is hidden. Later
     // samples run behind a video the user is already watching: blocking on every

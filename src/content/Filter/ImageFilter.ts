@@ -1,7 +1,7 @@
 import { PredictionRequest } from '../../utils/messages'
 import { mediaElements } from '../mediaRoots'
 
-import { Filter, FilterSettings } from './Filter'
+import { Filter, FilterSettings, OFFSCREEN_MARGIN } from './Filter'
 
 export type ImageElement = HTMLImageElement | SVGImageElement
 
@@ -25,6 +25,27 @@ export class ImageFilter extends Filter implements IImageFilter {
   private readonly sources = new WeakMap<ImageElement, string>()
   private readonly wired = new WeakSet<ImageElement>()
   private readonly smallImages = new WeakSet<ImageElement>()
+  private readonly viewport: IntersectionObserver
+  private readonly awaiting = new Set<ImageElement>()
+
+  constructor () {
+    super()
+    // Every filter shares one prediction chain, so asking about a whole page of
+    // images at once pushes the last of them past their deadline, where they
+    // settle as unavailable and are blocked. An image keeps its processing tag
+    // and stays hidden until it comes within range of the viewport.
+    this.viewport = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        const image = entry.target as ImageElement
+        if (entry.isIntersecting) this.classify(image)
+        else if (!image.isConnected) {
+          // Gone from the page before it was ever reached: stop holding on to it.
+          this.viewport.unobserve(image)
+          this.awaiting.delete(image)
+        }
+      }
+    }, { rootMargin: OFFSCREEN_MARGIN })
+  }
 
   public revealImage (image: ImageElement): void {
     this.unhidden.add(image)
@@ -67,6 +88,25 @@ export class ImageFilter extends Filter implements IImageFilter {
     }
 
     this.smallImages.delete(image)
+    this.awaiting.add(image)
+
+    // A verdict already on the element is on screen, and whatever changed here
+    // makes it stale: take it down and ask again now. Waiting to be told the
+    // element is in view would leave the old verdict showing, which is what a
+    // seek preview swapping its source through one <img> does.
+    if (status !== undefined) this.classify(image)
+    // A first look waits instead, since observing reports what is in view. Until
+    // then it stays untagged, where the pending rule hides it without collapsing
+    // the box the observer needs: tagging hides it inline, and `hidden` on a BODY
+    // child removes that box.
+    else this.viewport.observe(image)
+  }
+
+  // Taking it out of the waiting set is what keeps one image from being asked
+  // about twice for the same change.
+  private classify (image: ImageElement): void {
+    if (!this.awaiting.delete(image)) return
+
     image.dataset.nsfwFilterStatus = 'processing'
     this.hideElement(image)
     void this._analyzeImage(image)
@@ -101,6 +141,8 @@ export class ImageFilter extends Filter implements IImageFilter {
   public stop (): void {
     this.active = false
     this.epoch++
+    this.viewport.disconnect()
+    this.awaiting.clear()
   }
 
   private sourceOf (image: ImageElement): string {

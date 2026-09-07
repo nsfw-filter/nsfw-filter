@@ -2,7 +2,7 @@ import { PredictionRequest } from '../../utils/messages'
 import { mediaElements } from '../mediaRoots'
 
 import { backgroundImageUrls } from './backgroundImageValue'
-import { Filter, MIN_MEDIA_SIZE } from './Filter'
+import { Filter, MIN_MEDIA_SIZE, OFFSCREEN_MARGIN } from './Filter'
 
 export type IBackgroundImageFilter = {
   observe: (root: Element) => void
@@ -37,7 +37,6 @@ type BackgroundState = {
   } | null
 }
 
-const OFFSCREEN_MARGIN = '300px'
 // Past this many dirty roots, testing every visible element against each of them
 // costs more than simply re-reading the visible set.
 const DIRTY_ROOT_LIMIT = 8

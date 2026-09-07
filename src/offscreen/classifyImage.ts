@@ -11,7 +11,12 @@ const MAX_DECODED_FRAMES = 300
 // and every prediction is a second of a stalled queue on a machine without a GPU.
 const MAX_PREDICTIONS = 8
 const IMAGE_SIZE = 224
-const LOAD_TIMEOUT = 5000
+// Wall-clock, and it competes with inference for the same thread: a page full of
+// media has every retrieval waiting behind model work that blocks the task queue.
+// Five seconds cut those off and the caller read that as media it could not see,
+// which is blocked. The content-side deadline is the real backstop for a request
+// that never lands.
+const LOAD_TIMEOUT = 45000
 
 type Predict = (image: HTMLImageElement, label: string) => Promise<boolean>
 

@@ -18,6 +18,10 @@ const GRAYSCALE = 'grayscale(1)'
 // backgrounds and canvases all draw the line in the same place.
 export const MIN_MEDIA_SIZE = 41
 
+// How far outside the viewport media is still worth judging, so it is ready by
+// the time a scroll brings it in.
+export const OFFSCREEN_MARGIN = '300px'
+
 type FilterRequestWaiter = {
   resolve: (value: PredictionResponse) => void
   reject: (error: PredictionRequest) => void
@@ -169,6 +173,18 @@ export class Filter implements IFilter {
     })
   }
 
+  // The deadline is there to catch a pipeline that has stopped answering, not one
+  // that is merely busy. A reply is proof it is still working, so whatever is
+  // queued behind it starts its wait again: a page with more media than the model
+  // can judge inside one deadline would otherwise give up on the tail of it, and
+  // give up means blocked.
+  private _renewDeadlines (): void {
+    for (const [url, queued] of this.requestQueue) {
+      window.clearTimeout(queued.deadline)
+      queued.deadline = window.setTimeout(() => this._giveUp(url), ANALYSIS_DEADLINE)
+    }
+  }
+
   // Takes the pending entry off the queue and stops its timers. undefined means it
   // was already settled, which is how a reply that arrives too late is dropped.
   private _take (url: string): FilterRequestQueueValue | undefined {
@@ -214,6 +230,7 @@ export class Filter implements IFilter {
       const pending = this._takeFor(request)
       if (pending === undefined) return
 
+      this._renewDeadlines()
       for (const { resolve } of pending.waiters) resolve(response)
     })
   }

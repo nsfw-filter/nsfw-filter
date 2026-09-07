@@ -13,6 +13,11 @@ import { injectPendingHide } from './pendingStyle'
 const STYLE_SHEET = 'link[rel~="stylesheet"], style'
 const MEDIA_SELECTOR = 'img,video,canvas,svg image'
 const BACKGROUND_EVENTS = ['pointerover', 'pointerout', 'focusin', 'focusout']
+// The root sweep visits every element and asks Chrome for a shadow root on each,
+// which on a large page costs tens of milliseconds. Most seconds have no new
+// roots to find, so it runs when the document has changed, and once every few
+// seconds regardless for a root that appeared without a mutation we saw.
+const SWEEPS_BETWEEN_FULL = 5
 
 export type IDOMWatcher = {
   watch: () => void
@@ -26,6 +31,8 @@ export class DOMWatcher implements IDOMWatcher {
   private readonly backgroundFilter: IBackgroundImageFilter
   private readonly canvasFilter: ICanvasFilter
   private readonly roots = new Set<MediaRoot>()
+  private rootsDirty = true
+  private sweeps = 0
   private rootTimer: ReturnType<typeof setInterval> | undefined
   private sheetObservers: Map<Element, MutationObserver>
   private sheetLoads: AbortController
@@ -100,6 +107,7 @@ export class DOMWatcher implements IDOMWatcher {
     for (let i = 0; i < mutationsList.length; i++) {
       const mutation = mutationsList[i]
       if (mutation.type === 'childList') {
+        this.rootsDirty = true
         // A removed subtree has to give up its override and its pending request,
         // and a stale registration would keep the element alive with the page.
         mutation.removedNodes.forEach(node => {
@@ -208,6 +216,8 @@ export class DOMWatcher implements IDOMWatcher {
 
   private discoverRoots (): void {
     if (document.visibilityState !== 'visible') return
+    if (!this.rootsDirty && ++this.sweeps % SWEEPS_BETWEEN_FULL !== 0) return
+    this.rootsDirty = false
     for (const root of mediaRoots()) {
       if (root instanceof ShadowRoot && !this.roots.has(root)) this.findAndCheckAllMedia(root)
     }

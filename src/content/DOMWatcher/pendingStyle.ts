@@ -6,11 +6,17 @@ export const HIDE_STYLE_ID = 'nsfw-filter-pending-hide'
 export const PENDING_HIDE_RULES = `
     @namespace html "http://www.w3.org/1999/xhtml";
     @layer nsfw-filter {
-      img:not([data-nsfw-filter-status]),
-      video:not([data-nsfw-filter-status]),
-      canvas:not([data-nsfw-filter-status]),
-      svg image:not([data-nsfw-filter-status]) {
-        visibility: var(--nsfw-filter-pending-visibility, revert-layer) !important;
+      /* Gated on the switch rather than a var() fallback: a CSS-wide keyword
+         substituted through var() is invalid at computed-value time, and
+         visibility then inherits, which showed media the page had hidden.
+         With the switch absent this rule does not apply at all. */
+      @container style(--nsfw-filter-pending-visibility: hidden) {
+        img:not([data-nsfw-filter-status]),
+        video:not([data-nsfw-filter-status]),
+        canvas:not([data-nsfw-filter-status]),
+        svg image:not([data-nsfw-filter-status]) {
+          visibility: hidden !important;
+        }
       }
       /* The document root has no parent to query; its stylesheet is removed on pause. */
       html|*:root:not([data-nsfw-filter-background-status]),
