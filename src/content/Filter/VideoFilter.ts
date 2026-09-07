@@ -135,7 +135,7 @@ export class VideoFilter extends Filter implements IVideoFilter {
       }
       return
     }
-    if (video.dataset.nsfwFilterStatus === 'nsfw') return
+    if (this.isBlocked(video)) return
     // Until the video has played, the poster is what is on screen, however many
     // frames have been decoded and judged behind it.
     if (state.approved === state.generation && video.played.length > 0) return
@@ -249,7 +249,10 @@ export class VideoFilter extends Filter implements IVideoFilter {
     // Seeking exposes a frame nothing has judged, including while paused.
     video.addEventListener('seeking', () => {
       if (!this.active || state.overridden || state.unsampleable) return
-      if (video.dataset.nsfwFilterStatus === 'nsfw') return
+      // Blocked stays blocked until the element plays different media, which
+      // resets it. Seeking inside the same footage would otherwise clear the
+      // status and hand it back for another look that already failed once.
+      if (this.isBlocked(video)) return
       // A loop returns to footage from the same source. Cancelling every pending
       // verdict on each lap would keep a short safe loop hidden indefinitely.
       if (video.loop && video.currentTime === 0) {
