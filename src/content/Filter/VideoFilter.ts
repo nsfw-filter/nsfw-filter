@@ -102,10 +102,17 @@ export class VideoFilter extends Filter implements IVideoFilter {
       }
 
       // Decoding can finish before the viewport observer reports this video, so
-      // the first frame stays hidden until something has actually inspected it.
-      video.dataset.nsfwFilterStatus = 'processing'
-      this.hideElement(video)
-      if (video.poster.length > 0) void this.classifyPoster(video, state)
+      // anything already on screen stays hidden until it has been inspected.
+      if (video.poster.length > 0 || video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+        video.dataset.nsfwFilterStatus = 'processing'
+        this.hideElement(video)
+        if (video.poster.length > 0) void this.classifyPoster(video, state)
+      } else {
+        // Nothing decoded and no poster: nothing is on screen to judge yet, and
+        // the element needs a status or the pending rule keeps hiding it. The
+        // first decoded frame is hidden by schedule().
+        video.dataset.nsfwFilterStatus = 'sfw'
+      }
     }
 
     // A paused video still shows its first decoded frame, so having one is reason
@@ -498,8 +505,10 @@ export class VideoFilter extends Filter implements IVideoFilter {
       this.reveal(video)
       return
     }
-    // An unreadable poster must not blank footage a frame has already cleared.
-    if (state.approved !== state.generation) this.markUnavailable(video)
+    // An unreadable poster says nothing about the footage behind it, so let a
+    // frame decide. Only media whose pixels cannot be read at all is unavailable.
+    if (state.unsampleable) this.markUnavailable(video)
+    else this.schedule(video)
   }
 
   private block (video: HTMLVideoElement): void {

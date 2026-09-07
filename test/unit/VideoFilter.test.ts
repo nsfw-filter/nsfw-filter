@@ -251,8 +251,8 @@ describe('content => VideoFilter', () => {
     runtime.release()
     await settle()
 
-    expect(video.dataset.nsfwFilterStatus).toBe('processing')
-    expect(video.style.visibility).toBe('hidden')
+    expect(video.dataset.nsfwFilterStatus).toBe('sfw')
+    expect(video.style.visibility).toBe('')
   })
 
   // New media still has to end up with a status, or the stylesheet that hides

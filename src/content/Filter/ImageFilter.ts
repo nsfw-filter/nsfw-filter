@@ -48,9 +48,10 @@ export class ImageFilter extends Filter implements IImageFilter {
     if (source !== previous) this.unhidden.delete(image)
     this.sources.set(image, source)
 
+    // Nothing to judge. An element whose source is cleared mid-flight has to be
+    // released, or it keeps a `processing` tag no reply will ever settle.
     if (source === '') {
-      this.revealElement(image)
-      delete image.dataset.nsfwFilterStatus
+      if (status === 'processing') this.showImage(image)
       return
     }
 

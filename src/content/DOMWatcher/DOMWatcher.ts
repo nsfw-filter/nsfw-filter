@@ -116,12 +116,12 @@ export class DOMWatcher implements IDOMWatcher {
         if (mutation.target instanceof HTMLElement) this.backgroundFilter.checkElement(mutation.target)
         if (mutation.addedNodes.length === 0) continue
 
-        this.findAndCheckAllMedia(mutation.target as ParentNode)
-        // Backgrounds are registered per added subtree rather than by re-walking
-        // the mutation target: a feed appending rows would otherwise re-walk the
-        // whole feed on every row.
+        // Registered per added subtree rather than by re-walking the mutation
+        // target: a feed appending rows would otherwise re-walk the whole feed
+        // on every row.
         mutation.addedNodes.forEach(node => {
           if (!(node instanceof Element)) return
+          this.findAndCheckAllMedia(node)
           this.backgroundFilter.observe(node)
           this.watchStyleSheets(node)
         })
@@ -214,6 +214,10 @@ export class DOMWatcher implements IDOMWatcher {
     const detached = [...this.roots].filter(root => root instanceof ShadowRoot && !root.host.isConnected)
     if (detached.length === 0) return
     for (const root of detached) this.roots.delete(root)
+    // disconnect() empties the record queue as well as the target list, so drain
+    // it first: media in an undelivered record would otherwise never be seen,
+    // and the pending rule would keep it hidden.
+    this.callback(this.observer.takeRecords())
     this.observer.disconnect()
     for (const root of this.roots) this.observer.observe(root, DOMWatcher.getConfig())
   }

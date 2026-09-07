@@ -10,7 +10,7 @@ export const PENDING_HIDE_RULES = `
       video:not([data-nsfw-filter-status]),
       canvas:not([data-nsfw-filter-status]),
       svg image:not([data-nsfw-filter-status]) {
-        visibility: var(--nsfw-filter-pending-visibility, visible) !important;
+        visibility: var(--nsfw-filter-pending-visibility, revert-layer) !important;
       }
       /* The document root has no parent to query; its stylesheet is removed on pause. */
       html|*:root:not([data-nsfw-filter-background-status]),

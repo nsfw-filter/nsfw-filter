@@ -23,6 +23,13 @@ type CanvasState = {
 const FRAME_SIZE = 224
 const SAMPLE_INTERVAL = 1000
 
+// Snapshots are keyed, not addressed, and the background deduplicates by key
+// across every tab, so the key is scoped to this realm. randomUUID would do but
+// it is secure-context only, and an ordinary http page has to work too.
+const REALM = crypto.getRandomValues(new Uint32Array(2)).join('')
+let snapshots = 0
+const snapshotKey = (): string => `nsfw-filter-canvas:${REALM}-${++snapshots}`
+
 // Drawing notifications catch changes before paint. Polling also covers drawings
 // made outside the page's context, such as an OffscreenCanvas in a worker.
 export class CanvasFilter extends Filter implements ICanvasFilter {
@@ -144,8 +151,7 @@ export class CanvasFilter extends Filter implements ICanvasFilter {
         this.revealElement(canvas)
         return
       }
-      const key = `nsfw-filter-canvas:${crypto.randomUUID()}`
-      const { result, error } = await this.requestToAnalyzeImage(new PredictionRequest(key, pixels))
+      const { result, error } = await this.requestToAnalyzeImage(new PredictionRequest(snapshotKey(), pixels))
       if (epoch !== this.epoch || state.overridden) return
       if (error !== undefined) throw new Error(error)
       // Drawing can continue while the model works. A safe verdict must not
