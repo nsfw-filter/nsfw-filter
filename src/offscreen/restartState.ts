@@ -2,7 +2,7 @@ import { ILogger } from '../utils/Logger'
 import { TrainedModel } from '../utils/models'
 
 // The offscreen document cannot switch the TensorFlow.js backend in place, so it
-// reloads itself onto WASM instead (see restartOnWasm in offscreen.ts). The
+// reloads itself onto WASM instead (see restartRealm in offscreen.ts). The
 // reloaded document has no way back to the settings the service worker pushed,
 // because the worker is still running and won't push them again, so they are
 // handed over through sessionStorage.

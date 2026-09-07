@@ -132,4 +132,4 @@ const startFixtureServer = async () => {
   return { server, baseUrl: `http://localhost:${server.address().port}/` }
 }
 
-module.exports = { launchOptions, startFixtureServer, SLOW_IMAGE_DELAY }
+module.exports = { launchOptions, startFixtureServer }
