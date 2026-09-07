@@ -4,12 +4,15 @@ import { createChromeStore } from '../popup/redux/chrome-storage'
 import { rootReducer } from '../popup/redux/reducers'
 import { SettingsState } from '../popup/redux/reducers/settings'
 import { isHostAllowed } from '../utils/allowlist'
-import { CONTEXT_TARGET, UNHIDE_IMAGE, UnhideImageMessage } from '../utils/messages'
+import { CONTEXT_TARGET, PAGE_HOST, UNHIDE_IMAGE, UnhideImageMessage } from '../utils/messages'
 
 import { DOMWatcher } from './DOMWatcher/DOMWatcher'
+import { HIDE_STYLE_ID, injectPendingHide } from './DOMWatcher/pendingStyle'
 import { BackgroundImageFilter } from './Filter/BackgroundImageFilter'
-import { ImageFilter } from './Filter/ImageFilter'
+import { CanvasFilter } from './Filter/CanvasFilter'
+import { ImageElement, ImageFilter } from './Filter/ImageFilter'
 import { VideoFilter } from './Filter/VideoFilter'
+import { mediaElements } from './mediaRoots'
 
 // chrome.storage reads are async, so there is a gap between document_start (when
 // this script runs) and the store resolving and the observer attaching. Images
@@ -17,35 +20,33 @@ import { VideoFilter } from './Filter/VideoFilter'
 // that, inject a stylesheet at document_start that hides every image the filter
 // hasn't tagged yet. Once ImageFilter sets data-nsfw-filter-status, the per-image
 // inline styles take over, so blur and grayscale modes are unaffected.
-const HIDE_STYLE_ID = 'nsfw-filter-pending-hide'
 // Backstop: if the store somehow never settles, reveal images rather than
 // leaving the page permanently blank (matches the "show images if we can't
 // filter" degradation of the .catch branch below).
 const HIDE_STYLE_SAFETY_TIMEOUT = 4000
 
-const injectPendingHide = (): void => {
-  const style = document.createElement('style')
-  style.id = HIDE_STYLE_ID
-  style.textContent =
-    'img:not([data-nsfw-filter-status]),video:not([data-nsfw-filter-status]){visibility:hidden !important}'
-  document.documentElement.appendChild(style)
-}
-
 const removePendingHide = (): void => {
-  document.getElementById(HIDE_STYLE_ID)?.remove()
+  mediaElements(`#${HIDE_STYLE_ID}`).forEach(style => style.remove())
 }
 
 // Wire the right-click "unhide" menu. On every context-menu open we tell the
 // service worker whether the cursor is over an image we filtered, so it can show
 // the menu item only then; if the user picks it, the worker messages this frame
 // to reveal the element we last reported.
-const wireContextMenuUnhide = (imageFilter: ImageFilter, videoFilter: VideoFilter): void => {
-  let lastTarget: HTMLImageElement | HTMLVideoElement | null = null
+const wireContextMenuUnhide = (
+  imageFilter: ImageFilter,
+  videoFilter: VideoFilter,
+  canvasFilter: CanvasFilter
+): void => {
+  let lastTarget: ImageElement | HTMLVideoElement | HTMLCanvasElement | null = null
 
   document.addEventListener('contextmenu', event => {
-    const target = event.target
-    const media = target instanceof HTMLImageElement || target instanceof HTMLVideoElement
-    const filtered = media && target.dataset.nsfwFilterStatus === 'nsfw'
+    const found = event.composedPath().find(node =>
+      node instanceof Element && node.matches('img,video,canvas,svg image')
+    )
+    const target = (found ?? null) as ImageElement | HTMLVideoElement | HTMLCanvasElement | null
+    const status = target?.dataset.nsfwFilterStatus
+    const filtered = status === 'nsfw' || status === 'unavailable'
     lastTarget = filtered ? target : null
     chrome.runtime.sendMessage({ type: CONTEXT_TARGET, filtered }).catch(() => undefined)
   }, true)
@@ -54,8 +55,13 @@ const wireContextMenuUnhide = (imageFilter: ImageFilter, videoFilter: VideoFilte
     if (message?.type !== UNHIDE_IMAGE) return
     if (lastTarget === null) return
 
-    if (lastTarget instanceof HTMLVideoElement) videoFilter.revealVideo(lastTarget)
-    else imageFilter.revealImage(lastTarget)
+    if (lastTarget instanceof HTMLVideoElement) {
+      videoFilter.revealVideo(lastTarget)
+    } else if (lastTarget instanceof HTMLCanvasElement) {
+      canvasFilter.revealCanvas(lastTarget)
+    } else {
+      imageFilter.revealImage(lastTarget)
+    }
     lastTarget = null
   })
 }
@@ -63,34 +69,44 @@ const wireContextMenuUnhide = (imageFilter: ImageFilter, videoFilter: VideoFilte
 const init = (): void => {
   const imageFilter = new ImageFilter()
   const videoFilter = new VideoFilter()
-
-  // The unhide menu must work per-frame: contextmenu events don't cross the
-  // iframe boundary, and the background targets the UNHIDE reply to the exact
-  // frame that reported the image. So wire reporting/unhide in every frame, but
-  // keep the actual filtering (DOMWatcher, pending-hide, store) top-frame only.
-  // Without this, the menu's global visibility goes stale over iframe images.
-  wireContextMenuUnhide(imageFilter, videoFilter)
-
-  // Ignore iframes for filtering, https://stackoverflow.com/a/326076/10432429
-  if (window.self !== window.top) return
-
+  const canvasFilter = new CanvasFilter()
   const backgroundFilter = new BackgroundImageFilter()
-  const domWatcher = new DOMWatcher(imageFilter, videoFilter, backgroundFilter)
+  const domWatcher = new DOMWatcher(imageFilter, videoFilter, backgroundFilter, canvasFilter)
 
-  injectPendingHide()
+  wireContextMenuUnhide(imageFilter, videoFilter, canvasFilter)
+
+  // The three element filters share a lifecycle. Naming the set once keeps a new
+  // filter from being added to some of these steps and missed in the others.
+  const mediaFilters = [imageFilter, videoFilter, canvasFilter]
+  const setEffect = (filterEffect: SettingsState['filterEffect']): void => {
+    for (const filter of mediaFilters) filter.setSettings({ filterEffect })
+  }
+
+  injectPendingHide(document)
   const safety = setTimeout(removePendingHide, HIDE_STYLE_SAFETY_TIMEOUT)
 
   // Whether this page should be filtered right now, from a settings snapshot.
+  let pageHost = window.location.hostname
   const shouldFilter = (settings: SettingsState): boolean =>
-    settings.enabled && !isHostAllowed(window.location.hostname, settings.websites)
+    settings.enabled && !isHostAllowed(pageHost, settings.websites)
 
-  createChromeStore({ createStore })(rootReducer)
-    .then(store => {
+  // sendMessage throws synchronously once the extension context is gone, which a
+  // .catch() on the returned promise never sees.
+  const askPageHost = async (): Promise<unknown> => {
+    try {
+      return await chrome.runtime.sendMessage({ type: PAGE_HOST })
+    } catch {
+      return pageHost
+    }
+  }
+
+  Promise.all([createChromeStore({ createStore })(rootReducer), askPageHost()])
+    .then(([store, host]) => {
+      if (typeof host === 'string') pageHost = host
       clearTimeout(safety)
 
       let previous = store.getState().settings
-      imageFilter.setSettings({ filterEffect: previous.filterEffect })
-      videoFilter.setSettings({ filterEffect: previous.filterEffect })
+      setEffect(previous.filterEffect)
 
       let filtering = shouldFilter(previous)
       if (filtering) {
@@ -101,6 +117,7 @@ const init = (): void => {
       } else {
         // Extension turned off, or filtering disabled for this site: reveal everything.
         backgroundFilter.stop()
+        for (const filter of mediaFilters) filter.stop()
         removePendingHide()
       }
 
@@ -114,11 +131,10 @@ const init = (): void => {
         previous = next
 
         if (next.filterEffect !== prev.filterEffect) {
-          imageFilter.setSettings({ filterEffect: next.filterEffect })
-          videoFilter.setSettings({ filterEffect: next.filterEffect })
+          setEffect(next.filterEffect)
+          // A new effect is not a new verdict: re-render what is already blocked.
           if (filtering) {
-            imageFilter.applyEffectToBlocked()
-            videoFilter.applyEffectToBlocked()
+            for (const filter of mediaFilters) filter.applyEffectToBlocked()
           }
         }
 
@@ -127,24 +143,24 @@ const init = (): void => {
         filtering = nextFiltering
 
         if (filtering) {
-          videoFilter.start()
+          for (const filter of mediaFilters) filter.start()
           backgroundFilter.start()
           domWatcher.watch()
         } else {
           domWatcher.unwatch()
+          // Stop before revealing: stop() is what keeps a verdict still in flight
+          // from applying, so revealing first can be undone by a late reply.
+          for (const filter of mediaFilters) filter.stop()
           backgroundFilter.stop()
           removePendingHide()
-          imageFilter.revealAll()
-          videoFilter.revealAll()
-          videoFilter.stop()
+          for (const filter of mediaFilters) filter.revealAll()
           backgroundFilter.revealAll()
         }
       })
     })
     .catch(error => {
       console.warn(error)
-      imageFilter.setSettings({ filterEffect: 'blur' })
-      videoFilter.setSettings({ filterEffect: 'blur' })
+      setEffect('blur')
       backgroundFilter.stop()
       clearTimeout(safety)
       removePendingHide()

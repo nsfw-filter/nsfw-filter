@@ -1,13 +1,18 @@
 // Highly sensitive code, make sure that you know what you're doing
 // https://stackoverflow.com/a/39332340/10432429
 
-// @TODO Canvas and SVG
-
 import { IBackgroundImageFilter } from '../Filter/BackgroundImageFilter'
-import { IImageFilter } from '../Filter/ImageFilter'
+import { ICanvasFilter } from '../Filter/CanvasFilter'
+import { IImageFilter, ImageElement } from '../Filter/ImageFilter'
 import { IVideoFilter } from '../Filter/VideoFilter'
+import { CANVAS_DRAWN, SHADOW_ROOT_CREATED } from '../mediaChanges'
+import { mediaRoots, shadowRootOf, MediaRoot } from '../mediaRoots'
+
+import { injectPendingHide } from './pendingStyle'
 
 const STYLE_SHEET = 'link[rel~="stylesheet"], style'
+const MEDIA_SELECTOR = 'img,video,canvas,svg image'
+const BACKGROUND_EVENTS = ['pointerover', 'pointerout', 'focusin', 'focusout']
 
 export type IDOMWatcher = {
   watch: () => void
@@ -19,6 +24,9 @@ export class DOMWatcher implements IDOMWatcher {
   private readonly imageFilter: IImageFilter
   private readonly videoFilter: IVideoFilter
   private readonly backgroundFilter: IBackgroundImageFilter
+  private readonly canvasFilter: ICanvasFilter
+  private readonly roots = new Set<MediaRoot>()
+  private rootTimer: ReturnType<typeof setInterval> | undefined
   private sheetObservers: Map<Element, MutationObserver>
   private sheetLoads: AbortController
   private registered: WeakSet<Element>
@@ -27,11 +35,13 @@ export class DOMWatcher implements IDOMWatcher {
   constructor (
     imageFilter: IImageFilter,
     videoFilter: IVideoFilter,
-    backgroundFilter: IBackgroundImageFilter
+    backgroundFilter: IBackgroundImageFilter,
+    canvasFilter: ICanvasFilter
   ) {
     this.imageFilter = imageFilter
     this.videoFilter = videoFilter
     this.backgroundFilter = backgroundFilter
+    this.canvasFilter = canvasFilter
     this.observer = new MutationObserver(this.callback.bind(this))
     this.sheetObservers = new Map()
     this.sheetLoads = new AbortController()
@@ -46,12 +56,20 @@ export class DOMWatcher implements IDOMWatcher {
     this.watching = true
 
     this.observer.observe(document, DOMWatcher.getConfig())
+    this.roots.add(document)
+    document.addEventListener(SHADOW_ROOT_CREATED, this.onShadowRootCreated)
+    document.addEventListener(CANVAS_DRAWN, this.onCanvasDrawn, true)
+    this.watchBackgroundInteractions(document)
+    injectPendingHide(document)
     // The observer only reports future mutations. Sweep the media already in the
     // DOM so anything parsed before the (async) store resolved is still hidden
     // and classified instead of missed.
     this.findAndCheckAllMedia(document.documentElement)
     this.backgroundFilter.observe(document.documentElement)
     this.watchStyleSheets(document.documentElement)
+    // Also discover declarative shadow roots and roots created through an API
+    // another script replaced after our drawing/root notifications were installed.
+    this.rootTimer = setInterval(() => this.discoverRoots(), 1000)
   }
 
   // Live pause / allow-list: stop reacting to the page so no new image gets
@@ -60,6 +78,15 @@ export class DOMWatcher implements IDOMWatcher {
     if (!this.watching) return
     this.watching = false
     this.observer.disconnect()
+    clearInterval(this.rootTimer)
+    for (const root of this.roots) {
+      root.removeEventListener(CANVAS_DRAWN, this.onCanvasDrawn, true)
+      for (const type of BACKGROUND_EVENTS) {
+        root.removeEventListener(type, this.onBackgroundInteraction, true)
+      }
+    }
+    this.roots.clear()
+    document.removeEventListener(SHADOW_ROOT_CREATED, this.onShadowRootCreated)
     // Every stylesheet gets its own observer, so a stop that left them running
     // would keep both the callbacks and the removed <style> elements alive.
     this.sheetObservers.forEach(observer => observer.disconnect())
@@ -89,7 +116,7 @@ export class DOMWatcher implements IDOMWatcher {
         if (mutation.target instanceof HTMLElement) this.backgroundFilter.checkElement(mutation.target)
         if (mutation.addedNodes.length === 0) continue
 
-        this.findAndCheckAllMedia(mutation.target as Element)
+        this.findAndCheckAllMedia(mutation.target as ParentNode)
         // Backgrounds are registered per added subtree rather than by re-walking
         // the mutation target: a feed appending rows would otherwise re-walk the
         // whole feed on every row.
@@ -106,9 +133,9 @@ export class DOMWatcher implements IDOMWatcher {
 
   // A stylesheet can give an element on screen a background without touching an
   // attribute or an intersection, so its arrival is what prompts the recheck.
-  private watchStyleSheets (root: Element): void {
+  private watchStyleSheets (root: ParentNode): void {
     const sheets = [...root.querySelectorAll(STYLE_SHEET)]
-    if (root.matches(STYLE_SHEET)) sheets.push(root)
+    if (root instanceof Element && root.matches(STYLE_SHEET)) sheets.push(root)
     if (sheets.length === 0) return
 
     this.backgroundFilter.recheckVisible()
@@ -151,75 +178,147 @@ export class DOMWatcher implements IDOMWatcher {
     return element.matches(STYLE_SHEET) || element.querySelector(STYLE_SHEET) !== null
   }
 
-  private findAndCheckAllMedia (element: Element): void {
-    const images = element.getElementsByTagName('img')
-    for (let i = 0; i < images.length; i++) {
-      this.imageFilter.analyzeImage(images[i], false)
-    }
-
-    const videos = element.getElementsByTagName('video')
-    for (let i = 0; i < videos.length; i++) {
-      this.videoFilter.analyzeVideo(videos[i], false)
+  private findAndCheckAllMedia (root: ParentNode): void {
+    for (const current of mediaRoots(root)) {
+      if (current instanceof ShadowRoot) this.watchRoot(current)
+      const elements = [...current.querySelectorAll(MEDIA_SELECTOR)]
+      if (current instanceof Element && current.matches(MEDIA_SELECTOR)) elements.unshift(current)
+      for (const element of elements) {
+        if (element instanceof HTMLVideoElement) {
+          this.videoFilter.analyzeVideo(element, false)
+        } else if (element instanceof HTMLCanvasElement) {
+          this.canvasFilter.observe(element)
+        } else {
+          this.imageFilter.analyzeImage(element as ImageElement)
+        }
+      }
     }
   }
 
+  private watchRoot (root: ShadowRoot): void {
+    if (this.roots.has(root)) return
+    this.roots.add(root)
+    injectPendingHide(root)
+    root.addEventListener(CANVAS_DRAWN, this.onCanvasDrawn, true)
+    this.watchBackgroundInteractions(root)
+    this.observer.observe(root, DOMWatcher.getConfig())
+    for (const child of root.children) this.backgroundFilter.observe(child)
+    this.watchStyleSheets(root)
+  }
+
+  private discoverRoots (): void {
+    if (document.visibilityState !== 'visible') return
+    for (const root of mediaRoots()) {
+      if (root instanceof ShadowRoot && !this.roots.has(root)) this.findAndCheckAllMedia(root)
+    }
+    const detached = [...this.roots].filter(root => root instanceof ShadowRoot && !root.host.isConnected)
+    if (detached.length === 0) return
+    for (const root of detached) this.roots.delete(root)
+    this.observer.disconnect()
+    for (const root of this.roots) this.observer.observe(root, DOMWatcher.getConfig())
+  }
+
+  // The page world sends the host element; a closed root is resolved here rather
+  // than handed out where any script on the page could pick it up.
+  private readonly onShadowRootCreated = (event: Event): void => {
+    if (!this.watching) return
+    const host: unknown = (event as CustomEvent).detail
+    if (!(host instanceof Element)) return
+    const root = shadowRootOf(host)
+    if (root !== null) this.findAndCheckAllMedia(root)
+  }
+
+  private readonly onCanvasDrawn = (event: Event): void => {
+    if (!this.watching) return
+    const canvas = event.composedPath()[0]
+    if (canvas instanceof HTMLCanvasElement && event.currentTarget === canvas.getRootNode()) {
+      this.canvasFilter.observe(canvas, true)
+    }
+  }
+
+  // Hover and focus can change CSS without changing the DOM. Listen inside each
+  // shadow root too: interactions between its children may not leave that root.
+  private watchBackgroundInteractions (root: MediaRoot): void {
+    for (const type of BACKGROUND_EVENTS) {
+      root.addEventListener(type, this.onBackgroundInteraction, true)
+    }
+  }
+
+  private readonly onBackgroundInteraction = (): void => {
+    if (this.watching) this.backgroundFilter.recheckVisible()
+  }
+
+  // Five kinds of element can be affected by one attribute change, and an
+  // element can be more than one of them: a canvas carries its own background,
+  // an <img> can too. Each check decides for itself whether it applies.
   private checkAttributeMutation (mutation: MutationRecord): void {
     const node = mutation.target
+    const attribute = mutation.attributeName
+
+    if (node instanceof SVGElement && node.localName === 'image') {
+      this.checkImageElement(node as SVGImageElement, attribute)
+      return
+    }
     if (!(node instanceof HTMLElement)) return
 
-    // A class, id or hidden change can bring in a rule carrying a background
-    // image; a style change can set one directly. An <img> can carry one too, so
-    // this runs for images as well as for everything else.
-    if (mutation.attributeName === 'style') {
-      this.backgroundFilter.checkStyleMutation(node)
-    } else if (mutation.attributeName !== 'src' && mutation.attributeName !== 'poster') {
-      this.backgroundFilter.checkElement(node)
-    }
+    if (node instanceof HTMLCanvasElement) this.checkCanvas(node, attribute)
+    if (node instanceof HTMLSourceElement) this.checkPictureSource(node)
+    this.checkBackground(node, attribute)
 
-    if (node.nodeName === 'IMG') {
-      const image = node as HTMLImageElement
-      // A style change is the page overwriting our effect (see checkStyleMutation),
-      // not a new image to classify.
-      if (mutation.attributeName === 'style') {
-        this.imageFilter.checkStyleMutation(image)
-        return
-      }
+    if (node instanceof HTMLImageElement) this.checkImageElement(node, attribute)
+    else if (node instanceof HTMLVideoElement) this.checkVideo(node, attribute)
+  }
 
-      this.imageFilter.analyzeImage(image, mutation.attributeName === 'src')
-      return
-    }
+  // A style change is the page overwriting the effect we applied, not a new
+  // image to classify.
+  private checkImageElement (image: ImageElement, attribute: string | null): void {
+    if (attribute === 'style') this.imageFilter.checkStyleMutation(image)
+    else this.imageFilter.analyzeImage(image)
+  }
 
-    if (node.nodeName !== 'VIDEO') return
+  private checkCanvas (canvas: HTMLCanvasElement, attribute: string | null): void {
+    if (attribute === 'style') this.canvasFilter.checkStyleMutation(canvas)
+    else this.canvasFilter.observe(canvas)
+  }
 
-    const video = node as HTMLVideoElement
-    if (mutation.attributeName === 'style') {
-      this.videoFilter.checkStyleMutation(video)
-      return
-    }
+  // The <img> is what renders; a <source> only changes what it selects.
+  private checkPictureSource (source: HTMLSourceElement): void {
+    if (!(source.parentElement instanceof HTMLPictureElement)) return
+    const image = source.parentElement.querySelector('img')
+    if (image !== null) this.imageFilter.analyzeImage(image)
+  }
 
-    // A src swap fires loadstart, which VideoFilter already treats as new media;
-    // a poster swap fires nothing, so it has to come from here. It replaces the
-    // preview, not the footage, and so is not a media change.
-    if (mutation.attributeName === 'poster') {
-      this.videoFilter.checkPoster(video)
-      return
-    }
+  // A class, id or hidden change can bring in a rule carrying a background
+  // image; a style change can set one directly.
+  private checkBackground (element: HTMLElement, attribute: string | null): void {
+    if (attribute === 'style') this.backgroundFilter.checkStyleMutation(element)
+    else if (attribute !== 'src' && attribute !== 'poster') this.backgroundFilter.checkElement(element)
+  }
 
-    this.videoFilter.analyzeVideo(video, false)
+  // A src swap fires loadstart, which VideoFilter already treats as new media; a
+  // poster swap fires nothing, so it has to come from here. It replaces the
+  // preview, not the footage, and so is not a media change.
+  private checkVideo (video: HTMLVideoElement, attribute: string | null): void {
+    if (attribute === 'style') this.videoFilter.checkStyleMutation(video)
+    else if (attribute === 'poster') this.videoFilter.checkPoster(video)
+    else this.videoFilter.analyzeVideo(video, false)
   }
 
   // Backgrounds selected through other attributes, through CSSOM insertRule, or
-  // through adopted stylesheets and shadow roots are not covered: watching every
-  // attribute would re-read the visible set on any page that animates one. Nor
-  // are selectors that reach outside the changed element's parent, :has() above
-  // all, for the same reason: a mutation there rechecks that subtree only.
+  // through adopted stylesheets are not covered: watching every attribute would
+  // re-read the visible set on any page that animates one. Nor are selectors that
+  // reach outside the changed element's parent, :has() above all, for the same
+  // reason: a mutation there rechecks that subtree only.
   private static getConfig (): MutationObserverInit {
     return {
       characterData: false,
       subtree: true,
       childList: true,
       attributes: true,
-      attributeFilter: ['src', 'style', 'poster', 'class', 'id', 'hidden']
+      attributeFilter: [
+        'src', 'srcset', 'sizes', 'href', 'xlink:href', 'media', 'type',
+        'width', 'height', 'style', 'poster', 'class', 'id', 'hidden'
+      ]
     }
   }
 }

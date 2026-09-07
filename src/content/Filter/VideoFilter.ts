@@ -1,4 +1,5 @@
 import { PredictionRequest } from '../../utils/messages'
+import { mediaElements } from '../mediaRoots'
 
 import { Filter } from './Filter'
 
@@ -34,14 +35,10 @@ type VideoState = {
 
 const FRAME_SIZE = 224
 const FRAME_QUALITY = 0.8
-const MIN_VIDEO_SIZE = 41
+const FRAME_PRESENTATION_TIMEOUT = 250
 // Sampling follows media time, not wall time: a paused or buffering video is not
 // showing anything new, and a 2x playback is showing it twice as fast.
-const SAMPLE_INTERVAL = 10
-// A video can be laid out long before it has a frame to give (preload="none",
-// a slow network). Reveal it rather than hold a hidden element on a frame that
-// may never decode.
-const FRAME_DEADLINE = 3000
+const SAMPLE_INTERVAL = 1
 const OFFSCREEN_MARGIN = '300px'
 
 // Frames are keyed, not addressed, and the background deduplicates by key across
@@ -82,7 +79,7 @@ export class VideoFilter extends Filter implements IVideoFilter {
     if (!this.active) {
       // Filtering was turned off while this video was out of the document, so
       // revealAll() never reached it. It comes back filtered otherwise.
-      if (video.dataset.nsfwFilterStatus !== undefined) this.retire(video)
+      if (video.dataset.nsfwFilterStatus !== undefined) this.reset(video, this.stateOf(video))
       return
     }
 
@@ -104,16 +101,11 @@ export class VideoFilter extends Filter implements IVideoFilter {
         return
       }
 
-      if (video.poster.length > 0) {
-        video.dataset.nsfwFilterStatus = 'processing'
-        this.hideElement(video)
-        this.classifyPoster(video, state)
-      } else {
-        // Nothing on screen to judge yet. The frame that appears is judged below,
-        // and until then the element has to carry a status or the pending-hide
-        // stylesheet keeps hiding it.
-        video.dataset.nsfwFilterStatus = 'sfw'
-      }
+      // Decoding can finish before the viewport observer reports this video, so
+      // the first frame stays hidden until something has actually inspected it.
+      video.dataset.nsfwFilterStatus = 'processing'
+      this.hideElement(video)
+      if (video.poster.length > 0) void this.classifyPoster(video, state)
     }
 
     // A paused video still shows its first decoded frame, so having one is reason
@@ -145,7 +137,7 @@ export class VideoFilter extends Filter implements IVideoFilter {
     state.posterGeneration++
     video.dataset.nsfwFilterStatus = 'processing'
     this.hideElement(video)
-    this.classifyPoster(video, state)
+    void this.classifyPoster(video, state)
   }
 
   // User-initiated unhide from the right-click menu. Sampling stops until the
@@ -154,7 +146,6 @@ export class VideoFilter extends Filter implements IVideoFilter {
   public revealVideo (video: HTMLVideoElement): void {
     const state = this.stateOf(video)
     state.approved = state.generation
-    state.unsampleable = true
     state.overridden = true
     this.due.delete(video)
 
@@ -162,41 +153,20 @@ export class VideoFilter extends Filter implements IVideoFilter {
     video.dataset.nsfwFilterStatus = 'sfw'
   }
 
-  public checkStyleMutation (video: HTMLVideoElement): void {
-    const status = video.dataset.nsfwFilterStatus
-    if (status === 'processing') {
-      if (video.style.visibility !== 'hidden') this.hideElement(video)
-      return
-    }
-    if (status !== 'nsfw') return
-    if (this.isEffectApplied(video)) return
-    this.applyEffect(video)
-  }
-
   public applyEffectToBlocked (): void {
-    const blocked = document.querySelectorAll<HTMLVideoElement>('video[data-nsfw-filter-status="nsfw"]')
+    const blocked = mediaElements<HTMLVideoElement>(
+      'video[data-nsfw-filter-status="nsfw"],video[data-nsfw-filter-status="unavailable"]'
+    )
     blocked.forEach(video => this.applyEffect(video))
-  }
-
-  public revealAll (): void {
-    const filtered = document.querySelectorAll<HTMLVideoElement>('video[data-nsfw-filter-status]')
-    filtered.forEach(video => this.retire(video))
   }
 
   // A verdict reached while filtering was on does not survive being turned off
   // and on again, the same way images are reclassified rather than trusted. The
   // user's unhide goes with it, or the next verdict is dropped and the video
   // stays hidden.
-  private retire (video: HTMLVideoElement): void {
-    this.revealElement(video)
-    delete video.dataset.nsfwFilterStatus
-    this.due.delete(video)
-
-    const state = this.stateOf(video)
-    state.generation++
-    state.unsampleable = false
-    state.framePending = false
-    state.overridden = false
+  public revealAll (): void {
+    const filtered = mediaElements<HTMLVideoElement>('video[data-nsfw-filter-status]')
+    filtered.forEach(video => this.reset(video, this.stateOf(video)))
   }
 
   // Filtering was turned off for this page. The elements stay wired, so turning
@@ -262,7 +232,7 @@ export class VideoFilter extends Filter implements IVideoFilter {
     video.addEventListener('play', () => {
       // A page that calls play() on a blocked video gets it back paused rather
       // than playing behind the effect.
-      if (video.dataset.nsfwFilterStatus === 'nsfw') {
+      if (this.isBlocked(video)) {
         video.pause()
         return
       }
@@ -271,8 +241,32 @@ export class VideoFilter extends Filter implements IVideoFilter {
     // The first decoded frame is on screen whether or not anything is playing.
     video.addEventListener('loadeddata', () => this.schedule(video))
     // Seeking exposes a frame nothing has judged, including while paused.
+    video.addEventListener('seeking', () => {
+      if (!this.active || state.overridden || state.unsampleable) return
+      if (video.dataset.nsfwFilterStatus === 'nsfw') return
+      // A loop returns to footage from the same source. Cancelling every pending
+      // verdict on each lap would keep a short safe loop hidden indefinitely.
+      if (video.loop && video.currentTime === 0) {
+        state.lastSampleTime = Number.NEGATIVE_INFINITY
+        return
+      }
+      state.generation++
+      state.approved = -1
+      state.lastSampleTime = Number.NEGATIVE_INFINITY
+      state.framePending = true
+      video.dataset.nsfwFilterStatus = 'processing'
+      this.hideElement(video)
+    })
     video.addEventListener('seeked', () => this.schedule(video))
     video.addEventListener('timeupdate', () => this.schedule(video))
+    video.addEventListener('enterpictureinpicture', () => {
+      if (this.isBlocked(video)) {
+        video.pause()
+        this.exitPictureInPicture(video)
+      } else {
+        this.schedule(video)
+      }
+    })
   }
 
   private onIntersection (entries: IntersectionObserverEntry[]): void {
@@ -296,16 +290,23 @@ export class VideoFilter extends Filter implements IVideoFilter {
   }
 
   private tooSmall (video: HTMLVideoElement): boolean {
-    const width = video.clientWidth
-    const height = video.clientHeight
-
-    return width !== 0 && height !== 0 && (width <= MIN_VIDEO_SIZE || height <= MIN_VIDEO_SIZE)
+    return this.belowMinSize(video.clientWidth, video.clientHeight)
   }
 
   private schedule (video: HTMLVideoElement): void {
     const state = this.stateOf(video)
-    if (!this.eligible(video, state)) return
+    if (!this.active || state.overridden || state.unsampleable) return
+    if (video.dataset.nsfwFilterStatus === 'nsfw') return
 
+    // Hide decoded footage before checking viewport eligibility: intersection
+    // callbacks may arrive after its first paint, including behind a safe poster.
+    if (state.approved !== state.generation &&
+        video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && !this.tooSmall(video)) {
+      state.framePending = true
+      video.dataset.nsfwFilterStatus = 'processing'
+      this.hideElement(video)
+    }
+    if (!this.eligible(video, state)) return
     this.due.add(video)
     void this.drain()
   }
@@ -313,7 +314,10 @@ export class VideoFilter extends Filter implements IVideoFilter {
   private eligible (video: HTMLVideoElement, state: VideoState): boolean {
     if (!this.active || state.unsampleable || state.overridden) return false
     if (video.dataset.nsfwFilterStatus === 'nsfw') return false
-    if (!this.visible.has(video) || document.visibilityState !== 'visible') return false
+    const pictureInPicture = document.pictureInPictureElement === video
+    if (!pictureInPicture && (!this.visible.has(video) || document.visibilityState !== 'visible')) return false
+    // Empty placeholders must not delay videos that already have pixels to read.
+    if (video.seeking || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return false
     if (this.tooSmall(video)) return false
     // Once a frame of this media has been cleared, resample only as the footage
     // moves on. Everything that can happen to a video on a busy page routes
@@ -371,7 +375,7 @@ export class VideoFilter extends Filter implements IVideoFilter {
 
     // Until a frame of this media has been cleared, the element is hidden. Later
     // samples run behind a video the user is already watching: blocking on every
-    // one of them would blink the page every ten seconds.
+    // one of them would blink the page on every sample.
     const first = state.approved !== generation
     if (first) {
       video.dataset.nsfwFilterStatus = 'processing'
@@ -381,7 +385,8 @@ export class VideoFilter extends Filter implements IVideoFilter {
     const frame = await this.captureFrame(video, state)
     if (!this.stillCurrent(state, generation)) return
     if (frame === null) {
-      if (first) this.markUnavailable(video)
+      state.framePending = false
+      this.markUnavailable(video)
       return
     }
     // From here there is decoded footage on screen behind the hide, so nothing
@@ -391,19 +396,22 @@ export class VideoFilter extends Filter implements IVideoFilter {
     state.lastSampleTime = video.currentTime
 
     try {
-      const { result } = await this.requestToAnalyzeImage(new PredictionRequest(frameKey(), frame))
-      if (first) state.framePending = false
+      const { result, error } = await this.requestToAnalyzeImage(new PredictionRequest(frameKey(), frame))
       if (!this.stillCurrent(state, generation)) return
+      if (first) state.framePending = false
 
-      if (result) {
+      if (error !== undefined) {
+        this.markUnavailable(video)
+      } else if (result) {
         this.block(video)
       } else {
         state.approved = generation
         if (first) this.reveal(video)
       }
     } catch {
+      if (!this.stillCurrent(state, generation)) return
       if (first) state.framePending = false
-      if (this.stillCurrent(state, generation) && first) this.markUnavailable(video)
+      this.markUnavailable(video)
     }
   }
 
@@ -413,13 +421,29 @@ export class VideoFilter extends Filter implements IVideoFilter {
     return this.active && !state.overridden && state.generation === generation
   }
 
-  // null means no frame to classify: either none has decoded within the deadline,
-  // or the canvas is tainted by media this document may not read back.
+  // Only decoded videos enter the queue. null means this document cannot read
+  // their pixels, even though Chrome can play them.
   private async captureFrame (video: HTMLVideoElement, state: VideoState): Promise<string | null> {
-    if (video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
-      const decoded = await this.waitForFrame(video)
-      if (!decoded) return null
+    const generation = state.generation
+    // loadeddata can precede presentation: canvas would then contain black
+    // pixels, not the decoded frame. A paused frame may already be presented and
+    // produce no further callback, so bound this wait.
+    if (state.approved !== state.generation && typeof video.requestVideoFrameCallback === 'function') {
+      await new Promise<void>(resolve => {
+        // Each side cancels the other, so the handle is in place before either
+        // can run rather than being read out of its own declaration.
+        let frameCallback = 0
+        const timer = setTimeout(() => {
+          video.cancelVideoFrameCallback(frameCallback)
+          resolve()
+        }, FRAME_PRESENTATION_TIMEOUT)
+        frameCallback = video.requestVideoFrameCallback(() => {
+          clearTimeout(timer)
+          resolve()
+        })
+      })
     }
+    if (state.generation !== generation) return null
 
     // A fresh canvas per capture: one tainted by a cross-origin video must not
     // fail every capture after it.
@@ -436,47 +460,46 @@ export class VideoFilter extends Filter implements IVideoFilter {
       return canvas.toDataURL('image/jpeg', FRAME_QUALITY)
     } catch {
       // SecurityError: cross-origin media without CORS, or DRM. The page can play
-      // it, we cannot read it, and retrying costs the same every ten seconds.
+      // it, we cannot read it, and retrying cannot change that.
       state.unsampleable = true
 
       return null
     }
   }
 
-  private async waitForFrame (video: HTMLVideoElement): Promise<boolean> {
-    return await new Promise(resolve => {
-      const settle = (decoded: boolean): void => {
-        window.clearTimeout(timer)
-        video.removeEventListener('loadeddata', onLoaded)
-        resolve(decoded)
-      }
-      const onLoaded = (): void => settle(true)
-
-      const timer = window.setTimeout(() => settle(false), FRAME_DEADLINE)
-      video.addEventListener('loadeddata', onLoaded)
-    })
-  }
-
-  private classifyPoster (video: HTMLVideoElement, state: VideoState): void {
+  // A safe poster only clears the preview, never the footage behind it: it does
+  // not count as an approved frame, and it cannot speak for a frame still being
+  // judged. A blocked poster blocks regardless, since it is what is on screen.
+  private async classifyPoster (video: HTMLVideoElement, state: VideoState): Promise<void> {
     const generation = state.generation
     const posterGeneration = state.posterGeneration
     const poster = video.poster
     const current = (): boolean =>
-      this.stillCurrent(state, generation) && state.posterGeneration === posterGeneration && video.poster === poster
+      this.stillCurrent(state, generation) &&
+      state.posterGeneration === posterGeneration && video.poster === poster
 
-    this.requestToAnalyzeImage(new PredictionRequest(poster))
-      .then(({ result }) => {
-        if (!current()) return
+    let blocked = false
+    let unavailable = false
+    try {
+      const { result, error } = await this.requestToAnalyzeImage(new PredictionRequest(poster))
+      blocked = result
+      unavailable = error !== undefined
+    } catch {
+      unavailable = true
+    }
 
-        // A safe poster only clears the preview, never the footage behind it, so
-        // it does not count as an approved frame, and it cannot reveal footage a
-        // frame is still being judged for.
-        if (result) this.block(video)
-        else if (!state.framePending) this.reveal(video)
-      })
-      .catch(() => {
-        if (current() && !state.framePending) this.reveal(video)
-      })
+    if (!current()) return
+    if (blocked) {
+      this.block(video)
+      return
+    }
+    if (state.framePending) return
+    if (!unavailable) {
+      this.reveal(video)
+      return
+    }
+    // An unreadable poster must not blank footage a frame has already cleared.
+    if (state.approved !== state.generation) this.markUnavailable(video)
   }
 
   private block (video: HTMLVideoElement): void {
@@ -485,12 +508,13 @@ export class VideoFilter extends Filter implements IVideoFilter {
     this.due.delete(video)
     this.applyEffect(video)
     video.pause()
+    this.exitPictureInPicture(video)
   }
 
   // A frame and a poster can be in flight together, and either can come back
   // first. Whichever loses the race must not put an unsafe video back on screen.
   private reveal (video: HTMLVideoElement): void {
-    if (video.dataset.nsfwFilterStatus === 'nsfw') return
+    if (this.isBlocked(video)) return
 
     video.dataset.nsfwFilterStatus = 'sfw'
     this.revealElement(video)
@@ -500,6 +524,13 @@ export class VideoFilter extends Filter implements IVideoFilter {
     if (video.dataset.nsfwFilterStatus === 'nsfw') return
 
     video.dataset.nsfwFilterStatus = 'unavailable'
-    this.revealElement(video)
+    this.applyEffect(video)
+    video.pause()
+    this.exitPictureInPicture(video)
+  }
+
+  private exitPictureInPicture (video: HTMLVideoElement): void {
+    if (document.pictureInPictureElement !== video) return
+    void document.exitPictureInPicture().catch(() => undefined)
   }
 }

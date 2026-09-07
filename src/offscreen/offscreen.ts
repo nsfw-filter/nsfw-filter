@@ -21,13 +21,12 @@ import {
 import { DEFAULT_TRAINED_MODEL, TrainedModel } from '../utils/models'
 import { withTimeout } from '../utils/withTimeout'
 
+import { classifyImage } from './classifyImage'
 import { BinaryClassifier } from './classifiers/BinaryClassifier'
 import { Classifier } from './classifiers/Classifier'
 import { NsfwjsClassifier } from './classifiers/NsfwjsClassifier'
 import { readRestartState, saveRestartState } from './restartState'
 
-const IMAGE_SIZE = 224
-const LOADING_TIMEOUT = 1000
 const DEFAULT_FILTER_STRICTNESS = 55
 const MAX_LOAD_ATTEMPTS = 5
 
@@ -39,7 +38,7 @@ const WEBGL_PROBE_TIMEOUT = 3000
 // Cap a single classification. Predictions are serialised through `enqueue`, so
 // one stuck predict would wedge every queued image behind it (and the content
 // script's pending-hide stylesheet would leave them hidden). On timeout the
-// prediction rejects, the image is revealed, and the chain is freed.
+// prediction rejects, the caller receives an error, and the chain is freed.
 const PREDICTION_TIMEOUT = 10000
 // Fetching and compiling the .wasm binary is slower than probing WebGL.
 const WASM_INIT_TIMEOUT = 15000
@@ -108,7 +107,7 @@ const ensureBackend = async (): Promise<void> => {
 
   // Throw rather than leave currentBackend claiming a backend that isn't active.
   // bringUpClassifier retries, then every classification rejects and the content
-  // script reveals the images.
+  // script keeps the images filtered as unavailable.
   if (!(await setWasmBackend())) throw new Error('No usable TensorFlow.js backend')
   currentBackend = 'wasm'
 }
@@ -117,7 +116,7 @@ const ensureBackend = async (): Promise<void> => {
 // switching the live tfjs engine to WASM waits on it forever, so come back up in a
 // clean realm instead. reload() only schedules the navigation, so throw as well
 // rather than carry on in a realm about to go away. In-flight classifications are
-// dropped and the content script reveals those images.
+// dropped and the content script treats those images as unavailable.
 const restartOnWasm = (): never => {
   restarting = true
   saveRestartState(sessionStorage, {
@@ -250,28 +249,18 @@ const switchTo = async (id: TrainedModel): Promise<void> => {
   }
 }
 
-const loadImage = async (url: string, label: string): Promise<HTMLImageElement> => {
-  const image: HTMLImageElement = new Image(IMAGE_SIZE, IMAGE_SIZE)
-
-  return await new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(`Image load timeout ${label}`)), LOADING_TIMEOUT)
-    image.crossOrigin = 'anonymous'
-    image.onload = () => { clearTimeout(timer); resolve(image) }
-    image.onerror = (err) => { clearTimeout(timer); reject(err) }
-    image.src = url
-  })
-}
-
-const classify = async (url: string, label: string): Promise<boolean> => {
-  ensureUp()
-  const image = await loadImage(url, label)
-
+const predictImage = async (image: HTMLImageElement, label: string): Promise<boolean> => {
   return await enqueue(async () => {
     if (activeClassifier === null) throw new Error('Model is not loaded')
     const prediction = activeClassifier.predict(image, label)
     inFlightPredict = prediction.catch(() => undefined)
     return await withTimeout(prediction, PREDICTION_TIMEOUT, 'Prediction')
   })
+}
+
+const classify = async (url: string, label: string): Promise<boolean> => {
+  ensureUp()
+  return await classifyImage(url, label, predictImage)
 }
 
 chrome.runtime.onMessage.addListener((
