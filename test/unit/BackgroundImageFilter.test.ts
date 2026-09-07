@@ -136,7 +136,7 @@ describe('content => BackgroundImageFilter', () => {
     new BackgroundImageFilter().observe(element)
     intersect(element, true)
 
-    expect(element.dataset.nsfwFilterBackgroundStatus).toBeUndefined()
+    expect(element.dataset.nsfwFilterBackgroundStatus).toBe('sfw')
     expect(runtime.sent()).toBe(0)
   })
 
@@ -149,7 +149,7 @@ describe('content => BackgroundImageFilter', () => {
     new BackgroundImageFilter().observe(element)
     intersect(element, true)
 
-    expect(element.dataset.nsfwFilterBackgroundStatus).toBeUndefined()
+    expect(element.dataset.nsfwFilterBackgroundStatus).toBe('sfw')
     expect(runtime.sent()).toBe(0)
   })
 
@@ -175,9 +175,8 @@ describe('content => BackgroundImageFilter', () => {
     expect(element.dataset.nsfwFilterBackgroundStatus).toBe('processing')
   })
 
-  // Nothing downstream is guaranteed to answer. A background the page owns is
-  // not ours to keep off the screen.
-  test('restores the background when the background worker never answers', async () => {
+  // A failed request does not establish that the background is safe.
+  test('keeps an unavailable background hidden', async () => {
     jest.useFakeTimers()
     jest.spyOn(console, 'warn').mockImplementation(() => {})
     const { intersect } = stubIntersectionObserver()
@@ -193,8 +192,8 @@ describe('content => BackgroundImageFilter', () => {
     intersect(element, true)
     await jest.advanceTimersByTimeAsync(5000)
 
-    expect(element.dataset.nsfwFilterBackgroundStatus).toBe('sfw')
-    expect(element.style.getPropertyValue('background-image')).toBe(`url("${IMAGE}")`)
+    expect(element.dataset.nsfwFilterBackgroundStatus).toBe('unavailable')
+    expect(element.style.getPropertyValue('background-image')).toBe('none')
   })
 
   test('restores every background it removed when filtering is turned off', async () => {

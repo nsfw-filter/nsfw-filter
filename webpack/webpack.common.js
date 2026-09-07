@@ -9,6 +9,7 @@ const PATHS = {
 module.exports = {
     entry: {
         content: `${PATHS.src}/content/content.ts`,
+        mediaGuard: `${PATHS.src}/content/mediaGuard.ts`,
         background: `${PATHS.src}/background/background.ts`,
         offscreen: `${PATHS.src}/offscreen/offscreen.ts`,
         popup: `${PATHS.src}/popup/index.tsx`,

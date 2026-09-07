@@ -142,7 +142,7 @@ describe('content => VideoFilter', () => {
     expect(sent).toHaveLength(1)
     expect(sent[0].source).toBe(FRAME)
     expect(video.dataset.nsfwFilterStatus).toBe('sfw')
-    expect(video.style.visibility).toBe('visible')
+    expect(video.style.visibility).toBe('')
   })
 
   // The frame is the payload, not the identity: a data url used as a key would be
@@ -184,9 +184,8 @@ describe('content => VideoFilter', () => {
     expect(video.paused).toBe(true)
   })
 
-  // Cross-origin footage the browser will play but not let us read. Leaving it
-  // hidden would blank video the page is entitled to show.
-  test('reveals a video whose frames cannot be read back', async () => {
+  // Cross-origin footage can play even when its pixels cannot be inspected.
+  test('keeps unreadable video hidden', async () => {
     stubCanvas('taint')
     const { sent } = stubRuntime()
     const video = makeVideo()
@@ -196,7 +195,8 @@ describe('content => VideoFilter', () => {
 
     expect(sent).toHaveLength(0)
     expect(video.dataset.nsfwFilterStatus).toBe('unavailable')
-    expect(video.style.visibility).toBe('visible')
+    expect(video.style.visibility).toBe('hidden')
+    expect(video.paused).toBe(true)
   })
 
   test('stops sampling a video it cannot read', async () => {
@@ -252,7 +252,7 @@ describe('content => VideoFilter', () => {
     await settle()
 
     expect(video.dataset.nsfwFilterStatus).toBe('sfw')
-    expect(video.style.visibility).toBe('visible')
+    expect(video.style.visibility).toBe('')
   })
 
   // New media still has to end up with a status, or the stylesheet that hides
@@ -267,7 +267,7 @@ describe('content => VideoFilter', () => {
     await settle()
 
     expect(video.dataset.nsfwFilterStatus).toBe('sfw')
-    expect(video.style.visibility).toBe('visible')
+    expect(video.style.visibility).toBe('')
   })
 
   // A frame is the stronger evidence and can land first. The poster reply that
@@ -353,7 +353,7 @@ describe('content => VideoFilter', () => {
     filter.analyzeVideo(video)
 
     expect(video.dataset.nsfwFilterStatus).toBeUndefined()
-    expect(video.style.visibility).toBe('visible')
+    expect(video.style.visibility).toBe('')
   })
 
   // A paused video still shows its first decoded frame.
@@ -407,7 +407,7 @@ describe('content => VideoFilter', () => {
     await settle()
 
     expect(video.dataset.nsfwFilterStatus).toBeUndefined()
-    expect(video.style.visibility).toBe('visible')
+    expect(video.style.visibility).toBe('')
     expect(video.paused).toBe(false)
   })
 
@@ -437,7 +437,7 @@ describe('content => VideoFilter', () => {
 
     expect(runtime.sent).toHaveLength(1)
     expect(video.dataset.nsfwFilterStatus).toBe('sfw')
-    expect(video.style.visibility).toBe('visible')
+    expect(video.style.visibility).toBe('')
   })
 
   // Filtering off, then on again: the same elements have to start being sampled
@@ -493,7 +493,7 @@ describe('content => VideoFilter', () => {
     await settle()
 
     expect(runtime.sent).toHaveLength(1)
-    expect(video.style.visibility).toBe('visible')
+    expect(video.style.visibility).toBe('')
   })
 
   // Turning filtering off retires the user's unhide with everything else. Keeping
@@ -515,7 +515,7 @@ describe('content => VideoFilter', () => {
 
     expect(runtime.sent.filter(({ url }) => url.endsWith('poster.jpg'))).toHaveLength(2)
     expect(video.dataset.nsfwFilterStatus).toBe('sfw')
-    expect(video.style.visibility).toBe('visible')
+    expect(video.style.visibility).toBe('')
   })
 
   // The poster is the only thing on screen for a video with nothing decoded, so
@@ -535,7 +535,7 @@ describe('content => VideoFilter', () => {
     await settle()
 
     expect(video.dataset.nsfwFilterStatus).toBe('sfw')
-    expect(video.style.visibility).toBe('visible')
+    expect(video.style.visibility).toBe('')
   })
 
   // A poster and a frame are two requests racing. A frame that cannot be read

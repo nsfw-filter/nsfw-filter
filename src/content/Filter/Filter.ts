@@ -5,6 +5,7 @@ type IFilter = {
 }
 
 export type FilterEffect = 'blur' | 'hide' | 'grayscale'
+export type FilterElement = HTMLElement | SVGElement
 
 export type FilterSettings = {
   filterEffect: FilterEffect
@@ -12,6 +13,14 @@ export type FilterSettings = {
 
 const BLUR = 'blur(25px)'
 const GRAYSCALE = 'grayscale(1)'
+
+// Icons, sprites and spacers: too small to be worth a round trip. Images,
+// backgrounds and canvases all draw the line in the same place.
+export const MIN_MEDIA_SIZE = 41
+
+// How far outside the viewport media is still worth judging, so it is ready by
+// the time a scroll brings it in.
+export const OFFSCREEN_MARGIN = '300px'
 
 type FilterRequestWaiter = {
   resolve: (value: PredictionResponse) => void
@@ -26,15 +35,15 @@ type FilterRequestQueueValue = {
 
 // An image stays hidden until its prediction settles, and nothing downstream is
 // guaranteed to answer: the service worker can be torn down mid-request, and an
-// offscreen document whose TensorFlow.js backend wedged never replies. Reveal the
-// image rather than leave it hidden for the life of the page.
+// offscreen document whose TensorFlow.js backend wedged never replies. Settle
+// with an error so callers can distinguish unavailable media from safe media.
 const ANALYSIS_DEADLINE = 60000
 
 export class Filter implements IFilter {
   protected blockedItems: number
   protected settings: FilterSettings
   private readonly requestQueue: Map<string, FilterRequestQueueValue>
-  private readonly hiddenByUs: WeakSet<HTMLElement>
+  private readonly hiddenByUs: WeakSet<FilterElement>
 
   constructor () {
     this.blockedItems = 0
@@ -51,47 +60,89 @@ export class Filter implements IFilter {
     this.settings = settings
   }
 
+  protected statusOf (element: FilterElement): string | undefined {
+    return element.dataset.nsfwFilterStatus
+  }
+
+  public checkStyleMutation (element: FilterElement): void {
+    const status = this.statusOf(element)
+    if (status === 'processing') {
+      if (!this.isHidden(element)) this.hideElement(element)
+      return
+    }
+    if (!this.isBlocked(element)) return
+    if (!this.isEffectApplied(element)) this.applyEffect(element)
+  }
+
   // `hidden` as well as the inline style: an image whose parent is BODY is
   // rendered by Chrome's document-level image viewer, which ignores visibility.
   // Track what we hid that way: the page can move the element out of BODY before
   // the verdict lands, and clearing `hidden` only for what is still a BODY child
   // would leave it hidden for good.
-  protected hideElement (element: HTMLElement): void {
+  protected hideElement (element: FilterElement): void {
     if (element instanceof HTMLImageElement && element.parentNode?.nodeName === 'BODY') {
       element.hidden = true
       this.hiddenByUs.add(element)
     }
-    element.style.visibility = 'hidden'
+    element.style.setProperty('visibility', 'hidden', 'important')
   }
 
-  protected revealElement (element: HTMLElement): void {
+  // Remove what we wrote rather than forcing `visible`: the page may have hidden
+  // this element for its own reasons, and a filter that is off should leave no
+  // declaration of ours behind.
+  protected revealElement (element: FilterElement): void {
     this.unsetHidden(element)
-    element.style.filter = ''
-    element.style.visibility = 'visible'
+    element.style.removeProperty('filter')
+    element.style.removeProperty('visibility')
   }
 
-  protected applyEffect (element: HTMLElement): void {
+  protected applyEffect (element: FilterElement): void {
     if (this.settings.filterEffect === 'hide') {
       this.hideElement(element)
       return
     }
 
-    element.style.filter = this.settings.filterEffect === 'blur' ? BLUR : GRAYSCALE
-    element.style.visibility = 'visible'
+    const effect = this.settings.filterEffect === 'blur' ? BLUR : GRAYSCALE
+    element.style.setProperty('filter', effect, 'important')
+    // Blur and grayscale show the element; lift a hide from an earlier verdict
+    // without overriding the page's own visibility.
+    element.style.removeProperty('visibility')
     this.unsetHidden(element)
   }
 
-  private unsetHidden (element: HTMLElement): void {
-    if (this.hiddenByUs.delete(element)) element.hidden = false
+  private unsetHidden (element: FilterElement): void {
+    if (this.hiddenByUs.delete(element) && element instanceof HTMLElement) element.hidden = false
   }
 
   // Match our exact value, not a substring: a site setting its own weak
   // `filter: blur(1px)` on a blocked element must still count as effect-gone so
   // we re-apply the full blur, not leave it barely obscured.
-  protected isEffectApplied (element: HTMLElement): boolean {
-    if (this.settings.filterEffect === 'blur') return element.style.filter === BLUR
-    if (this.settings.filterEffect === 'grayscale') return element.style.filter === GRAYSCALE
-    return element.style.visibility === 'hidden'
+  protected isEffectApplied (element: FilterElement): boolean {
+    if (this.settings.filterEffect === 'hide') return this.isHidden(element)
+    return this.hasImportant(element, 'filter', this.settings.filterEffect === 'blur' ? BLUR : GRAYSCALE)
+  }
+
+  protected isHidden (element: FilterElement): boolean {
+    return this.hasImportant(element, 'visibility', 'hidden')
+  }
+
+  // Blocked either way: one is a verdict, the other is our answer to media we
+  // could not read. Both wear the configured effect and neither is re-judged.
+  protected isBlocked (element: FilterElement): boolean {
+    const status = this.statusOf(element)
+    return status === 'nsfw' || status === 'unavailable'
+  }
+
+  // Zero means the element has no box yet, not that it is small: it is still a
+  // candidate, and clearing it here would show whatever it holds the moment the
+  // page gives it a size.
+  protected belowMinSize (width: number, height: number): boolean {
+    return width !== 0 && height !== 0 && (width <= MIN_MEDIA_SIZE || height <= MIN_MEDIA_SIZE)
+  }
+
+  private hasImportant (element: FilterElement, property: string, value: string): boolean {
+    return element.style.getPropertyValue(property) === value &&
+      element.style.getPropertyPriority(property) === 'important'
   }
 
   protected async requestToAnalyzeImage (request: PredictionRequest): Promise<PredictionResponse> {
@@ -120,6 +171,18 @@ export class Filter implements IFilter {
         }
       }
     })
+  }
+
+  // The deadline is there to catch a pipeline that has stopped answering, not one
+  // that is merely busy. A reply is proof it is still working, so whatever is
+  // queued behind it starts its wait again: a page with more media than the model
+  // can judge inside one deadline would otherwise give up on the tail of it, and
+  // give up means blocked.
+  private _renewDeadlines (): void {
+    for (const [url, queued] of this.requestQueue) {
+      window.clearTimeout(queued.deadline)
+      queued.deadline = window.setTimeout(() => this._giveUp(url), ANALYSIS_DEADLINE)
+    }
   }
 
   // Takes the pending entry off the queue and stops its timers. undefined means it
@@ -151,7 +214,7 @@ export class Filter implements IFilter {
     const pending = this._take(url)
     if (pending === undefined) return
 
-    console.warn(`[NSFW-Filter] No verdict for ${url} after ${ANALYSIS_DEADLINE}ms, marked as visible`)
+    console.warn(`[NSFW-Filter] No verdict for ${url} after ${ANALYSIS_DEADLINE}ms, analysis unavailable`)
     for (const { resolve } of pending.waiters) {
       resolve(new PredictionResponse(false, url, 'Analysis timed out'))
     }
@@ -167,6 +230,7 @@ export class Filter implements IFilter {
       const pending = this._takeFor(request)
       if (pending === undefined) return
 
+      this._renewDeadlines()
       for (const { resolve } of pending.waiters) resolve(response)
     })
   }
@@ -183,7 +247,7 @@ export class Filter implements IFilter {
       const pending = this._takeFor(request)
       if (pending === undefined) return
 
-      console.warn(`[NSFW-Filter] Background worker is down, marked as visible ${request.url}`)
+      console.warn(`[NSFW-Filter] Background worker is down, analysis unavailable ${request.url}`)
       for (const { resolve } of pending.waiters) {
         resolve(new PredictionResponse(false, request.url, 'Background worker doesn\'t working'))
       }

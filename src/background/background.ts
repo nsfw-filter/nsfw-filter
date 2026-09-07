@@ -5,7 +5,13 @@ import { StatisticsActionTypes } from '../popup/redux/actions/statistics'
 import { createChromeStore } from '../popup/redux/chrome-storage'
 import { rootReducer, RootState } from '../popup/redux/reducers'
 import { ILogger, Logger } from '../utils/Logger'
-import { CONTEXT_TARGET, ContextTargetMessage, PredictionResponse, UNHIDE_IMAGE } from '../utils/messages'
+import {
+  CONTEXT_TARGET,
+  ContextTargetMessage,
+  PAGE_HOST,
+  PredictionResponse,
+  UNHIDE_IMAGE
+} from '../utils/messages'
 
 import { OffscreenModel } from './OffscreenModel'
 import { DEFAULT_TAB_ID, TabIdUrl } from './Queue/QueueBase'
@@ -185,7 +191,7 @@ const createUnhideMenu = (): void => {
     chrome.contextMenus.create({
       id: UNHIDE_MENU_ID,
       title: 'Unhide this (NSFW Filter)',
-      contexts: ['image', 'video'],
+      contexts: ['all'],
       visible: false
     })
   })
@@ -238,6 +244,23 @@ chrome.runtime.onMessage.addListener((request: IncomingMessage, sender, sendResp
     .catch(err => sendResponse(new PredictionResponse(false, url, err?.message)))
 
   return true // https://stackoverflow.com/a/56483156
+})
+
+// Every frame follows the user's choice for the page in the tab. A cross-origin
+// child cannot read that URL itself; sender.tab is supplied by Chrome.
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request?.type !== PAGE_HOST) return
+  for (const url of [sender.tab?.url, sender.origin, sender.url]) {
+    if (url === undefined) continue
+    try {
+      const host = new URL(url).hostname
+      if (host !== '') {
+        sendResponse(host)
+        return
+      }
+    } catch { /* An opaque origin has no hostname. */ }
+  }
+  sendResponse('')
 })
 
 // When user opened a new tab

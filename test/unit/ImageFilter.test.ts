@@ -74,9 +74,12 @@ describe('content => ImageFilter => analyzeImage', () => {
   test('does not reprocess an already-tagged image', () => {
     const spy = stubAnalyze()
     const image = makeImage(200, 200)
+    const filter = new ImageFilter()
+    filter.analyzeImage(image)
+    spy.mockClear()
     image.dataset.nsfwFilterStatus = 'sfw'
 
-    new ImageFilter().analyzeImage(image, false)
+    filter.analyzeImage(image)
 
     expect(spy).not.toHaveBeenCalled()
   })
@@ -86,7 +89,7 @@ describe('content => ImageFilter => analyzeImage', () => {
     const image = makeImage(200, 200)
     image.dataset.nsfwFilterStatus = 'sfw'
 
-    new ImageFilter().analyzeImage(image, true)
+    new ImageFilter().analyzeImage(image)
 
     expect(image.dataset.nsfwFilterStatus).toBe('processing')
     expect(spy).toHaveBeenCalled()
@@ -97,7 +100,7 @@ describe('content => ImageFilter => analyzeImage', () => {
     const image = makeImage(20, 20)
     image.dataset.nsfwFilterStatus = 'nsfw'
 
-    new ImageFilter().analyzeImage(image, true)
+    new ImageFilter().analyzeImage(image)
 
     expect(image.dataset.nsfwFilterStatus).toBe('nsfw')
     expect(spy).not.toHaveBeenCalled()
@@ -183,7 +186,7 @@ describe('content => ImageFilter => checkStyleMutation', () => {
     filter.setSettings({ filterEffect: 'hide' })
     const image = makeImage(200, 200)
     image.dataset.nsfwFilterStatus = 'nsfw'
-    image.style.visibility = 'hidden'
+    image.style.setProperty('visibility', 'hidden', 'important')
     const spy = jest.spyOn(image.style, 'visibility', 'set')
 
     filter.checkStyleMutation(image)
@@ -239,7 +242,7 @@ describe('content => ImageFilter => revealAll', () => {
     new ImageFilter().revealAll()
 
     expect(image.style.filter).toBe('')
-    expect(image.style.visibility).toBe('visible')
+    expect(image.style.visibility).toBe('')
     expect(image.dataset.nsfwFilterStatus).toBeUndefined()
   })
 
@@ -284,7 +287,7 @@ describe('content => ImageFilter => revealImage', () => {
     new ImageFilter().revealImage(image)
 
     expect(image.style.filter).toBe('')
-    expect(image.style.visibility).toBe('visible')
+    expect(image.style.visibility).toBe('')
     expect(image.dataset.nsfwFilterStatus).toBe('sfw')
   })
 
@@ -324,7 +327,7 @@ describe('content => ImageFilter => revealImage', () => {
     filter.revealImage(image)
 
     expect(image.hidden).toBe(false)
-    expect(image.style.visibility).toBe('visible')
+    expect(image.style.visibility).toBe('')
 
     wrapper.remove()
   })
@@ -362,7 +365,7 @@ describe('content => ImageFilter => late verdicts', () => {
 
     filter.analyzeImage(image)
     image.src = 'http://example.com/b.jpg'
-    filter.analyzeImage(image, true)
+    filter.analyzeImage(image)
     runtime.release(true)
     await settle()
 
@@ -381,7 +384,7 @@ describe('content => ImageFilter => late verdicts', () => {
     await settle()
 
     expect(image.dataset.nsfwFilterStatus).toBeUndefined()
-    expect(image.style.visibility).toBe('visible')
+    expect(image.style.visibility).toBe('')
   })
 
   test('does not hide an image the user unhid while it was being classified', async () => {
@@ -396,7 +399,7 @@ describe('content => ImageFilter => late verdicts', () => {
     await settle()
 
     expect(image.dataset.nsfwFilterStatus).toBe('sfw')
-    expect(image.style.visibility).toBe('visible')
+    expect(image.style.visibility).toBe('')
   })
 
   // An image the page reparents while its verdict is out still carries the hidden
@@ -416,6 +419,6 @@ describe('content => ImageFilter => late verdicts', () => {
 
     expect(image.dataset.nsfwFilterStatus).toBe('sfw')
     expect(image.hidden).toBe(false)
-    expect(image.style.visibility).toBe('visible')
+    expect(image.style.visibility).toBe('')
   })
 })

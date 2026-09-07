@@ -70,9 +70,18 @@ describe('CSS background images', () => {
     }
   })
 
-  test('ignores an element with no background image', async () => {
+  // Releasing the pending rule needs a status on every element the walk visits,
+  // so an element with no background of its own is tagged sfw rather than left
+  // alone. Nothing else about it may change: no background introduced, no
+  // declaration written onto it, and its own text stays visible.
+  test('leaves an element with no background image untouched', async () => {
     const plain = await read(page, 'plain')
-    expect(plain.status).toBeNull()
+    expect(plain.status).toBe('sfw')
+    expect(plain.backgroundImage).toBe('none')
+    expect(plain.textVisibility).toBe('visible')
+    expect(await page.evaluate(() =>
+      document.getElementById('plain').getAttribute('style')
+    )).toBeNull()
   })
 
   // A virtualized list swaps the class and the same element shows different
@@ -176,13 +185,41 @@ describe('CSS background images', () => {
     expect(shorthand).toContain('var(--photo)')
   })
 
+  // Every element the walk reaches carries a status, so the tag alone no longer
+  // marks the ones with a background to restore. Ask the page instead: an element
+  // is owed a background only where the author declared a url for it.
   test('leaves no background stuck missing or unprocessed', async () => {
-    const leftovers = await page.evaluate(() =>
-      [...document.querySelectorAll('[data-nsfw-filter-background-status]')].filter(element => {
-        const status = element.getAttribute('data-nsfw-filter-background-status')
-        return status === 'processing' || getComputedStyle(element).backgroundImage === 'none'
-      }).length
+    const stuck = await page.evaluate(() =>
+      document.querySelectorAll('[data-nsfw-filter-background-status="processing"]').length
     )
-    expect(leftovers).toBe(0)
+    expect(stuck).toBe(0)
+
+    const missing = await page.evaluate(() => {
+      const owed = new Set()
+      // An inline url, including one held in a custom property the shorthand reads.
+      for (const element of document.querySelectorAll('[style]')) {
+        if (element.getAttribute('style').includes('url(')) owed.add(element)
+      }
+      for (const sheet of document.styleSheets) {
+        let rules
+        try {
+          rules = sheet.cssRules
+        } catch {
+          continue // A cross-origin sheet tells us nothing about this page.
+        }
+        for (const rule of rules) {
+          if (!(rule instanceof CSSStyleRule) || !rule.style.cssText.includes('url(')) continue
+          try {
+            for (const element of document.querySelectorAll(rule.selectorText)) owed.add(element)
+          } catch {
+            continue // A selector this document cannot query matches nothing here.
+          }
+        }
+      }
+      return [...owed]
+        .filter(element => getComputedStyle(element).backgroundImage === 'none')
+        .map(element => element.id || element.tagName)
+    })
+    expect(missing).toEqual([])
   })
 })
