@@ -21,6 +21,10 @@ export const Sub = styled.p`
   margin: 8px 0 24px;
 `
 
+export const LockWrap = styled.div`
+  margin-bottom: 20px;
+`
+
 export const AddRow = styled.form`
   display: flex;
   gap: 8px;
@@ -63,8 +67,13 @@ export const Remove = styled.button`
   display: flex;
   padding: 4px;
 
-  &:hover {
+  &:hover:not(:disabled) {
     color: ${props => props.theme.accent};
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
   }
 `
 

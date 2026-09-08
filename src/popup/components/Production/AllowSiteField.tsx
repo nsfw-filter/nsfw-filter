@@ -32,7 +32,7 @@ const useCurrentHost = (): string | null => {
   return host
 }
 
-export const AllowSiteField: React.FC = () => {
+export const AllowSiteField: React.FC<{ disabled: boolean }> = ({ disabled }) => {
   const dispatch = useDispatch()
   const { websites } = useSelector<RootState>((state) => state.settings) as SettingsState
   const host = useCurrentHost()
@@ -40,7 +40,7 @@ export const AllowSiteField: React.FC = () => {
   const allowed = host !== null && host !== '' && isHostAllowed(host, websites)
 
   const onToggle = (allow: boolean): void => {
-    if (host === null || host === '') return
+    if (disabled || host === null || host === '') return
     if (allow) {
       const entry = normalizeHostEntry(host)
       if (entry !== '' && !websites.includes(entry)) dispatch(setWebsiteList([...websites, entry]))
@@ -57,7 +57,7 @@ export const AllowSiteField: React.FC = () => {
         <FieldLabel>Allow this site</FieldLabel>
         <AllowHost>{host === null ? '…' : host === '' ? 'Not available on this page' : host}</AllowHost>
       </AllowText>
-      <Switch checked={allowed} disabled={host === null || host === ''} onChange={onToggle} />
+      <Switch checked={allowed} disabled={disabled || host === null || host === ''} onChange={onToggle} />
     </AllowRow>
   )
 }

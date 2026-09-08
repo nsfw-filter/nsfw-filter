@@ -21,6 +21,8 @@ When you load web pages, NSFW Filter will first hide all images and only show th
 
 Click the icon in your extensions tab to open the popup. From there you can turn protection on or off, adjust how strict the filter is, choose how flagged images are handled (blur, grayscale, or hide), pick which model does the classifying, and allow specific sites.
 
+Set an optional password or PIN under **Advanced** to lock filter settings. A password does not prevent disabling or removing the extension; see [Chrome's force-install policy](https://chromeenterprise.google/policies/extension-install-forcelist/) for that.
+
 ![NSFW Filter popup](demo/images/popup-window.png)
 
 # Development

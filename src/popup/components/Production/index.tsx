@@ -4,16 +4,17 @@ import React, { useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 
 import { TRAINED_MODELS, TRAINED_MODEL_LABELS, TrainedModel } from '../../../utils/models'
-import { setFilterStrictness } from '../../redux/actions/settings'
 import {
-  setTrainedModel,
   setFilterEffect,
+  setFilterStrictness,
+  setTrainedModel,
   toggleEnabled,
   toggleLogging
-} from '../../redux/actions/settings/index'
+} from '../../redux/actions/settings'
 import { RootState } from '../../redux/reducers'
 import { SettingsState } from '../../redux/reducers/settings'
 import { StatisticsState } from '../../redux/reducers/statistics'
+import { SettingsLockControls, UnlockForm, useSettingsLock } from '../SettingsLock'
 
 import { AllowSiteField } from './AllowSiteField'
 import {
@@ -41,6 +42,7 @@ import {
 export const Production: React.FC = () => {
   const dispatch = useDispatch()
   const [advancedOpen, setAdvancedOpen] = useState(false)
+  const lock = useSettingsLock()
   const {
     enabled,
     filterStrictness,
@@ -62,8 +64,15 @@ export const Production: React.FC = () => {
           <PowerTitle>Protection</PowerTitle>
           <PowerHint>{enabled ? 'On' : 'Paused'}</PowerHint>
         </PowerText>
-        <Switch checked={enabled} onChange={() => dispatch(toggleEnabled())} />
+        <Switch
+          aria-label="Protection"
+          checked={enabled}
+          disabled={lock.isLocked}
+          onChange={() => dispatch(toggleEnabled())}
+        />
       </PowerRow>
+
+      {lock.isLocked && <UnlockForm lock={lock} />}
 
       <Card>
         <Field>
@@ -75,6 +84,7 @@ export const Production: React.FC = () => {
             min={1}
             max={100}
             value={filterStrictness}
+            disabled={lock.isLocked}
             tooltip={{ open: false }}
             onChange={(value: number) => dispatch(setFilterStrictness(value))}
           />
@@ -88,6 +98,7 @@ export const Production: React.FC = () => {
           <FieldLabel>Filter effect</FieldLabel>
           <Segmented<'blur' | 'grayscale' | 'hide'>
             block
+            disabled={lock.isLocked}
             style={{ marginTop: 8 }}
             value={filterEffect}
             onChange={value => dispatch(setFilterEffect(value))}
@@ -99,7 +110,7 @@ export const Production: React.FC = () => {
           />
         </EffectField>
 
-        <AllowSiteField />
+        <AllowSiteField disabled={lock.isLocked} />
         <ManageLink onClick={() => chrome.runtime.openOptionsPage()}>
           Manage allowed sites
         </ManageLink>
@@ -120,14 +131,20 @@ export const Production: React.FC = () => {
               <FieldLabel>Trained model</FieldLabel>
               <Select<TrainedModel>
                 value={trainedModel}
+                disabled={lock.isLocked}
                 style={{ width: 170 }}
                 onChange={value => dispatch(setTrainedModel(value))}
                 options={TRAINED_MODELS.map(value => ({ value, label: TRAINED_MODEL_LABELS[value] }))}
               />
             </AdvancedRow>
-            <Checkbox checked={logging} onChange={() => dispatch(toggleLogging())}>
+            <Checkbox
+              checked={logging}
+              disabled={lock.isLocked}
+              onChange={() => dispatch(toggleLogging())}
+            >
               Show logs in browser console
             </Checkbox>
+            {!lock.isLocked && <SettingsLockControls lock={lock} />}
           </AdvancedPanel>
         )}
       </div>

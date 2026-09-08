@@ -48,6 +48,7 @@ module.exports = {
                 { from: `${PATHS.src}/popup/popup.html`, to: PATHS.dist },
                 { from: `${PATHS.src}/options/options.html`, to: PATHS.dist },
                 { from: `${PATHS.src}/offscreen/offscreen.html`, to: PATHS.dist },
+                { from: `${PATHS.src}/help/browser-policy.html`, to: PATHS.dist },
                 // TensorFlow.js WASM backend binaries, loaded via setWasmPaths()
                 {
                     from: '*.wasm',
