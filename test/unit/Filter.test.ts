@@ -102,7 +102,7 @@ describe('content => Filter => analysis deadline', () => {
     await jest.advanceTimersByTimeAsync(ANALYSIS_DEADLINE)
 
     expect(image.dataset.nsfwFilterStatus).toBe('sfw')
-    expect(image.style.visibility).toBe('visible')
+    expect(image.style.visibility).toBe('')
   })
 
   test('keeps the image hidden until the deadline is actually reached', async () => {
@@ -139,7 +139,7 @@ describe('content => Filter => analysis deadline', () => {
     await jest.advanceTimersByTimeAsync(0)
 
     expect(image.dataset.nsfwFilterStatus).toBe('sfw')
-    expect(image.style.visibility).toBe('visible')
+    expect(image.style.visibility).toBe('')
   })
 
   // Two <img> elements sharing a src are deduplicated onto one request, so the
@@ -154,8 +154,8 @@ describe('content => Filter => analysis deadline', () => {
     filter.analyzeImage(second)
     await jest.advanceTimersByTimeAsync(ANALYSIS_DEADLINE)
 
-    expect(first.style.visibility).toBe('visible')
-    expect(second.style.visibility).toBe('visible')
+    expect(first.style.visibility).toBe('')
+    expect(second.style.visibility).toBe('')
   })
 
   // Giving up on an unreachable worker settles every waiter and stops retrying.
@@ -169,8 +169,8 @@ describe('content => Filter => analysis deadline', () => {
     filter.analyzeImage(second)
     await jest.advanceTimersByTimeAsync(ANALYSIS_DEADLINE)
 
-    expect(first.style.visibility).toBe('visible')
-    expect(second.style.visibility).toBe('visible')
+    expect(first.style.visibility).toBe('')
+    expect(second.style.visibility).toBe('')
     expect(sent()).toBe(6)
   })
 
@@ -186,7 +186,7 @@ describe('content => Filter => analysis deadline', () => {
     await jest.advanceTimersByTimeAsync(5000)
 
     expect(runtime.sent()).toBe(1)
-    expect(image.style.visibility).toBe('visible')
+    expect(image.style.visibility).toBe('')
   })
 
   // The runtime error for an abandoned request arrives while the same url is queued

@@ -23,6 +23,18 @@
       ],
       "js": ["src/content.js"],
       "all_frames": true,
+      "match_origin_as_fallback": true,
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": ["src/mediaGuard.js"],
+      "world": "MAIN",
+      "all_frames": true,
+      "match_origin_as_fallback": true,
       "run_at": "document_start"
     }
   ],

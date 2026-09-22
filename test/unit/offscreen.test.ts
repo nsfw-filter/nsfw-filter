@@ -64,6 +64,13 @@ jest.mock('@tensorflow/tfjs', () => {
 
 jest.mock('@tensorflow/tfjs-backend-wasm', () => ({ setWasmPaths: jest.fn() }))
 
+// Pixel decoding is separate from the orchestration under test. Feed the same
+// prediction callback used by still images and animation frames.
+jest.mock('../../src/offscreen/classifyImage', () => ({
+  classifyImage: async (_url: string, label: string, predict: (image: HTMLImageElement, label: string) => Promise<boolean>) =>
+    await predict(new Image(), label)
+}))
+
 jest.mock('../../src/offscreen/classifiers/BinaryClassifier', () => ({
   BinaryClassifier: jest.fn(() => makeClassifier('ViT_NSFW_384'))
 }))

@@ -30,7 +30,9 @@ const read = async (page, id) => await page.evaluate((id) => {
   const video = document.getElementById(id)
   return {
     status: video.getAttribute('data-nsfw-filter-status'),
-    visibility: getComputedStyle(video).visibility
+    visibility: getComputedStyle(video).visibility,
+    filter: getComputedStyle(video).filter,
+    paused: video.paused
   }
 }, id)
 
@@ -48,11 +50,8 @@ const classified = async (page, id) => await page.waitForFunction(
 // A posterless video is tagged 'sfw' before it is sampled, and reloading its
 // media starts that over, so the status alone says nothing about where a video
 // is: only a status that is not 'processing' with the element back on screen
-// means a round finished. Waiting for that also rides out the sample a playing
-// video takes every ten seconds of media time.
-// The snapshot comes back from the same evaluation that accepted it: a playing
-// video samples again every ten seconds of media time, so reading it over a
-// second round trip can land in the next hide.
+// means the initial check finished. Read both values together so a media change
+// cannot put the status and visibility snapshots out of sync.
 const settledStatus = async (page, id) => {
   const settled = await page.waitForFunction((id) => {
     const video = document.getElementById(id)
@@ -116,13 +115,13 @@ describe('Videos on the page', () => {
     expect(await statuses(page, 'tiny')).not.toContain('tiny:processing')
   })
 
-  // A cross-origin video without CORS plays but cannot be read back. Leaving it
-  // hidden would blank video the browser is willing to show.
-  test('reveals a video whose frames cannot be read', async () => {
+  // Cross-origin footage can play even when its pixels cannot be inspected.
+  test('leaves a video whose frames cannot be read visible', async () => {
     await waitForStatus(page, 'foreign', 'unavailable')
     const foreign = await read(page, 'foreign')
     expect(foreign.status).toBe('unavailable')
     expect(foreign.visibility).toBe('visible')
+    expect(foreign.filter).toBe('none')
   })
 
   test('picks up and classifies a video added after load', async () => {

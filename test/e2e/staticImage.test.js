@@ -1,15 +1,24 @@
 // Regression guard for the flash fix: an image present in the markup at
 // document_start must be hidden, classified, and revealed by the content
 // script's initial sweep. Served locally so the result is deterministic.
+const SETTLE_TIMEOUT = 60000
+
 describe('Static images present at load', () => {
   let page
 
   beforeAll(async () => {
     page = await global.__BROWSER__.newPage()
     await page.goto(global.__BASE_URL__, { waitUntil: 'domcontentloaded' })
-    // Settle until every tagged image is past the 'processing' state.
-    await global.getDocumentImageAttributes(page)
-  })
+    // The shared helper waits only on images already carrying a status, and an
+    // empty set satisfies it at once: it cannot tell "nothing left to do" from
+    // "registration has not started". This fixture knows which images it ships,
+    // so wait for each of them to be registered as well as settled.
+    await page.waitForFunction(() => document.images.length > 0 &&
+      [...document.images].every(image => {
+        const status = image.getAttribute('data-nsfw-filter-status')
+        return status !== null && status !== 'processing'
+      }), { timeout: SETTLE_TIMEOUT, polling: 250 })
+  }, SETTLE_TIMEOUT)
 
   afterAll(async () => {
     await page.close()

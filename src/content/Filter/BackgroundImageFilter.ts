@@ -1,7 +1,8 @@
 import { PredictionRequest } from '../../utils/messages'
+import { mediaElements } from '../mediaRoots'
 
 import { backgroundImageUrls } from './backgroundImageValue'
-import { Filter } from './Filter'
+import { Filter, MIN_MEDIA_SIZE, OFFSCREEN_MARGIN } from './Filter'
 
 export type IBackgroundImageFilter = {
   observe: (root: Element) => void
@@ -36,8 +37,12 @@ type BackgroundState = {
   } | null
 }
 
-const MIN_ELEMENT_SIZE = 41
-const OFFSCREEN_MARGIN = '300px'
+type BackgroundLayer = {
+  pseudo: 'before' | 'after' | null
+  statusKey: string
+  states: WeakMap<HTMLElement, BackgroundState>
+}
+
 // Past this many dirty roots, testing every visible element against each of them
 // costs more than simply re-reading the visible set.
 const DIRTY_ROOT_LIMIT = 8
@@ -48,7 +53,6 @@ const RESIZE_INTERVAL = 250
 const SKIPPED = new Set(['SCRIPT', 'STYLE', 'LINK', 'META', 'TITLE', 'HEAD', 'TEMPLATE', 'NOSCRIPT', 'BR'])
 
 export class BackgroundImageFilter extends Filter implements IBackgroundImageFilter {
-  private readonly states: WeakMap<HTMLElement, BackgroundState>
   private readonly visible: Set<HTMLElement>
   private readonly writes: WeakMap<HTMLElement, number>
   private readonly dirty: Set<HTMLElement>
@@ -58,9 +62,16 @@ export class BackgroundImageFilter extends Filter implements IBackgroundImageFil
   private resizeTimer: ReturnType<typeof setTimeout> | undefined
   private active: boolean
 
+  // All three backgrounds share discovery, viewport tracking and scheduling.
+  // Only their source, verdict and saved declaration belong to separate layers.
+  private readonly layers: BackgroundLayer[] = [
+    { pseudo: null, statusKey: 'nsfwFilterBackgroundStatus', states: new WeakMap() },
+    { pseudo: 'before', statusKey: 'nsfwFilterBeforeStatus', states: new WeakMap() },
+    { pseudo: 'after', statusKey: 'nsfwFilterAfterStatus', states: new WeakMap() }
+  ]
+
   constructor () {
     super()
-    this.states = new WeakMap()
     this.visible = new Set()
     this.writes = new WeakMap()
     this.dirty = new Set()
@@ -94,7 +105,7 @@ export class BackgroundImageFilter extends Filter implements IBackgroundImageFil
       // Observing an element again produces no notification, so an element we have
       // already judged and that moved here needs an explicit re-read: its new
       // parent can select a different background.
-      if (this.states.has(element)) this.markDirty(element)
+      if (this.layers.some(layer => layer.states.has(element))) this.markDirty(element)
     })
   }
 
@@ -106,8 +117,10 @@ export class BackgroundImageFilter extends Filter implements IBackgroundImageFil
         // Moved rather than removed: keep it hidden and force a fresh verdict. Its
         // registration still stands, and an element that stays on screen through
         // the move gets no new notification, so it keeps its place in `visible`.
-        const state = this.states.get(element)
-        if (state !== undefined) state.key = ''
+        for (const layer of this.layers) {
+          const state = layer.states.get(element)
+          if (state !== undefined) state.key = ''
+        }
         this.markDirty(element)
         return
       }
@@ -115,10 +128,7 @@ export class BackgroundImageFilter extends Filter implements IBackgroundImageFil
       this.visible.delete(element)
       this.dirty.delete(element)
       this.viewport.unobserve(element)
-      if (!this.states.has(element)) return
-      this.restore(element)
-      this.states.delete(element)
-      delete element.dataset.nsfwFilterBackgroundStatus
+      for (const layer of this.layers) this.clear(element, layer)
     })
   }
 
@@ -139,7 +149,7 @@ export class BackgroundImageFilter extends Filter implements IBackgroundImageFil
       return
     }
 
-    this.checkElement(element)
+    this.markDirty(element)
   }
 
   // A stylesheet arriving late changes no attribute and triggers no intersection,
@@ -156,11 +166,10 @@ export class BackgroundImageFilter extends Filter implements IBackgroundImageFil
   public applyEffectToBlocked (): void {}
 
   public revealAll (): void {
-    this.filtered().forEach(element => {
-      this.restore(element)
-      this.states.delete(element)
-      delete element.dataset.nsfwFilterBackgroundStatus
-    })
+    const selector = '[data-nsfw-filter-background-status], [data-nsfw-filter-before-status], [data-nsfw-filter-after-status]'
+    for (const element of mediaElements<HTMLElement>(selector)) {
+      for (const layer of this.layers) this.clear(element, layer)
+    }
   }
 
   // Resuming produces no new intersection for targets already registered, so what
@@ -203,10 +212,10 @@ export class BackgroundImageFilter extends Filter implements IBackgroundImageFil
   private schedule (): void {
     if (this.scheduled) return
     this.scheduled = true
-    setTimeout(() => {
+    queueMicrotask(() => {
       this.scheduled = false
       this.flush()
-    }, 0)
+    })
   }
 
   private flush (): void {
@@ -223,7 +232,7 @@ export class BackgroundImageFilter extends Filter implements IBackgroundImageFil
 
     const done = new Set<HTMLElement>()
     for (const root of roots) {
-      if (!this.visible.has(root) && root.dataset.nsfwFilterBackgroundStatus === undefined) continue
+      if (!this.visible.has(root) && !this.layers.some(layer => root.dataset[layer.statusKey] !== undefined)) continue
       done.add(root)
       this.analyze(root)
     }
@@ -252,49 +261,76 @@ export class BackgroundImageFilter extends Filter implements IBackgroundImageFil
 
   private analyze (element: HTMLElement): void {
     if (!this.active || !element.isConnected) return
+    for (const layer of this.layers) this.analyzeLayer(element, layer)
+  }
+
+  private analyzeLayer (element: HTMLElement, layer: BackgroundLayer): void {
     // Icons, sprites and spacers: too small to be worth a round trip. The root
     // and the body are exempt: their background paints the whole canvas whatever
     // box they happen to have.
-    const { width, height } = element.getBoundingClientRect()
-    const canvas = element === document.body || element === document.documentElement
-    if (!canvas && (width <= MIN_ELEMENT_SIZE || height <= MIN_ELEMENT_SIZE)) return
+    if (layer.pseudo === null) {
+      const { width, height } = element.getBoundingClientRect()
+      const canvas = element === document.body || element === document.documentElement
+      if (!canvas && (width <= MIN_MEDIA_SIZE || height <= MIN_MEDIA_SIZE)) {
+        if (width > 0 && height > 0) {
+          this.clear(element, layer)
+          element.dataset[layer.statusKey] = 'sfw'
+        }
+        return
+      }
+    }
 
-    const state = this.states.get(element)
+    const state = layer.states.get(element)
     // Our own override masks the author's value, so the page's current background
     // has to be read with it lifted. Both writes land in this task, before paint.
-    if (state !== undefined) this.restore(element)
+    if (state !== undefined) this.restore(element, layer)
 
-    const urls = backgroundImageUrls(getComputedStyle(element).backgroundImage)
+    // Lift the pending stylesheet only while reading the author's background.
+    // A real image is hidden again below in the same task, before paint.
+    if (element.dataset[layer.statusKey] === undefined) {
+      element.dataset[layer.statusKey] = 'processing'
+    }
+
+    const computed = layer.pseudo === null
+      ? getComputedStyle(element)
+      : getComputedStyle(element, `::${layer.pseudo}`)
+    // A pseudo-element without content is not generated, even if a rule gives
+    // it a background. Its host's size tells us nothing about a generated one.
+    const generated = layer.pseudo === null || !['', 'none', 'normal'].includes(computed.content)
+    const urls = generated ? backgroundImageUrls(computed.backgroundImage) : []
     const key = urls.join(' ')
     if (urls.length === 0) {
-      if (state !== undefined) {
-        this.states.delete(element)
-        delete element.dataset.nsfwFilterBackgroundStatus
-      }
+      layer.states.delete(element)
+      if (element.dataset[layer.statusKey] !== 'sfw') element.dataset[layer.statusKey] = 'sfw'
       return
     }
 
-    const status = element.dataset.nsfwFilterBackgroundStatus
+    const status = element.dataset[layer.statusKey]
     if (state !== undefined && state.key === key && status !== undefined && (status !== 'processing' || state.pending)) {
-      // Same background as the verdict we already hold, or as the one still in
-      // flight; put the effect back if it was a block, since restore() lifted it.
-      if (status !== 'sfw') this.hide(element, state)
+      // Put the effect back if it was a block, since restore() lifted it.
+      if (status !== 'sfw') this.hide(element, state, layer)
       return
     }
 
     const generation = (state?.generation ?? 0) + 1
     const next: BackgroundState = { generation, key, pending: true, inline: null }
-    this.states.set(element, next)
-    element.dataset.nsfwFilterBackgroundStatus = 'processing'
-    this.hide(element, next)
+    layer.states.set(element, next)
+    element.dataset[layer.statusKey] = 'processing'
+    this.hide(element, next, layer)
 
-    void this.classify(element, next, urls)
+    void this.classify(element, next, urls, layer)
   }
 
   // One unsafe layer condemns the stack: the layers are positioned against each
   // other, and dropping only one leaves the rest misaligned over a gap.
-  private async classify (element: HTMLElement, state: BackgroundState, urls: string[]): Promise<void> {
+  private async classify (
+    element: HTMLElement,
+    state: BackgroundState,
+    urls: string[],
+    layer: BackgroundLayer
+  ): Promise<void> {
     let blocked = false
+    let unavailable = false
 
     for (const url of urls) {
       try {
@@ -304,26 +340,35 @@ export class BackgroundImageFilter extends Filter implements IBackgroundImageFil
           break
         }
       } catch {
-        // Fail open: an unanswered background is the page's own, not ours to keep.
+        unavailable = true
       }
     }
 
     state.pending = false
-    if (this.states.get(element) !== state || !this.active) return
+    if (layer.states.get(element) !== state || !this.active) return
 
     if (blocked) {
       this.blockedItems++
-      element.dataset.nsfwFilterBackgroundStatus = 'nsfw'
+      element.dataset[layer.statusKey] = 'nsfw'
       return
     }
 
-    element.dataset.nsfwFilterBackgroundStatus = 'sfw'
-    this.restore(element)
+    if (unavailable) {
+      element.dataset[layer.statusKey] = 'unavailable'
+      return
+    }
+
+    element.dataset[layer.statusKey] = 'sfw'
+    this.restore(element, layer)
   }
 
   // Removing the image is the only effect that leaves the element alone: blur or
   // visibility on the element would take its text and children with it.
-  private hide (element: HTMLElement, state: BackgroundState): void {
+  private hide (element: HTMLElement, state: BackgroundState, layer: BackgroundLayer): void {
+    if (layer.pseudo !== null) {
+      element.setAttribute(`data-nsfw-filter-${layer.pseudo}-hidden`, '')
+      return
+    }
     if (state.inline === null) {
       const value = element.style.getPropertyValue('background-image')
       // `background: var(--photo)` has no readable longhand, and the override
@@ -354,8 +399,12 @@ export class BackgroundImageFilter extends Filter implements IBackgroundImageFil
       element.style.getPropertyPriority('background-image') === 'important'
   }
 
-  private restore (element: HTMLElement): void {
-    const state = this.states.get(element)
+  private restore (element: HTMLElement, layer: BackgroundLayer): void {
+    if (layer.pseudo !== null) {
+      element.removeAttribute(`data-nsfw-filter-${layer.pseudo}-hidden`)
+      return
+    }
+    const state = layer.states.get(element)
     if (state?.inline == null) return
 
     const { value, priority, shorthand, attribute } = state.inline
@@ -396,7 +445,9 @@ export class BackgroundImageFilter extends Filter implements IBackgroundImageFil
     queueMicrotask(() => this.writes.delete(element))
   }
 
-  private filtered (): HTMLElement[] {
-    return [...document.querySelectorAll<HTMLElement>('[data-nsfw-filter-background-status]')]
+  private clear (element: HTMLElement, layer: BackgroundLayer): void {
+    this.restore(element, layer)
+    layer.states.delete(element)
+    delete element.dataset[layer.statusKey]
   }
 }

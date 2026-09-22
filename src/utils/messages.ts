@@ -29,6 +29,7 @@ export class PredictionRequest {
 // unhide command back to the exact frame that reported the target.
 export const CONTEXT_TARGET = 'NSFW_FILTER_CONTEXT_TARGET'
 export const UNHIDE_IMAGE = 'NSFW_FILTER_UNHIDE'
+export const PAGE_HOST = 'NSFW_FILTER_PAGE_HOST'
 
 export type ContextTargetMessage = {
   type: typeof CONTEXT_TARGET
@@ -68,6 +69,7 @@ export type OffscreenClassifyResponse = {
 
 export class PredictionResponse {
   public readonly result: boolean
+  public readonly error?: string
   public readonly message: string
   public readonly url: string
 
@@ -77,6 +79,7 @@ export class PredictionResponse {
       : `Prediction result is ${result} for image ${url}`
 
     this.url = url
+    this.error = error
     this.result = result
     this.message = message
   }

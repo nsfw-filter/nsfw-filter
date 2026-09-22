@@ -136,7 +136,7 @@ describe('content => BackgroundImageFilter', () => {
     new BackgroundImageFilter().observe(element)
     intersect(element, true)
 
-    expect(element.dataset.nsfwFilterBackgroundStatus).toBeUndefined()
+    expect(element.dataset.nsfwFilterBackgroundStatus).toBe('sfw')
     expect(runtime.sent()).toBe(0)
   })
 
@@ -149,7 +149,7 @@ describe('content => BackgroundImageFilter', () => {
     new BackgroundImageFilter().observe(element)
     intersect(element, true)
 
-    expect(element.dataset.nsfwFilterBackgroundStatus).toBeUndefined()
+    expect(element.dataset.nsfwFilterBackgroundStatus).toBe('sfw')
     expect(runtime.sent()).toBe(0)
   })
 
@@ -175,8 +175,6 @@ describe('content => BackgroundImageFilter', () => {
     expect(element.dataset.nsfwFilterBackgroundStatus).toBe('processing')
   })
 
-  // Nothing downstream is guaranteed to answer. A background the page owns is
-  // not ours to keep off the screen.
   test('restores the background when the background worker never answers', async () => {
     jest.useFakeTimers()
     jest.spyOn(console, 'warn').mockImplementation(() => {})

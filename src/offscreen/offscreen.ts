@@ -22,17 +22,12 @@ import {
 import { DEFAULT_TRAINED_MODEL, TrainedModel } from '../utils/models'
 import { withTimeout } from '../utils/withTimeout'
 
+import { classifyImage } from './classifyImage'
 import { BinaryClassifier } from './classifiers/BinaryClassifier'
 import { Classifier } from './classifiers/Classifier'
 import { NsfwjsClassifier } from './classifiers/NsfwjsClassifier'
 import { readRestartState, saveRestartState } from './restartState'
 
-const IMAGE_SIZE = 224
-// The offscreen document fetches the image again, CORS-anonymous so it can read
-// the pixels. 1s came from Manifest V2, where two loads ran at a time and a stuck
-// one starved the other slot; MV3 loads them in parallel, so a budget that tight
-// only turns a slow image into an unfiltered one.
-const LOADING_TIMEOUT = 10000
 const DEFAULT_FILTER_STRICTNESS = 55
 const MAX_LOAD_ATTEMPTS = 5
 
@@ -285,22 +280,7 @@ const switchTo = async (id: TrainedModel): Promise<void> => {
   }
 }
 
-const loadImage = async (url: string, label: string): Promise<HTMLImageElement> => {
-  const image: HTMLImageElement = new Image(IMAGE_SIZE, IMAGE_SIZE)
-
-  return await new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(`Image load timeout ${label}`)), LOADING_TIMEOUT)
-    image.crossOrigin = 'anonymous'
-    image.onload = () => { clearTimeout(timer); resolve(image) }
-    image.onerror = (err) => { clearTimeout(timer); reject(err) }
-    image.src = url
-  })
-}
-
-const classify = async (url: string, label: string): Promise<boolean> => {
-  ensureUp()
-  const image = await loadImage(url, label)
-
+const predict = async (image: HTMLImageElement, label: string): Promise<boolean> => {
   return await enqueue(async () => {
     // ensureUp() swallows the restart so it can't reject an unrelated caller, which
     // leaves the model null here. Say which it is: the service worker sends a lost
@@ -312,6 +292,11 @@ const classify = async (url: string, label: string): Promise<boolean> => {
     trackPrediction(activeClassifier, prediction)
     return await withTimeout(prediction, PREDICTION_TIMEOUT, 'Prediction')
   })
+}
+
+const classify = async (url: string, label: string): Promise<boolean> => {
+  ensureUp()
+  return await classifyImage(url, label, predict)
 }
 
 chrome.runtime.onMessage.addListener((
