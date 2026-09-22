@@ -1,10 +1,12 @@
+import { MediaType } from '../../utils/messages'
+
 import { PredictionQueue } from './PredictionQueue'
 import { TabIdUrl } from './QueueBase'
 
 // @TODO Add tabs priority, when user opens 5 tabs at once(restore tabs) and go to 4th tab - we need to switch to images prediction of 4th tab immediately
 
 type IQueueWrapper = {
-  predict: (url: string, tabId: TabIdUrl, source?: string) => Promise<boolean>
+  predict: (url: string, tabId: TabIdUrl, source?: string, mediaType?: MediaType) => Promise<boolean>
   clearByTabId: (tabId: number) => void
   addTabIdUrl: (tabIdUrl: TabIdUrl) => void
   updateTabIdUrl: (tabIdUrl: TabIdUrl) => void
@@ -12,18 +14,19 @@ type IQueueWrapper = {
 }
 
 export class QueueWrapper extends PredictionQueue implements IQueueWrapper {
-  public async predict (url: string, tabIdUrl: TabIdUrl, source?: string): Promise<boolean> {
+  public async predict (url: string, tabIdUrl: TabIdUrl, source?: string, mediaType?: MediaType): Promise<boolean> {
+    const key = this.requestKey(url, mediaType)
     return await new Promise((resolve, reject) => {
-      if (this.cache.has(url)) {
-        resolve(this.cache.get(url) as boolean)
+      if (this.cache.has(key)) {
+        resolve(this.cache.get(key) as boolean)
         return
       }
 
-      if (this.requestMap.has(url)) {
-        this.requestMap.get(url)?.push([{ resolve, reject }])
+      if (this.requestMap.has(key)) {
+        this.requestMap.get(key)?.push([{ resolve, reject }])
       } else {
-        this.requestMap.set(url, [[{ resolve, reject }]])
-        this.predictionQueue.add({ url, tabIdUrl, source })
+        this.requestMap.set(key, [[{ resolve, reject }]])
+        this.predictionQueue.add({ url, tabIdUrl, source, mediaType })
       }
     })
   }

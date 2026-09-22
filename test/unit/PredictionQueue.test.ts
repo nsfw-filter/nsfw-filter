@@ -25,10 +25,10 @@ describe('background => PredictionQueue => onFailure', () => {
     }
 
     const url = 'http://example.com/a.jpg'
-    queue.requestMap.set(url, [[{ resolve: () => {}, reject: () => {} }]])
+    queue.requestMap.set(JSON.stringify(['image', url]), [[{ resolve: () => {}, reject: () => {} }]])
     queue.onFailure({ url, error: new Error('Model is unavailable') })
 
-    expect(queue.cache.has(url)).toBe(false)
+    expect(queue.cache.has(JSON.stringify(['image', url]))).toBe(false)
   })
 })
 
@@ -43,40 +43,40 @@ describe('background => PredictionQueue => frame sources', () => {
     const predict = jest.fn(async () => await Promise.resolve(false))
     const queue = makeQueue({ predict }) as unknown as {
       currentTabIdUrls: Map<number, string>
-      onProcess: (param: { url: string, source?: string, tabIdUrl: unknown }, callback: unknown) => void
+      onProcess: (param: { url: string, source?: string, mediaType?: 'image' | 'video', tabIdUrl: unknown }, callback: unknown) => void
     }
 
     const tabIdUrl = { tabId: 1, tabUrl: 'http://example.com' }
     queue.currentTabIdUrls.set(tabIdUrl.tabId, tabIdUrl.tabUrl)
-    queue.onProcess({ url: KEY, source: FRAME, tabIdUrl }, () => undefined)
+    queue.onProcess({ url: KEY, source: FRAME, mediaType: 'video', tabIdUrl }, () => undefined)
 
-    expect(predict).toHaveBeenCalledWith(FRAME, KEY)
+    expect(predict).toHaveBeenCalledWith(FRAME, KEY, 'video')
   })
 
   test('does not cache a verdict for a one-off frame key', () => {
     const queue = makeQueue() as unknown as {
       requestMap: Map<string, unknown>
       cache: { has: (key: string) => boolean }
-      onSuccess: (param: { url: string, source?: string, result: boolean }) => void
+      onSuccess: (param: { url: string, source?: string, mediaType?: 'image' | 'video', result: boolean }) => void
     }
 
-    queue.requestMap.set(KEY, [[{ resolve: () => {}, reject: () => {} }]])
-    queue.onSuccess({ url: KEY, source: FRAME, result: false })
+    queue.requestMap.set(JSON.stringify(['video', KEY]), [[{ resolve: () => {}, reject: () => {} }]])
+    queue.onSuccess({ url: KEY, source: FRAME, mediaType: 'video', result: false })
 
-    expect(queue.cache.has(KEY)).toBe(false)
+    expect(queue.cache.has(JSON.stringify(['video', KEY]))).toBe(false)
   })
 
   test('still caches a verdict for a real url', () => {
     const queue = makeQueue() as unknown as {
       requestMap: Map<string, unknown>
       cache: { has: (key: string) => boolean }
-      onSuccess: (param: { url: string, source?: string, result: boolean }) => void
+      onSuccess: (param: { url: string, source?: string, mediaType?: 'image' | 'video', result: boolean }) => void
     }
 
     const url = 'http://example.com/a.jpg'
-    queue.requestMap.set(url, [[{ resolve: () => {}, reject: () => {} }]])
+    queue.requestMap.set(JSON.stringify(['image', url]), [[{ resolve: () => {}, reject: () => {} }]])
     queue.onSuccess({ url, result: false })
 
-    expect(queue.cache.has(url)).toBe(true)
+    expect(queue.cache.has(JSON.stringify(['image', url]))).toBe(true)
   })
 })

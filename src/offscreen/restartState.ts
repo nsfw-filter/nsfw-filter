@@ -10,6 +10,7 @@ export const RESTART_KEY = 'nsfw-filter-restart'
 
 export type RestartState = {
   filterStrictness: number
+  videoStrictness?: number
   trainedModel: TrainedModel
   logging: boolean
 }

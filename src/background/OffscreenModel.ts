@@ -1,4 +1,5 @@
 import {
+  MediaType,
   OffscreenClassifyResponse,
   OffscreenRequest,
   RESTARTING_MESSAGE
@@ -10,8 +11,8 @@ import { TrainedModel } from '../utils/models'
 // `setSettings`), but every call is an RPC because a Manifest V3 service worker
 // can't touch the DOM or run the WebGL/WASM model itself.
 export type IOffscreenModel = {
-  predict: (url: string, label?: string) => Promise<boolean>
-  setSettings: (filterStrictness: number, logging: boolean, trainedModel: TrainedModel) => void
+  predict: (url: string, label?: string, mediaType?: MediaType) => Promise<boolean>
+  setSettings: (filterStrictness: number, logging: boolean, trainedModel: TrainedModel, videoStrictness?: number) => void
 }
 
 // A classification that dies with the offscreen realm, as opposed to one the model
@@ -31,8 +32,8 @@ const REALM_RETRY_DELAY = 1000
 const REALM_RETRY_WINDOW = 30000
 
 export class OffscreenModel implements IOffscreenModel {
-  public async predict (url: string, label?: string): Promise<boolean> {
-    const request: OffscreenRequest = { target: 'offscreen', type: 'CLASSIFY', url, label }
+  public async predict (url: string, label?: string, mediaType?: MediaType): Promise<boolean> {
+    const request: OffscreenRequest = { target: 'offscreen', type: 'CLASSIFY', url, label, mediaType }
 
     let deadline = 0
 
@@ -77,11 +78,12 @@ export class OffscreenModel implements IOffscreenModel {
     })
   }
 
-  public setSettings (filterStrictness: number, logging: boolean, trainedModel: TrainedModel): void {
+  public setSettings (filterStrictness: number, logging: boolean, trainedModel: TrainedModel, videoStrictness?: number): void {
     const request: OffscreenRequest = {
       target: 'offscreen',
       type: 'SET_SETTINGS',
       filterStrictness,
+      videoStrictness,
       logging,
       trainedModel
     }

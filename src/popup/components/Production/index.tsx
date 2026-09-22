@@ -1,10 +1,10 @@
 import { Checkbox, Segmented, Select, Slider, Switch } from 'antd'
 import { ChevronDown, ChevronUp, Contrast, Droplet, EyeOff } from 'lucide-react'
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 
 import { TRAINED_MODELS, TRAINED_MODEL_LABELS, TrainedModel } from '../../../utils/models'
-import { setFilterStrictness } from '../../redux/actions/settings'
+import { setFilterStrictness, setVideoStrictness } from '../../redux/actions/settings'
 import {
   setTrainedModel,
   setFilterEffect,
@@ -39,11 +39,22 @@ import {
 } from './styles'
 
 export const Production: React.FC = () => {
+  const pointerInteraction = useRef(false)
+  const clearPointerFocus = (): void => {
+    // The slider refocuses its handle after dragging; wait for that update.
+    requestAnimationFrame(() => {
+      const handle = document.activeElement
+      if (pointerInteraction.current && handle instanceof HTMLElement && handle.matches('.ant-slider-handle')) {
+        handle.blur()
+      }
+    })
+  }
   const dispatch = useDispatch()
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const {
     enabled,
     filterStrictness,
+    videoStrictness,
     trainedModel,
     filterEffect,
     logging
@@ -66,23 +77,34 @@ export const Production: React.FC = () => {
       </PowerRow>
 
       <Card>
-        <Field>
-          <FieldHead>
-            <FieldLabel>Filter strictness</FieldLabel>
-            <FieldValue>{filterStrictness}%</FieldValue>
-          </FieldHead>
-          <Slider
-            min={1}
-            max={100}
-            value={filterStrictness}
-            tooltip={{ open: false }}
-            onChange={(value: number) => dispatch(setFilterStrictness(value))}
-          />
-          <SliderEnds>
-            <span>Lenient</span>
-            <span>Strict</span>
-          </SliderEnds>
-        </Field>
+        {[
+          { label: 'Image strictness', value: filterStrictness, action: setFilterStrictness },
+          { label: 'Video strictness', value: videoStrictness, action: setVideoStrictness }
+        ].map(({ label, value, action }) => (
+          <Field
+            key={label}
+            onPointerDownCapture={() => { pointerInteraction.current = true }}
+            onKeyDownCapture={() => { pointerInteraction.current = false }}
+          >
+            <FieldHead>
+              <FieldLabel>{label}</FieldLabel>
+              <FieldValue>{value}%</FieldValue>
+            </FieldHead>
+            <Slider
+              min={1}
+              max={100}
+              value={value}
+              ariaLabelForHandle={label}
+              tooltip={{ open: false }}
+              onChange={(value: number) => dispatch(action(value))}
+              onChangeComplete={clearPointerFocus}
+            />
+            <SliderEnds>
+              <span>Lenient</span>
+              <span>Strict</span>
+            </SliderEnds>
+          </Field>
+        ))}
 
         <EffectField>
           <FieldLabel>Filter effect</FieldLabel>

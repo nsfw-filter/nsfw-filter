@@ -7,6 +7,7 @@ import {
   SET_FILTER_EFFECT,
   SET_TRAINED_MODEL,
   SET_FILTER_STRICTNESS,
+  SET_VIDEO_STRICTNESS,
   SET_WEBSITE_LIST
 } from '../actions/settings/settingsTypes'
 
@@ -16,6 +17,7 @@ export type SettingsState = {
   filterEffect: 'hide' | 'blur' | 'grayscale'
   trainedModel: TrainedModel
   filterStrictness: number
+  videoStrictness: number
   websites: string[]
 }
 
@@ -25,6 +27,7 @@ const initialState: SettingsState = {
   filterEffect: 'blur',
   trainedModel: DEFAULT_TRAINED_MODEL,
   filterStrictness: 55,
+  videoStrictness: 45,
   websites: []
 }
 
@@ -36,6 +39,10 @@ export function settings (state = initialState, action: SettingsActionTypes): Se
   // missing, so unrelated actions keep the same `settings` reference.
   const hydrated = (state as Partial<SettingsState>).enabled !== undefined
   let s = hydrated ? state : { ...initialState, ...state }
+  // Keep the previous shared strictness for users upgrading to separate sliders.
+  if ((state as Partial<SettingsState>).videoStrictness === undefined) {
+    s = { ...s, videoStrictness: s.filterStrictness }
+  }
   // A model removed in a later version (or a downgrade) would leave an id the
   // offscreen document can't load; reset it so classification never wedges.
   if (!isTrainedModel(s.trainedModel)) s = { ...s, trainedModel: DEFAULT_TRAINED_MODEL }
@@ -50,6 +57,8 @@ export function settings (state = initialState, action: SettingsActionTypes): Se
       return { ...s, trainedModel: action.payload.trainedModel }
     case SET_FILTER_STRICTNESS:
       return { ...s, filterStrictness: action.payload.filterStrictness }
+    case SET_VIDEO_STRICTNESS:
+      return { ...s, videoStrictness: action.payload.videoStrictness }
     case SET_WEBSITE_LIST:
       return { ...s, websites: action.payload.websites }
     default:

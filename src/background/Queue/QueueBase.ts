@@ -1,4 +1,5 @@
 import { ILogger } from '../../utils/Logger'
+import { MediaType } from '../../utils/messages'
 import { IReduxedStorage } from '../background'
 import { LRUCache } from '../LRUCache'
 import { OffscreenModel } from '../OffscreenModel'
@@ -40,6 +41,10 @@ export class QueueBase {
 
     const state = this.store.getState()
     this.totalBlocked = state.statistics.totalBlocked
+  }
+
+  protected requestKey (url: string, mediaType: MediaType = 'image'): string {
+    return JSON.stringify([mediaType, url])
   }
 
   public clearCache (): void {

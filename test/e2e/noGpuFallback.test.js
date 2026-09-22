@@ -86,6 +86,7 @@ describe('No usable GPU', () => {
 
     expect(restart).toEqual({
       filterStrictness: expect.any(Number),
+      videoStrictness: expect.any(Number),
       trainedModel: expect.any(String),
       logging: expect.any(Boolean)
     })

@@ -1,5 +1,6 @@
 import { setTotalBlocked } from '../../popup/redux/actions/statistics'
 import { ILogger } from '../../utils/Logger'
+import { MediaType } from '../../utils/messages'
 import { IReduxedStorage } from '../background'
 import { OffscreenModel } from '../OffscreenModel'
 
@@ -9,15 +10,16 @@ import { QueueBase, requestQueueValue, TabIdUrl } from './QueueBase'
 type HandlerParams = {
   url: string
   source?: string
+  mediaType?: MediaType
   tabIdUrl: TabIdUrl
   result: boolean
   error: Error
 }
 
-type OnProcessParam = Pick<HandlerParams, 'url' | 'tabIdUrl' | 'source'>
-export type OnSuccessParam = Pick<HandlerParams, 'url' | 'result' | 'source'>
-export type OnFailureParam = Pick<HandlerParams, 'url' | 'error'>
-type OnDoneParam = Pick<HandlerParams, 'url'>
+type OnProcessParam = Pick<HandlerParams, 'url' | 'mediaType' | 'tabIdUrl' | 'source'>
+export type OnSuccessParam = Pick<HandlerParams, 'url' | 'mediaType' | 'result' | 'source'>
+export type OnFailureParam = Pick<HandlerParams, 'url' | 'mediaType' | 'error'>
+type OnDoneParam = Pick<HandlerParams, 'url' | 'mediaType'>
 
 export type CallbackFunction = (err: unknown | undefined, result: unknown | undefined) => undefined
 
@@ -43,45 +45,47 @@ export class PredictionQueue extends QueueBase {
     })
   }
 
-  private onProcess ({ url, source, tabIdUrl }: OnProcessParam, callback: CallbackFunction): void {
+  private onProcess ({ url, source, mediaType, tabIdUrl }: OnProcessParam, callback: CallbackFunction): void {
     if (!this._checkCurrentTabIdUrlStatus(tabIdUrl)) {
-      callback({ url, error: new Error('User closed tab or page where this url located') }, undefined)
+      callback({ url, mediaType, error: new Error('User closed tab or page where this url located') }, undefined)
       return
     }
 
-    this.model.predict(source ?? url, url)
-      .then(result => callback(undefined, { url, source, result }))
-      .catch((error: Error) => callback({ url, error }, undefined))
+    this.model.predict(source ?? url, url, mediaType)
+      .then(result => callback(undefined, { url, source, mediaType, result }))
+      .catch((error: Error) => callback({ url, mediaType, error }, undefined))
   }
 
-  private onSuccess ({ url, source, result }: OnSuccessParam): void {
-    if (!this._checkUrlStatus(url)) return
+  private onSuccess ({ url, source, mediaType, result }: OnSuccessParam): void {
+    const key = this.requestKey(url, mediaType)
+    if (!this._checkUrlStatus(key)) return
 
     if (result) this.totalBlocked++
     // A request carrying its own source is a video frame under a one-off key.
     // Caching a verdict under a key nothing will ask for again only evicts
     // entries that are still worth keeping.
-    if (source === undefined) this.cache.set(url, result)
+    if (source === undefined) this.cache.set(key, result)
 
-    for (const [{ resolve }] of this.requestMap.get(url) as requestQueueValue) {
+    for (const [{ resolve }] of this.requestMap.get(key) as requestQueueValue) {
       resolve(result)
     }
   }
 
-  private onFailure ({ url, error }: OnFailureParam): void {
-    if (!this._checkUrlStatus(url)) return
+  private onFailure ({ url, mediaType, error }: OnFailureParam): void {
+    const key = this.requestKey(url, mediaType)
+    if (!this._checkUrlStatus(key)) return
 
     // Not cached. A failure means no verdict, usually an unavailable model rather
     // than a safe image, so caching `false` would keep serving "safe" for that URL
     // until the entry is evicted.
 
-    for (const [{ reject }] of this.requestMap.get(url) as requestQueueValue) {
+    for (const [{ reject }] of this.requestMap.get(key) as requestQueueValue) {
       reject(error)
     }
   }
 
-  private onDone ({ url }: OnDoneParam): void {
-    this.requestMap.delete(url)
+  private onDone ({ url, mediaType }: OnDoneParam): void {
+    this.requestMap.delete(this.requestKey(url, mediaType))
   }
 
   private onDrain (): void {

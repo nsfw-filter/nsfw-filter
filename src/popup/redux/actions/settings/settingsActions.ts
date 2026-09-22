@@ -7,6 +7,7 @@ import {
   SET_FILTER_EFFECT,
   SET_TRAINED_MODEL,
   SET_FILTER_STRICTNESS,
+  SET_VIDEO_STRICTNESS,
   SET_WEBSITE_LIST
 } from './settingsTypes'
 
@@ -27,6 +28,11 @@ export const setTrainedModel = (trainedModel: TrainedModel) => ({
 export const setFilterStrictness = (filterStrictness: number) => ({
   type: SET_FILTER_STRICTNESS,
   payload: { filterStrictness }
+} as const)
+
+export const setVideoStrictness = (videoStrictness: number) => ({
+  type: SET_VIDEO_STRICTNESS,
+  payload: { videoStrictness }
 } as const)
 
 export const setWebsiteList = (websites: string[]) => ({
